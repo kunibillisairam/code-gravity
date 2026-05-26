@@ -653,8 +653,8 @@ class Judge0Client:
             token = self.submit_code(code, language, stdin, problem_id)
             
             attempts = 0
-            max_attempts = 15
-            delay = 1.0
+            max_attempts = 5
+            delay = 0.4
 
             while attempts < max_attempts:
                 try:
