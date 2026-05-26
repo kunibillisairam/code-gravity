@@ -85,7 +85,7 @@ async def register(user: UserCreate):
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
         
-    user_dict = user.model_dump()
+    user_dict = user.dict()
     user_dict["password"] = get_password_hash(user.password)
     
     # Initialize profile and progress fields to defaults
@@ -255,7 +255,7 @@ async def update_profile(profile_data: ProfileUpdate, current_user: dict = Depen
         "skills": []
     }
     
-    data = profile_data.model_dump(exclude_unset=True)
+    data = profile_data.dict(exclude_unset=True)
     for k, v in data.items():
         existing_profile[k] = v
         
@@ -270,7 +270,7 @@ from datetime import datetime
 
 @app.post("/submissions", status_code=201)
 async def create_submission(submission: SubmissionCreate, current_user: dict = Depends(get_current_user)):
-    submission_dict = submission.model_dump()
+    submission_dict = submission.dict()
     submission_dict["username"] = current_user["username"]
     submission_dict["email"] = current_user["email"]
     submission_dict["submitted_at"] = datetime.utcnow()
