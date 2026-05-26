@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import Workspace from './components/Workspace';
 import AuthModal from './components/AuthModal';
 import Submissions from './components/Submissions';
+import ProfileDashboard from './components/ProfileDashboard';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
@@ -150,8 +151,30 @@ function App() {
           onLoginClick={() => setShowAuthModal(true)}
           onLogoutClick={handleLogout}
           onSubmissionsClick={() => setView('submissions')}
+          onProfileClick={() => setView('profile')}
         />
         <Submissions onBack={() => setView('landing')} />
+        <Footer />
+      </div>
+    );
+  }
+
+  // If in Profile dashboard view, render Navbar shell + Profile Dashboard
+  if (view === 'profile') {
+    return (
+      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
+        <Navbar 
+          activeSection="" 
+          setActiveSection={() => {}} 
+          theme={theme} 
+          toggleTheme={toggleTheme} 
+          user={user}
+          onLoginClick={() => setShowAuthModal(true)}
+          onLogoutClick={handleLogout}
+          onSubmissionsClick={() => setView('submissions')}
+          onProfileClick={() => setView('profile')}
+        />
+        <ProfileDashboard onBack={() => setView('landing')} />
         <Footer />
       </div>
     );
@@ -176,6 +199,7 @@ function App() {
         onLoginClick={() => setShowAuthModal(true)}
         onLogoutClick={handleLogout}
         onSubmissionsClick={() => setView('submissions')}
+        onProfileClick={() => setView('profile')}
       />
 
       <AuthModal 

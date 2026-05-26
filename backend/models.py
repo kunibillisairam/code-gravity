@@ -43,3 +43,14 @@ class SubmissionResponse(BaseModel):
     submitted_at: datetime
     username: str
 
+class ProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    college_name: Optional[str] = None
+    bio: Optional[str] = None
+    github_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    profile_pic: Optional[str] = None
+    interested_domains: Optional[List[str]] = None
+    skills: Optional[List[str]] = None
+
+

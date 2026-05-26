@@ -1,8 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Orbit, Sun, Moon } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Orbit, Sun, Moon, User, LogOut, List, ChevronDown } from 'lucide-react';
 
-const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick }) => {
+const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick, onProfileClick }) => {
   const navItems = [
     { id: 'hero', label: 'Home' },
     { id: 'features', label: 'Features' },
@@ -10,6 +10,8 @@ const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onL
     { id: 'ai-assistant', label: 'AI Assistant' },
     { id: 'leaderboard', label: 'Leaderboard' }
   ];
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleScroll = (id) => {
     setActiveSection(id);
@@ -80,20 +82,68 @@ const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onL
       {/* Theme & Auth Buttons */}
       <div className="flex items-center gap-4">
         {user ? (
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] md:text-xs font-bold font-mono text-cyber-cyan uppercase hidden sm:block">@{user}</span>
+          <div className="relative">
             <button
-              onClick={onSubmissionsClick}
-              className="px-2.5 py-1.5 rounded bg-cyber-cyan/10 border border-cyber-cyan/30 text-cyber-cyan hover:bg-cyber-cyan hover:text-space-900 transition-all text-[9px] md:text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-1.5 p-1 rounded-full border border-slate-200 dark:border-slate-800 hover:border-cyber-cyan/50 dark:hover:border-cyber-cyan/40 bg-slate-550 dark:bg-[#121626] transition-all cursor-pointer select-none"
             >
-              My Submissions
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-purple flex items-center justify-center text-space-900 font-extrabold text-xs shadow-md">
+                {user.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-[10px] font-bold font-mono text-slate-600 dark:text-cyber-cyan uppercase hidden sm:block pr-1">@{user}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-            <button 
-              onClick={onLogoutClick}
-              className="text-[10px] md:text-xs font-bold uppercase text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
-            >
-              Logout
-            </button>
+
+            <AnimatePresence>
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setDropdownOpen(false)} />
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2.5 w-48 bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-800 rounded-xl py-2 shadow-2xl z-50 overflow-hidden text-left"
+                  >
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        onProfileClick();
+                      }}
+                      className="w-full px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-[#121626] text-slate-700 dark:text-slate-300 hover:text-cyber-cyan dark:hover:text-cyber-cyan text-xs font-bold font-sans flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span>My Profile</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        onSubmissionsClick();
+                      }}
+                      className="w-full px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-[#121626] text-slate-700 dark:text-slate-300 hover:text-cyber-cyan dark:hover:text-cyber-cyan text-xs font-bold font-sans flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <List className="w-4 h-4 text-slate-400" />
+                      <span>My Submissions</span>
+                    </button>
+                    
+                    <div className="h-[1px] bg-slate-100 dark:bg-slate-850 my-1"></div>
+                    
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        onLogoutClick();
+                      }}
+                      className="w-full px-4 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/10 text-slate-600 dark:text-slate-400 hover:text-rose-550 dark:hover:text-rose-450 text-xs font-bold font-sans flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-400" />
+                      <span>Logout</span>
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           <button

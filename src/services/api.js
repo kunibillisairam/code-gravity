@@ -63,6 +63,24 @@ export const apiService = {
     }
   },
 
+  getUserProfile: async () => {
+    try {
+      const response = await apiClient.get('/profile');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch user profile');
+    }
+  },
+
+  updateUserProfile: async (profileData) => {
+    try {
+      const response = await apiClient.put('/profile', profileData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to update user profile');
+    }
+  },
+
   /**
    * Execute code on isolated sandbox backend via Judge0
    * @param {string} code Source code written in Monaco

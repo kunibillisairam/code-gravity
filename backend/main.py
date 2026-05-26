@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from database import client, db
 from auth import get_password_hash, verify_password, create_access_token, get_current_user
-from models import UserCreate, UserLogin, Token, GoogleLoginRequest, SubmissionCreate, SubmissionResponse
+from models import UserCreate, UserLogin, Token, GoogleLoginRequest, SubmissionCreate, SubmissionResponse, ProfileUpdate
 from fastapi import status, Depends
 import requests
 
@@ -88,6 +88,30 @@ async def register(user: UserCreate):
     user_dict = user.model_dump()
     user_dict["password"] = get_password_hash(user.password)
     
+    # Initialize profile and progress fields to defaults
+    user_dict["profile"] = {
+        "display_name": user.username,
+        "college_name": "",
+        "bio": "",
+        "github_url": "",
+        "linkedin_url": "",
+        "profile_pic": "",
+        "interested_domains": [],
+        "skills": []
+    }
+    user_dict["progress"] = {
+        "xp": 0,
+        "level": 1,
+        "solved_problems": [],
+        "attempted_problems": [],
+        "daily_streak": 0,
+        "longest_streak": 0,
+        "last_activity_date": "",
+        "badges": [],
+        "activity_log": [],
+        "contribution_heatmap": {}
+    }
+    
     new_user = await db.users.insert_one(user_dict)
     
     access_token = create_access_token(data={"sub": user.email})
@@ -153,7 +177,29 @@ async def google_auth(request: GoogleLoginRequest):
             "username": name,
             "email": email,
             "password": "",  # Placeholder, signed in via Firebase Google OAuth
-            "created_via": "google-firebase"
+            "created_via": "google-firebase",
+            "profile": {
+                "display_name": name,
+                "college_name": "",
+                "bio": "",
+                "github_url": "",
+                "linkedin_url": "",
+                "profile_pic": "",
+                "interested_domains": [],
+                "skills": []
+            },
+            "progress": {
+                "xp": 0,
+                "level": 1,
+                "solved_problems": [],
+                "attempted_problems": [],
+                "daily_streak": 0,
+                "longest_streak": 0,
+                "last_activity_date": "",
+                "badges": [],
+                "activity_log": [],
+                "contribution_heatmap": {}
+            }
         }
         await db.users.insert_one(new_user)
         username = name
@@ -162,6 +208,63 @@ async def google_auth(request: GoogleLoginRequest):
         
     access_token = create_access_token(data={"sub": email})
     return {"access_token": access_token, "token_type": "bearer", "username": username}
+
+@app.get("/profile")
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    profile = current_user.get("profile") or {
+        "display_name": current_user.get("username"),
+        "college_name": "",
+        "bio": "",
+        "github_url": "",
+        "linkedin_url": "",
+        "profile_pic": "",
+        "interested_domains": [],
+        "skills": []
+    }
+    
+    progress = current_user.get("progress") or {
+        "xp": 0,
+        "level": 1,
+        "solved_problems": [],
+        "attempted_problems": [],
+        "daily_streak": 0,
+        "longest_streak": 0,
+        "last_activity_date": "",
+        "badges": [],
+        "activity_log": [],
+        "contribution_heatmap": {}
+    }
+    
+    return {
+        "username": current_user.get("username"),
+        "email": current_user.get("email"),
+        "profile": profile,
+        "progress": progress
+    }
+
+@app.put("/profile")
+async def update_profile(profile_data: ProfileUpdate, current_user: dict = Depends(get_current_user)):
+    existing_profile = current_user.get("profile") or {
+        "display_name": current_user.get("username"),
+        "college_name": "",
+        "bio": "",
+        "github_url": "",
+        "linkedin_url": "",
+        "profile_pic": "",
+        "interested_domains": [],
+        "skills": []
+    }
+    
+    data = profile_data.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        existing_profile[k] = v
+        
+    await db.users.update_one(
+        {"email": current_user["email"]},
+        {"$set": {"profile": existing_profile}}
+    )
+    
+    return {"status": "success", "profile": existing_profile}
 
 from datetime import datetime
 
@@ -173,8 +276,134 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
     submission_dict["submitted_at"] = datetime.utcnow()
     
     result = await db.submissions.insert_one(submission_dict)
-    
     submission_dict["id"] = str(result.inserted_id)
+    
+    # Gamification Progress Updates
+    progress = current_user.get("progress") or {
+        "xp": 0,
+        "level": 1,
+        "solved_problems": [],
+        "attempted_problems": [],
+        "daily_streak": 0,
+        "longest_streak": 0,
+        "last_activity_date": "",
+        "badges": [],
+        "activity_log": [],
+        "contribution_heatmap": {}
+    }
+    
+    prob_id = submission.problem_id
+    verdict = submission.verdict
+    
+    if prob_id not in progress.get("attempted_problems", []):
+        progress["attempted_problems"].append(prob_id)
+        
+    if verdict.lower() == "accepted":
+        if prob_id not in progress.get("solved_problems", []):
+            progress["solved_problems"].append(prob_id)
+            
+            # XP Weight: Easy = 100, Medium = 200, Hard = 300
+            xp_to_award = 100
+            if "medium" in prob_id.lower() or "water" in prob_id.lower():
+                xp_to_award = 200
+            elif "hard" in prob_id.lower():
+                xp_to_award = 300
+                
+            progress["xp"] = progress.get("xp", 0) + xp_to_award
+            
+            # Level check: every 500 XP is a level
+            new_level = (progress["xp"] // 500) + 1
+            if new_level > progress.get("level", 1):
+                progress["level"] = new_level
+                progress["activity_log"].append({
+                    "type": "level_up",
+                    "description": f"Reached Level {new_level}!",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+            
+            progress["activity_log"].append({
+                "type": "solved",
+                "description": f"Solved {submission.problem_title} (+{xp_to_award} XP)",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+            
+    # Heatmap increment
+    today_str = datetime.utcnow().date().isoformat()
+    heatmap = progress.get("contribution_heatmap") or {}
+    heatmap[today_str] = heatmap.get(today_str, 0) + 1
+    progress["contribution_heatmap"] = heatmap
+    
+    # Streaks calculation
+    last_active = progress.get("last_activity_date") or ""
+    if last_active:
+        try:
+            last_date = datetime.strptime(last_active, "%Y-%m-%d").date()
+            today_date = datetime.utcnow().date()
+            delta = (today_date - last_date).days
+            
+            if delta == 1:
+                progress["daily_streak"] = progress.get("daily_streak", 0) + 1
+                if progress["daily_streak"] > progress.get("longest_streak", 0):
+                    progress["longest_streak"] = progress["daily_streak"]
+            elif delta > 1:
+                progress["daily_streak"] = 1
+        except Exception:
+            progress["daily_streak"] = 1
+    else:
+        progress["daily_streak"] = 1
+        progress["longest_streak"] = 1
+        
+    progress["last_activity_date"] = today_str
+    
+    # Achievements Badges awarding logic
+    badges = progress.get("badges") or []
+    activity_log = progress.get("activity_log") or []
+    
+    if len(progress["solved_problems"]) >= 1 and "first_success" not in badges:
+        badges.append("first_success")
+        activity_log.append({
+            "type": "badge",
+            "description": "Unlocked Badge: First Success!",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+    try:
+        runtime_str = submission.runtime.replace("ms", "").strip()
+        runtime_val = float(runtime_str)
+        if verdict.lower() == "accepted" and runtime_val < 100.0 and "speed_demon" not in badges:
+            badges.append("speed_demon")
+            activity_log.append({
+                "type": "badge",
+                "description": "Unlocked Badge: Speed Demon (<100ms)!",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+    except Exception:
+        pass
+        
+    if progress["daily_streak"] >= 3 and "streak_master" not in badges:
+        badges.append("streak_master")
+        activity_log.append({
+            "type": "badge",
+            "description": "Unlocked Badge: Streak Master (3 days consecutive)!",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+    if len(progress["solved_problems"]) >= 5 and "algorithm_alchemist" not in badges:
+        badges.append("algorithm_alchemist")
+        activity_log.append({
+            "type": "badge",
+            "description": "Unlocked Badge: Algorithm Alchemist (Solved 5 unique problems)!",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+    progress["badges"] = badges
+    progress["activity_log"] = activity_log
+    
+    await db.users.update_one(
+        {"email": current_user["email"]},
+        {"$set": {"progress": progress}}
+    )
+    
     return submission_dict
 
 @app.get("/submissions")
