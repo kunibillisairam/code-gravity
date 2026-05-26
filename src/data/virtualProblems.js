@@ -19,10 +19,10 @@ const EXPLICIT_PROBLEMS_DB = {
       { input: "dummy", output: "Hello, World!", explanation: "Inputs are disregarded." }
     ],
     starter_code: {
-      python: "print(\"Hello, World!\")",
-      javascript: "console.log(\"Hello, World!\");",
-      cpp: "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}",
-      java: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}"
+      python: "# Write your print statement here\n",
+      javascript: "// Write your console log statement here\n",
+      cpp: "#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your greeting statement here\n    return 0;\n}",
+      java: "public class Main {\n    public static void main(String[] args) {\n        // Write your greeting statement here\n    }\n}"
     },
     test_cases: [
       { input: "", expected_output: "Hello, World!" },
