@@ -1,0 +1,924 @@
+[
+  {
+    "id": "hello-world",
+    "title": "Hello World",
+    "difficulty": "Easy",
+    "topic": "Python Basics",
+    "description": "Welcome to Python! The simplest way to start is by printing a line of text. Your task is to write a program that prints the exact phrase 'Hello, World!' to the console.",
+    "input_format": "This problem has no input.",
+    "output_format": "Print the string 'Hello, World!' on a single line.",
+    "constraints": [
+      "No performance constraints."
+    ],
+    "examples": [
+      {
+        "input": "",
+        "output": "Hello, World!",
+        "explanation": "The program prints the greeting exactly as requested."
+      },
+      {
+        "input": "dummy_input",
+        "output": "Hello, World!",
+        "explanation": "Even with input, the program ignores it and prints the standard greeting."
+      }
+    ],
+    "starter_code": {
+      "python": "print(\"Hello, World!\")",
+      "javascript": "console.log(\"Hello, World!\");",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}",
+      "java": "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "",
+        "expected_output": "Hello, World!"
+      },
+      {
+        "input": "case1",
+        "expected_output": "Hello, World!"
+      },
+      {
+        "input": "case2",
+        "expected_output": "Hello, World!"
+      }
+    ],
+    "tags": ["basics", "printing"],
+    "xp_points": 50
+  },
+  {
+    "id": "print-function",
+    "title": "Print Function",
+    "difficulty": "Easy",
+    "topic": "Python Basics",
+    "description": "Read an integer n. Print the string of numbers from 1 to n consecutively without any spaces. For example, if n = 5, print '12345'.",
+    "input_format": "A single integer n representing the limit.",
+    "output_format": "Print the numbers from 1 to n consecutively on a single line.",
+    "constraints": [
+      "1 <= n <= 150"
+    ],
+    "examples": [
+      {
+        "input": "3",
+        "output": "123",
+        "explanation": "For n = 3, we print 1, 2, and 3 consecutively."
+      },
+      {
+        "input": "5",
+        "output": "12345",
+        "explanation": "For n = 5, we print values up to 5."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Write your code here to print numbers from 1 to n\nfor i in range(1, n + 1):\n    print(i, end=\"\")\nprint()",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nlet res = '';\nfor (let i = 1; i <= n; i++) {\n    res += i;\n}\nconsole.log(res);",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        for (int i = 1; i <= n; i++) {\n            cout << i;\n        }\n        cout << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            for (int i = 1; i <= n; i++) {\n                System.out.print(i);\n            }\n            System.out.println();\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3",
+        "expected_output": "123"
+      },
+      {
+        "input": "5",
+        "expected_output": "12345"
+      },
+      {
+        "input": "10",
+        "expected_output": "12345678910"
+      }
+    ],
+    "tags": ["basics", "loops"],
+    "xp_points": 60
+  },
+  {
+    "id": "input-output",
+    "title": "Input Output",
+    "difficulty": "Easy",
+    "topic": "Python Basics",
+    "description": "Write a program that reads a user's name from standard input and prints a personalized greeting in the format: 'Hello, [name]!'. Ensure you strip any extra spaces.",
+    "input_format": "A single line containing the name string.",
+    "output_format": "Print the phrase 'Hello, <name>!' on a single line.",
+    "constraints": [
+      "1 <= name.length <= 100"
+    ],
+    "examples": [
+      {
+        "input": "Gravity",
+        "output": "Hello, Gravity!",
+        "explanation": "Input is 'Gravity', printing 'Hello, Gravity!'."
+      },
+      {
+        "input": "User",
+        "output": "Hello, User!",
+        "explanation": "Input is 'User', printing 'Hello, User!'."
+      }
+    ],
+    "starter_code": {
+      "python": "name = input().strip()\n# Write your print code here\nprint(\"Hello, \" + name + \"!\")",
+      "javascript": "const fs = require('fs');\nconst name = fs.readFileSync(0, 'utf-8').trim();\nconsole.log(\"Hello, \" + name + \"!\");",
+      "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        cout << \"Hello, \" << s << \"!\" << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine().trim();\n            System.out.println(\"Hello, \" + s + \"!\");\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "Gravity",
+        "expected_output": "Hello, Gravity!"
+      },
+      {
+        "input": "User",
+        "expected_output": "Hello, User!"
+      },
+      {
+        "input": "Alice",
+        "expected_output": "Hello, Alice!"
+      }
+    ],
+    "tags": ["basics", "stdin"],
+    "xp_points": 50
+  },
+  {
+    "id": "arithmetic-operators",
+    "title": "Arithmetic Operators",
+    "difficulty": "Easy",
+    "topic": "Operators",
+    "description": "Read two integers a and b from standard input. Perform calculations and print three lines:\n1. Sum of a and b.\n2. Difference of a and b (a - b).\n3. Product of a and b.",
+    "input_format": "Two integers a and b, each on a new line or separated by space.",
+    "output_format": "Print three lines: sum, difference, and product.",
+    "constraints": [
+      "-10^9 <= a, b <= 10^9"
+    ],
+    "examples": [
+      {
+        "input": "3\n2",
+        "output": "5\n1\n6",
+        "explanation": "3 + 2 = 5, 3 - 2 = 1, 3 * 2 = 6."
+      },
+      {
+        "input": "10\n5",
+        "output": "15\n5\n50",
+        "explanation": "10 + 5 = 15, 10 - 5 = 5, 10 * 5 = 50."
+      }
+    ],
+    "starter_code": {
+      "python": "a = int(input())\nb = int(input())\n# Print sum, difference, and product\nprint(a + b)\nprint(a - b)\nprint(a * b)",
+      "javascript": "const fs = require('fs');\nconst lines = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(Number);\nconst a = lines[0], b = lines[1];\nconsole.log(a + b);\nconsole.log(a - b);\nconsole.log(a * b);",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    if (cin >> a >> b) {\n        cout << a + b << endl;\n        cout << a - b << endl;\n        cout << a * b << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            System.out.println(a + b);\n            System.out.println(a - b);\n            System.out.println(a * b);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3\n2",
+        "expected_output": "5\n1\n6"
+      },
+      {
+        "input": "10\n5",
+        "expected_output": "15\n5\n50"
+      },
+      {
+        "input": "0\n0",
+        "expected_output": "0\n0\n0"
+      }
+    ],
+    "tags": ["operators", "math"],
+    "xp_points": 60
+  },
+  {
+    "id": "comparison-operators",
+    "title": "Comparison Operators",
+    "difficulty": "Easy",
+    "topic": "Operators",
+    "description": "Read two integers a and b. Print 'Greater' if a > b, 'Lesser' if a < b, and 'Equal' if a == b.",
+    "input_format": "Two space-separated integers a and b.",
+    "output_format": "Print Greater, Lesser, or Equal.",
+    "constraints": [
+      "-10^9 <= a, b <= 10^9"
+    ],
+    "examples": [
+      {
+        "input": "10 5",
+        "output": "Greater",
+        "explanation": "10 is greater than 5."
+      },
+      {
+        "input": "2 2",
+        "output": "Equal",
+        "explanation": "2 is equal to 2."
+      }
+    ],
+    "starter_code": {
+      "python": "a, b = map(int, input().split())\n# Write comparison logic\nif a > b:\n    print(\"Greater\")\nelif a < b:\n    print(\"Lesser\")\nelse:\n    print(\"Equal\")",
+      "javascript": "const fs = require('fs');\nconst [a, b] = fs.readFileSync(0, 'utf-8').trim().split(' ').map(Number);\nif (a > b) console.log(\"Greater\");\nelse if (a < b) console.log(\"Lesser\");\nelse console.log(\"Equal\");",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    if (cin >> a >> b) {\n        if (a > b) cout << \"Greater\" << endl;\n        else if (a < b) cout << \"Lesser\" << endl;\n        else cout << \"Equal\" << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            if (a > b) System.out.println(\"Greater\");\n            else if (a < b) System.out.println(\"Lesser\");\n            else System.out.println(\"Equal\");\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "10 5",
+        "expected_output": "Greater"
+      },
+      {
+        "input": "3 8",
+        "expected_output": "Lesser"
+      },
+      {
+        "input": "2 2",
+        "expected_output": "Equal"
+      }
+    ],
+    "tags": ["operators", "conditionals"],
+    "xp_points": 50
+  },
+  {
+    "id": "logical-operators",
+    "title": "Logical Operators",
+    "difficulty": "Easy",
+    "topic": "Operators",
+    "description": "Read two binary integers a and b (which can only be 0 or 1). Perform logical evaluations and print three lines:\n1. Result of logical AND (a AND b).\n2. Result of logical OR (a OR b).\n3. Result of logical NOT a (1 if a is 0, else 0).",
+    "input_format": "Two integers a and b (0 or 1) separated by a space.",
+    "output_format": "Print the evaluated results on three separate lines.",
+    "constraints": [
+      "a in {0, 1}",
+      "b in {0, 1}"
+    ],
+    "examples": [
+      {
+        "input": "1 0",
+        "output": "0\n1\n0",
+        "explanation": "1 AND 0 = 0; 1 OR 0 = 1; NOT 1 = 0."
+      },
+      {
+        "input": "0 0",
+        "output": "0\n0\n1",
+        "explanation": "0 AND 0 = 0; 0 OR 0 = 0; NOT 0 = 1."
+      }
+    ],
+    "starter_code": {
+      "python": "a, b = map(int, input().split())\n# Print standard operations\nprint(1 if (a and b) else 0)\nprint(1 if (a or b) else 0)\nprint(0 if a else 1)",
+      "javascript": "const fs = require('fs');\nconst [a, b] = fs.readFileSync(0, 'utf-8').trim().split(' ').map(Number);\nconsole.log(a && b ? 1 : 0);\nconsole.log(a || b ? 1 : 0);\nconsole.log(a ? 0 : 1);",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    if (cin >> a >> b) {\n        cout << (a && b) << endl;\n        cout << (a || b) << endl;\n        cout << (!a) << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            System.out.println(a == 1 && b == 1 ? 1 : 0);\n            System.out.println(a == 1 || b == 1 ? 1 : 0);\n            System.out.println(a == 1 ? 0 : 1);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "1 0",
+        "expected_output": "0\n1\n0"
+      },
+      {
+        "input": "0 0",
+        "expected_output": "0\n0\n1"
+      },
+      {
+        "input": "1 1",
+        "expected_output": "1\n1\n0"
+      }
+    ],
+    "tags": ["operators", "boolean"],
+    "xp_points": 60
+  },
+  {
+    "id": "if-else",
+    "title": "If Else",
+    "difficulty": "Easy",
+    "topic": "Conditionals",
+    "description": "Given an integer n, perform the following conditional actions:\n- If n is odd, print 'Weird'\n- If n is even and in the inclusive range of 2 to 5, print 'Not Weird'\n- If n is even and in the inclusive range of 6 to 20, print 'Weird'\n- If n is even and greater than 20, print 'Not Weird'",
+    "input_format": "A single integer n.",
+    "output_format": "Print Weird or Not Weird.",
+    "constraints": [
+      "1 <= n <= 100"
+    ],
+    "examples": [
+      {
+        "input": "3",
+        "output": "Weird",
+        "explanation": "3 is odd, so we print Weird."
+      },
+      {
+        "input": "24",
+        "output": "Not Weird",
+        "explanation": "24 is even and greater than 20, so we print Not Weird."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Write If-Else logic\nif n % 2 != 0:\n    print(\"Weird\")\nelse:\n    if 2 <= n <= 5:\n        print(\"Not Weird\")\n    elif 6 <= n <= 20:\n        print(\"Weird\")\n    else:\n        print(\"Not Weird\")",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nif (n % 2 !== 0) {\n    console.log(\"Weird\");\n} else {\n    if (n >= 2 && n <= 5) console.log(\"Not Weird\");\n    else if (n >= 6 && n <= 20) console.log(\"Weird\");\n    else console.log(\"Not Weird\");\n}",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        if (n % 2 != 0) cout << \"Weird\" << endl;\n        else {\n            if (n >= 2 && n <= 5) cout << \"Not Weird\" << endl;\n            else if (n >= 6 && n <= 20) cout << \"Weird\" << endl;\n            else cout << \"Not Weird\" << endl;\n        }\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            if (n % 2 != 0) System.out.println(\"Weird\");\n            else {\n                if (n >= 2 && n <= 5) System.out.println(\"Not Weird\");\n                else if (n >= 6 && n <= 20) System.out.println(\"Weird\");\n                else System.out.println(\"Not Weird\");\n            }\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3",
+        "expected_output": "Weird"
+      },
+      {
+        "input": "24",
+        "expected_output": "Not Weird"
+      },
+      {
+        "input": "4",
+        "expected_output": "Not Weird"
+      }
+    ],
+    "tags": ["conditionals", "if-else"],
+    "xp_points": 70
+  },
+  {
+    "id": "nested-if",
+    "title": "Nested If",
+    "difficulty": "Easy",
+    "topic": "Conditionals",
+    "description": "Read an integer n. Verify if it is divisible by both 2 and 3. Print 'Divisible by both' if it is. If it is divisible by 2 but not 3, print 'Divisible by 2'. If it is divisible by 3 but not 2, print 'Divisible by 3'. If it is divisible by neither, print 'Divisible by neither'.",
+    "input_format": "A single integer n.",
+    "output_format": "Print the divisibility summary string.",
+    "constraints": [
+      "1 <= n <= 10^5"
+    ],
+    "examples": [
+      {
+        "input": "6",
+        "output": "Divisible by both",
+        "explanation": "6 is divisible by 2 and 3."
+      },
+      {
+        "input": "8",
+        "output": "Divisible by 2",
+        "explanation": "8 is divisible by 2 but not 3."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Write nested checks\nif n % 2 == 0:\n    if n % 3 == 0:\n        print(\"Divisible by both\")\n    else:\n        print(\"Divisible by 2\")\nelse:\n    if n % 3 == 0:\n        print(\"Divisible by 3\")\n    else:\n        print(\"Divisible by neither\")",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nif (n % 2 === 0) {\n    if (n % 3 === 0) console.log(\"Divisible by both\");\n    else console.log(\"Divisible by 2\");\n} else {\n    if (n % 3 === 0) console.log(\"Divisible by 3\");\n    else console.log(\"Divisible by neither\");\n}",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        if (n % 2 == 0) {\n            if (n % 3 == 0) cout << \"Divisible by both\" << endl;\n            else cout << \"Divisible by 2\" << endl;\n        } else {\n            if (n % 3 == 0) cout << \"Divisible by 3\" << endl;\n            else cout << \"Divisible by neither\" << endl;\n        }\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            if (n % 2 == 0) {\n                if (n % 3 == 0) System.out.println(\"Divisible by both\");\n                else System.out.println(\"Divisible by 2\");\n            } else {\n                if (n % 3 == 0) System.out.println(\"Divisible by 3\");\n                else System.out.println(\"Divisible by neither\");\n            }\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "6",
+        "expected_output": "Divisible by both"
+      },
+      {
+        "input": "8",
+        "expected_output": "Divisible by 2"
+      },
+      {
+        "input": "9",
+        "expected_output": "Divisible by 3"
+      }
+    ],
+    "tags": ["conditionals", "divisibility"],
+    "xp_points": 70
+  },
+  {
+    "id": "leap-year",
+    "title": "Leap Year",
+    "difficulty": "Easy",
+    "topic": "Conditionals",
+    "description": "Determine if a given year `y` is a leap year. In the Gregorian calendar, three criteria identify leap years:\n- The year must be evenly divisible by 4;\n- If it can be evenly divided by 100, it is NOT a leap year, unless;\n- The year is also evenly divisible by 400. Then it is a leap year.\n\nPrint '1' if it is a leap year, otherwise '0'.",
+    "input_format": "A single year integer y.",
+    "output_format": "Print 1 if leap year, otherwise 0.",
+    "constraints": [
+      "1900 <= y <= 10^5"
+    ],
+    "examples": [
+      {
+        "input": "2000",
+        "output": "1",
+        "explanation": "2000 is divisible by 400, so it is a leap year."
+      },
+      {
+        "input": "1900",
+        "output": "0",
+        "explanation": "1900 is divisible by 100 but not by 400."
+      }
+    ],
+    "starter_code": {
+      "python": "y = int(input())\n# Write your logic here\nif (y % 4 == 0 and y % 100 != 0) or (y % 400 == 0):\n    print(1)\nelse:\n    print(0)",
+      "javascript": "const fs = require('fs');\nconst y = parseInt(fs.readFileSync(0, 'utf-8').trim());\nif ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0)) {\n    console.log(1);\n} else {\n    console.log(0);\n}",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int y;\n    if (cin >> y) {\n        if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) cout << 1 << endl;\n        else cout << 0 << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int y = sc.nextInt();\n            if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) System.out.println(1);\n            else System.out.println(0);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "2000",
+        "expected_output": "1"
+      },
+      {
+        "input": "1900",
+        "expected_output": "0"
+      },
+      {
+        "input": "2024",
+        "expected_output": "1"
+      }
+    ],
+    "tags": ["conditionals", "calendar"],
+    "xp_points": 80
+  },
+  {
+    "id": "for-loop",
+    "title": "For Loop",
+    "difficulty": "Easy",
+    "topic": "Loops",
+    "description": "Read an integer n. For all non-negative integers i < n, print i^2 (the square of i) on a new line.",
+    "input_format": "A single integer n.",
+    "output_format": "Print n lines, with each line containing the square of i.",
+    "constraints": [
+      "1 <= n <= 20"
+    ],
+    "examples": [
+      {
+        "input": "3",
+        "output": "0\n1\n4",
+        "explanation": "Squares of 0, 1, 2 are 0, 1, 4 respectively."
+      },
+      {
+        "input": "5",
+        "output": "0\n1\n4\n9\n16",
+        "explanation": "Squares of 0, 1, 2, 3, 4 are printed."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Write your square loop code here\nfor i in range(n):\n    print(i * i)",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nfor (let i = 0; i < n; i++) {\n    console.log(i * i);\n}",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        for (int i = 0; i < n; i++) {\n            cout << i * i << endl;\n        }\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            for (int i = 0; i < n; i++) {\n                System.out.println(i * i);\n            }\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3",
+        "expected_output": "0\n1\n4"
+      },
+      {
+        "input": "5",
+        "expected_output": "0\n1\n4\n9\n16"
+      },
+      {
+        "input": "1",
+        "expected_output": "0"
+      }
+    ],
+    "tags": ["loops", "for"],
+    "xp_points": 60
+  },
+  {
+    "id": "while-loop",
+    "title": "While Loop",
+    "difficulty": "Easy",
+    "topic": "Loops",
+    "description": "Read an integer n. Divide n by 2 continuously using integer division until n reaches 0. Print the value of n at each step on a new line.",
+    "input_format": "A single integer n.",
+    "output_format": "Print the sequence of integer values on separate lines.",
+    "constraints": [
+      "1 <= n <= 10^6"
+    ],
+    "examples": [
+      {
+        "input": "10",
+        "output": "5\n2\n1\n0",
+        "explanation": "10/2 = 5; 5/2 = 2; 2/2 = 1; 1/2 = 0."
+      },
+      {
+        "input": "4",
+        "output": "2\n1\n0",
+        "explanation": "4/2 = 2; 2/2 = 1; 1/2 = 0."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Write your division while loop\nwhile n > 0:\n    n = n // 2\n    print(n)",
+      "javascript": "const fs = require('fs');\nlet n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nwhile (n > 0) {\n    n = Math.floor(n / 2);\n    console.log(n);\n}",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        while (n > 0) {\n            n /= 2;\n            cout << n << endl;\n        }\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            while (n > 0) {\n                n /= 2;\n                System.out.println(n);\n            }\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "10",
+        "expected_output": "5\n2\n1\n0"
+      },
+      {
+        "input": "4",
+        "expected_output": "2\n1\n0"
+      },
+      {
+        "input": "1",
+        "expected_output": "0"
+      }
+    ],
+    "tags": ["loops", "while"],
+    "xp_points": 70
+  },
+  {
+    "id": "pattern-printing",
+    "title": "Pattern Printing",
+    "difficulty": "Easy",
+    "topic": "Loops",
+    "description": "Read an integer n. Print a right-angled triangle pattern made of asterisks (*) with height n. The first line should have 1 asterisk, the second 2, and the n-th line should have n asterisks.",
+    "input_format": "A single integer n.",
+    "output_format": "Print n lines representing the asterisk pattern.",
+    "constraints": [
+      "1 <= n <= 30"
+    ],
+    "examples": [
+      {
+        "input": "3",
+        "output": "*\n**\n***",
+        "explanation": "A triangle of height 3."
+      },
+      {
+        "input": "1",
+        "output": "*",
+        "explanation": "A triangle of height 1."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Print the asterisk triangles\nfor i in range(1, n + 1):\n    print(\"*\" * i)",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nfor (let i = 1; i <= n; i++) {\n    console.log(\"*\".repeat(i));\n}",
+      "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        for (int i = 1; i <= n; i++) {\n            cout << string(i, '*') << endl;\n        }\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            for (int i = 1; i <= n; i++) {\n                for (int j = 0; j < i; j++) {\n                    System.out.print(\"*\");\n                }\n                System.out.println();\n            }\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3",
+        "expected_output": "*\n**\n***"
+      },
+      {
+        "input": "1",
+        "expected_output": "*"
+      },
+      {
+        "input": "5",
+        "expected_output": "*\n**\n***\n****\n*****"
+      }
+    ],
+    "tags": ["loops", "formatting"],
+    "xp_points": 70
+  },
+  {
+    "id": "sum-of-numbers",
+    "title": "Sum of Numbers",
+    "difficulty": "Easy",
+    "topic": "Loops",
+    "description": "Read an integer n. Calculate the sum of all natural numbers from 1 to n and print it to standard output.",
+    "input_format": "A single integer n.",
+    "output_format": "Print the sum of natural numbers from 1 to n.",
+    "constraints": [
+      "1 <= n <= 10^4"
+    ],
+    "examples": [
+      {
+        "input": "5",
+        "output": "15",
+        "explanation": "1 + 2 + 3 + 4 + 5 = 15."
+      },
+      {
+        "input": "100",
+        "output": "5050",
+        "explanation": "The sum from 1 to 100 is 5050."
+      }
+    ],
+    "starter_code": {
+      "python": "n = int(input())\n# Print the sum of numbers from 1 to n\ns = sum(range(1, n + 1))\nprint(s)",
+      "javascript": "const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nlet s = 0;\nfor (let i = 1; i <= n; i++) s += i;\nconsole.log(s);",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    long long n;\n    if (cin >> n) {\n        cout << n * (n + 1) / 2 << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLong()) {\n            long n = sc.nextLong();\n            System.out.println(n * (n + 1) / 2);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "5",
+        "expected_output": "15"
+      },
+      {
+        "input": "100",
+        "expected_output": "5050"
+      },
+      {
+        "input": "1",
+        "expected_output": "1"
+      }
+    ],
+    "tags": ["loops", "math"],
+    "xp_points": 50
+  },
+  {
+    "id": "write-a-function",
+    "title": "Write a Function",
+    "difficulty": "Easy",
+    "topic": "Functions",
+    "description": "Write a function `is_leap` that takes a year and returns `True` if it is a leap year, otherwise `False`.",
+    "input_format": "A single integer year.",
+    "output_format": "Print True or False.",
+    "constraints": [
+      "1900 <= year <= 10^5"
+    ],
+    "examples": [
+      {
+        "input": "2000",
+        "output": "True",
+        "explanation": "2000 is divisible by 400."
+      },
+      {
+        "input": "2100",
+        "output": "False",
+        "explanation": "2100 is divisible by 100 but not 400."
+      }
+    ],
+    "starter_code": {
+      "python": "def is_leap(year):\n    # Write your function here\n    return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)\n\nif __name__ == '__main__':\n    year = int(input())\n    print(is_leap(year))",
+      "javascript": "function isLeap(year) {\n    return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);\n}\nconst fs = require('fs');\nconst year = parseInt(fs.readFileSync(0, 'utf-8').trim());\nconsole.log(isLeap(year) ? \"True\" : \"False\");",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nbool isLeap(int year) {\n    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);\n}\n\nint main() {\n    int year;\n    if (cin >> year) {\n        cout << (isLeap(year) ? \"True\" : \"False\") << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static boolean isLeap(int year) {\n        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int year = sc.nextInt();\n            System.out.println(isLeap(year) ? \"True\" : \"False\");\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "2000",
+        "expected_output": "True"
+      },
+      {
+        "input": "2100",
+        "expected_output": "False"
+      },
+      {
+        "input": "1992",
+        "expected_output": "True"
+      }
+    ],
+    "tags": ["functions", "calendar"],
+    "xp_points": 70
+  },
+  {
+    "id": "lambda-basics",
+    "title": "Lambda Basics",
+    "difficulty": "Easy",
+    "topic": "Functions",
+    "description": "Create a lambda function that takes two numbers, adds them, and multiplies the result by 3. Print the computed value.",
+    "input_format": "Two space-separated numbers a and b.",
+    "output_format": "Print the evaluated integer value.",
+    "constraints": [
+      "-10^4 <= a, b <= 10^4"
+    ],
+    "examples": [
+      {
+        "input": "2 3",
+        "output": "15",
+        "explanation": "(2 + 3) * 3 = 15."
+      },
+      {
+        "input": "1 1",
+        "output": "6",
+        "explanation": "(1 + 1) * 3 = 6."
+      }
+    ],
+    "starter_code": {
+      "python": "a, b = map(int, input().split())\n# Use lambda to compute\nsolve = lambda x, y: (x + y) * 3\nprint(solve(a, b))",
+      "javascript": "const fs = require('fs');\nconst [a, b] = fs.readFileSync(0, 'utf-8').trim().split(' ').map(Number);\nconst solve = (x, y) => (x + y) * 3;\nconsole.log(solve(a, b));",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    if (cin >> a >> b) {\n        auto solve = [](int x, int y) { return (x + y) * 3; };\n        cout << solve(a, b) << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\nimport java.util.function.BiFunction;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            BiFunction<Integer, Integer, Integer> solve = (x, y) -> (x + y) * 3;\n            System.out.println(solve.apply(a, b));\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "2 3",
+        "expected_output": "15"
+      },
+      {
+        "input": "1 1",
+        "expected_output": "6"
+      },
+      {
+        "input": "-2 2",
+        "expected_output": "0"
+      }
+    ],
+    "tags": ["functions", "lambda"],
+    "xp_points": 80
+  },
+  {
+    "id": "recursion-basics",
+    "title": "Recursion Basics",
+    "difficulty": "Easy",
+    "topic": "Functions",
+    "description": "Write a recursive function to compute the sum of digits of a given positive integer n.",
+    "input_format": "A single integer n.",
+    "output_format": "Print the sum of digits of n.",
+    "constraints": [
+      "1 <= n <= 2^31 - 1"
+    ],
+    "examples": [
+      {
+        "input": "123",
+        "output": "6",
+        "explanation": "1 + 2 + 3 = 6."
+      },
+      {
+        "input": "405",
+        "output": "9",
+        "explanation": "4 + 0 + 5 = 9."
+      }
+    ],
+    "starter_code": {
+      "python": "def sum_digits(n):\n    # Write recursive algorithm\n    if n < 10:\n        return n\n    return n % 10 + sum_digits(n // 10)\n\nprint(sum_digits(int(input())))",
+      "javascript": "function sumDigits(n) {\n    if (n < 10) return n;\n    return (n % 10) + sumDigits(Math.floor(n / 10));\n}\nconst fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\nconsole.log(sumDigits(n));",
+      "cpp": "#include <iostream>\nusing namespace std;\n\nint sumDigits(int n) {\n    if (n < 10) return n;\n    return (n % 10) + sumDigits(n / 10);\n}\n\nint main() {\n    int n;\n    if (cin >> n) {\n        cout << sumDigits(n) << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static int sumDigits(int n) {\n        if (n < 10) return n;\n        return (n % 10) + sumDigits(n / 10);\n    }\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            System.out.println(sumDigits(n));\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "123",
+        "expected_output": "6"
+      },
+      {
+        "input": "405",
+        "expected_output": "9"
+      },
+      {
+        "input": "9999",
+        "expected_output": "36"
+      }
+    ],
+    "tags": ["functions", "recursion"],
+    "xp_points": 80
+  },
+  {
+    "id": "reverse-string",
+    "title": "Reverse String",
+    "difficulty": "Easy",
+    "topic": "Strings",
+    "description": "Given a string `s`, reverse it and print the reversed string to the output.",
+    "input_format": "A single line containing the string s.",
+    "output_format": "Print the reversed string.",
+    "constraints": [
+      "1 <= s.length <= 1000"
+    ],
+    "examples": [
+      {
+        "input": "hello",
+        "output": "olleh",
+        "explanation": "hello spelled backwards is olleh."
+      },
+      {
+        "input": "sky",
+        "output": "yks",
+        "explanation": "sky spelled backwards is yks."
+      }
+    ],
+    "starter_code": {
+      "python": "s = input().strip()\n# Reverse and print\nprint(s[::-1])",
+      "javascript": "const fs = require('fs');\nconst s = fs.readFileSync(0, 'utf-8').trim();\nconsole.log(s.split('').reverse().join(''));",
+      "cpp": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        reverse(s.begin(), s.end());\n        cout << s << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine().trim();\n            System.out.println(new StringBuilder(s).reverse().toString());\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "hello",
+        "expected_output": "olleh"
+      },
+      {
+        "input": "sky",
+        "expected_output": "yks"
+      },
+      {
+        "input": "a",
+        "expected_output": "a"
+      }
+    ],
+    "tags": ["strings", "formatting"],
+    "xp_points": 50
+  },
+  {
+    "id": "palindrome",
+    "title": "Palindrome",
+    "difficulty": "Easy",
+    "topic": "Strings",
+    "description": "Verify if a given string `s` is a palindrome (reads identically forwards and backwards). Print 'true' if it is a palindrome, otherwise 'false'.",
+    "input_format": "A single line containing the string s.",
+    "output_format": "Print true or false.",
+    "constraints": [
+      "1 <= s.length <= 1000"
+    ],
+    "examples": [
+      {
+        "input": "radar",
+        "output": "true",
+        "explanation": "radar reversed is radar."
+      },
+      {
+        "input": "hello",
+        "output": "false",
+        "explanation": "hello reversed is olleh, not matching hello."
+      }
+    ],
+    "starter_code": {
+      "python": "s = input().strip()\n# Palindrome validation\nprint(\"true\" if s == s[::-1] else \"false\")",
+      "javascript": "const fs = require('fs');\nconst s = fs.readFileSync(0, 'utf-8').trim();\nconst rev = s.split('').reverse().join('');\nconsole.log(s === rev ? \"true\" : \"false\");",
+      "cpp": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    string s;\n    if (cin >> s) {\n        string r = s;\n        reverse(r.begin(), r.end());\n        cout << (s == r ? \"true\" : \"false\") << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            String r = new StringBuilder(s).reverse().toString();\n            System.out.println(s.equals(r) ? \"true\" : \"false\");\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "radar",
+        "expected_output": "true"
+      },
+      {
+        "input": "hello",
+        "expected_output": "false"
+      },
+      {
+        "input": "racecar",
+        "expected_output": "true"
+      }
+    ],
+    "tags": ["strings", "pointers"],
+    "xp_points": 60
+  },
+  {
+    "id": "count-vowels",
+    "title": "Count Vowels",
+    "difficulty": "Easy",
+    "topic": "Strings",
+    "description": "Given a string `s`, count the total number of vowels ('a', 'e', 'i', 'o', 'u', case-insensitive) contained in the string.",
+    "input_format": "A single line containing string s.",
+    "output_format": "Print the number of vowels.",
+    "constraints": [
+      "1 <= s.length <= 1000"
+    ],
+    "examples": [
+      {
+        "input": "education",
+        "output": "5",
+        "explanation": "Vowels in 'education' are e, u, a, i, o."
+      },
+      {
+        "input": "sky",
+        "output": "0",
+        "explanation": "No vowels in 'sky'."
+      }
+    ],
+    "starter_code": {
+      "python": "s = input().strip().lower()\n# Count vowels\nc = sum(1 for char in s if char in \"aeiou\")\nprint(c)",
+      "javascript": "const fs = require('fs');\nconst s = fs.readFileSync(0, 'utf-8').trim().toLowerCase();\nlet c = 0;\nfor (let char of s) {\n    if (\"aeiou\".includes(char)) c++;\n}\nconsole.log(c);",
+      "cpp": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (getline(cin, s)) {\n        int c = 0;\n        for (char ch : s) {\n            char l = tolower(ch);\n            if (l == 'a' || l == 'e' || l == 'i' || l == 'o' || l == 'u') c++;\n        }\n        cout << c << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String s = sc.nextLine().toLowerCase();\n            int c = 0;\n            for (int i = 0; i < s.length(); i++) {\n                char ch = s.charAt(i);\n                if (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u') c++;\n            }\n            System.out.println(c);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "education",
+        "expected_output": "5"
+      },
+      {
+        "input": "sky",
+        "expected_output": "0"
+      },
+      {
+        "input": "hello",
+        "expected_output": "2"
+      }
+    ],
+    "tags": ["strings", "counting"],
+    "xp_points": 60
+  },
+  {
+    "id": "find-maximum",
+    "title": "Find Maximum",
+    "difficulty": "Easy",
+    "topic": "Lists",
+    "description": "Given a list of space-separated integers, scan the sequence and return the maximum value in standard output.",
+    "input_format": "A single line containing space-separated integers.",
+    "output_format": "Print the maximum integer value.",
+    "constraints": [
+      "1 <= nums.length <= 1000",
+      "-10^6 <= nums[i] <= 10^6"
+    ],
+    "examples": [
+      {
+        "input": "3 8 2 10 5",
+        "output": "10",
+        "explanation": "10 is the largest integer in the list."
+      },
+      {
+        "input": "-5 -10 -2",
+        "output": "-2",
+        "explanation": "-2 is greater than -5 and -10."
+      }
+    ],
+    "starter_code": {
+      "python": "nums = list(map(int, input().split()))\n# Write scanning maximum logic\nprint(max(nums))",
+      "javascript": "const fs = require('fs');\nconst nums = fs.readFileSync(0, 'utf-8').trim().split(' ').map(Number);\nconsole.log(Math.max(...nums));",
+      "cpp": "#include <iostream>\n#include <vector>\n#include <sstream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        stringstream ss(line);\n        int val, maxVal = -1000000;\n        while (ss >> val) {\n            maxVal = max(maxVal, val);\n        }\n        cout << maxVal << endl;\n    }\n    return 0;\n}",
+      "java": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String[] parts = sc.nextLine().trim().split(\"\\\\s+\");\n            int max = Integer.MIN_VALUE;\n            for (String p : parts) {\n                int v = Integer.parseInt(p);\n                if (v > max) max = v;\n            }\n            System.out.println(max);\n        }\n    }\n}"
+    },
+    "test_cases": [
+      {
+        "input": "3 8 2 10 5",
+        "expected_output": "10"
+      },
+      {
+        "input": "-5 -10 -2",
+        "expected_output": "-2"
+      },
+      {
+        "input": "100",
+        "expected_output": "100"
+      }
+    ],
+    "tags": ["lists", "arrays"],
+    "xp_points": 50
+  }
+]

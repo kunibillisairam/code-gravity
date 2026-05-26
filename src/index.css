@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 dark:bg-[#080a10] dark:text-slate-100 transition-colors duration-300;
+    overflow-x: hidden;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+
+  /* JetBrains Mono typography for code nodes */
+  code, pre, textarea, .font-mono {
+    font-family: 'JetBrains Mono', monospace !important;
+  }
+
+  /* Custom Clean Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100 dark:bg-[#080a10];
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+}
+
+/* Solid Obsidian Card Styles (No Glassmorphism) */
+.solid-card {
+  background-color: #0e121e;
+  border: 1px solid #1e293b;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.solid-card-hover:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 8px 30px -4px rgba(0, 240, 255, 0.15);
+}
+
+.solid-nav {
+  background-color: rgba(8, 10, 16, 0.95);
+  border-bottom: 1px solid #1e293b;
+}
+
+/* Futuristic Solid Patterns */
+.bg-stellar-sky {
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(255,255,255,0.15), rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 70px 100px, rgba(255,255,255,0.15), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 120px 50px, rgba(255,255,255,0.1), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 150px 150px;
+}
+
+/* Solid Ambient Glowing Borders */
+.glow-border-cyan {
+  border-color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.glow-border-purple {
+  border-color: #bd00ff;
+  box-shadow: 0 0 12px rgba(189, 0, 255, 0.2);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.glow-text-purple {
+  text-shadow: 0 0 8px rgba(189, 0, 255, 0.4);
+}
+
+/* Minimal Grid Background */
+.tech-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+}
+
+/* Active typing cursor for our code simulator */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 15px;
+  background-color: #00f0ff;
+  margin-left: 2px;
+  animation: blink 1s infinite steps(2, start);
+}
+
+@keyframes blink {
+  to { visibility: hidden; }
+}

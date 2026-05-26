@@ -1,0 +1,122 @@
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8000';
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('codegravity_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const apiService = {
+  login: async (email, password) => {
+    try {
+      const response = await apiClient.post('/login', { email, password });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Login failed');
+    }
+  },
+
+  register: async (username, email, password) => {
+    try {
+      const response = await apiClient.post('/register', { username, email, password });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Registration failed');
+    }
+  },
+
+  googleLogin: async (credential) => {
+    try {
+      const response = await apiClient.post('/auth/google', { credential });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Google Login failed');
+    }
+  },
+
+  saveSubmission: async (submissionData) => {
+    try {
+      const response = await apiClient.post('/submissions', submissionData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to save submission');
+    }
+  },
+
+  getSubmissions: async () => {
+    try {
+      const response = await apiClient.get('/submissions');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch submissions');
+    }
+  },
+
+  /**
+   * Execute code on isolated sandbox backend via Judge0
+   * @param {string} code Source code written in Monaco
+   * @param {string} language Language key (python, javascript, cpp, java)
+   * @param {string} stdin Optional inputs to stdin console
+   * @param {string} problemId Active problem ID to append tests runner driver
+   * @returns {Promise<object>} Returns run metrics, stdout, stderr and status
+   */
+  runCode: async (code, language, stdin = '', problemId = '') => {
+    try {
+      const response = await apiClient.post('/run-code', {
+        code,
+        language,
+        stdin,
+        problem_id: problemId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('API Service runCode error:', error);
+      return {
+        error: true,
+        message: error.response?.data?.detail || 'Failed to establish connection with local sandboxed compiler server. Please ensure the backend is running.',
+        time: '0.0ms',
+        memory: '0 KB',
+      };
+    }
+  },
+
+  /**
+   * Submit code and evaluate strictly against testcases via backend
+   * @param {string} code Source code
+   * @param {string} language Language key
+   * @param {string} problemId Problem ID
+   * @param {Array} testcases Array of test cases
+   * @returns {Promise<object>} Returns structured verdict and testcase evaluations
+   */
+  submitCode: async (code, language, problemId, testcases) => {
+    try {
+      const response = await apiClient.post('/submit-code', {
+        code,
+        language,
+        problem_id: problemId,
+        testcases,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('API Service submitCode error:', error);
+      return {
+        verdict: "Server Error",
+        error: true,
+        message: error.response?.data?.detail || 'Failed to establish connection with backend validation engine.',
+        time: '0.0ms',
+        memory: '0 KB',
+      };
+    }
+  },
+};
