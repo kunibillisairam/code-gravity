@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Orbit, Sun, Moon, User, LogOut, List, ChevronDown } from 'lucide-react';
 
-const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick, onProfileClick }) => {
+const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick, onProfileClick, onNavClick }) => {
   const navItems = [
     { id: 'hero', label: 'Home' },
     { id: 'features', label: 'Features' },
@@ -14,6 +14,10 @@ const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onL
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleScroll = (id) => {
+    if (onNavClick) {
+      onNavClick(id);
+      return;
+    }
     setActiveSection(id);
     const element = document.getElementById(id);
     if (element) {

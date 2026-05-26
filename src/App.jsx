@@ -116,14 +116,27 @@ function App() {
     setUser(null);
   };
 
-  const handleBackToExplorer = () => {
+  const handleNavigateToSection = (sectionId) => {
     setView('landing');
     setTimeout(() => {
-      const problemsEl = document.getElementById('problems');
-      if (problemsEl) {
-        problemsEl.scrollIntoView({ behavior: 'auto' });
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = element.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
       }
-    }, 10);
+    }, 50);
+  };
+
+  const handleBackToExplorer = () => {
+    handleNavigateToSection('problems');
   };
 
   // If in immersive coding workspace, only render Workspace view
@@ -152,6 +165,7 @@ function App() {
           onLogoutClick={handleLogout}
           onSubmissionsClick={() => setView('submissions')}
           onProfileClick={() => setView('profile')}
+          onNavClick={handleNavigateToSection}
         />
         <Submissions onBack={() => setView('landing')} />
         <Footer />
@@ -173,6 +187,7 @@ function App() {
           onLogoutClick={handleLogout}
           onSubmissionsClick={() => setView('submissions')}
           onProfileClick={() => setView('profile')}
+          onNavClick={handleNavigateToSection}
         />
         <ProfileDashboard onBack={() => setView('landing')} />
         <Footer />
@@ -200,6 +215,7 @@ function App() {
         onLogoutClick={handleLogout}
         onSubmissionsClick={() => setView('submissions')}
         onProfileClick={() => setView('profile')}
+        onNavClick={handleNavigateToSection}
       />
 
       <AuthModal 
