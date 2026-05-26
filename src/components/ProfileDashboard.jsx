@@ -324,7 +324,7 @@ const ProfileDashboard = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative overflow-x-hidden">
+    <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative">
       
       {/* Dynamic Radial Glow Overlays */}
       <div className="absolute top-[-15%] right-[-10%] w-[60vw] h-[60vw] rounded-full radial-glow-cyan pointer-events-none z-0 opacity-10 dark:opacity-20"></div>
