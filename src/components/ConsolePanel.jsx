@@ -15,7 +15,9 @@ const ConsolePanel = ({
   consoleHeight,
   handleHeightMouseDown,
   handleHeightDoubleClick,
-  isResizingHeight
+  isResizingHeight,
+  onRun,
+  onSubmit
 }) => {
   const [isMaximized, setIsMaximized] = React.useState(false);
 
@@ -135,6 +137,27 @@ const ConsolePanel = ({
               </motion.span>
             )}
           </AnimatePresence>
+
+          {/* Action buttons when console is open */}
+          {isOpen && onRun && onSubmit && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onRun(); }}
+                disabled={isRunning}
+                className="px-3 py-1 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 hover:bg-slate-350 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-300 font-sans font-bold text-[10px] tracking-wider uppercase rounded transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+              >
+                Run Code
+              </button>
+              
+              <button
+                onClick={(e) => { e.stopPropagation(); onSubmit(); }}
+                disabled={isRunning}
+                className="px-3.5 py-1 bg-cyber-cyan hover:bg-[#00d6e6] text-space-900 font-sans font-bold text-[10px] tracking-wider uppercase rounded transition-colors cursor-pointer disabled:opacity-50 shrink-0 font-sans"
+              >
+                Submit
+              </button>
+            </div>
+          )}
 
           {isOpen && (
             <button

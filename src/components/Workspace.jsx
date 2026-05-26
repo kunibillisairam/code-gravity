@@ -353,6 +353,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
             handleHeightMouseDown={handleHeightMouseDown}
             handleHeightDoubleClick={handleHeightDoubleClick}
             isResizingHeight={isResizingHeight}
+            onRun={handleRun}
+            onSubmit={handleSubmit}
           />
         </div>
 
