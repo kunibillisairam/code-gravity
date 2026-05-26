@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import { 
-  ChevronLeft, Loader2, Award, Zap, Flame, Calendar, 
+  ChevronLeft, ChevronRight, Loader2, Award, Zap, Flame, Calendar, 
   Code2, User, Globe, BookOpen, 
   MapPin, Check, Plus, X, Edit3, Compass, History, Trophy
 } from 'lucide-react';
@@ -116,21 +116,101 @@ const ProfileDashboard = ({ onBack }) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  // GENERATE CONTRIBUTION HEATMAP DATES
-  // Produces an array of 24 weeks (168 days) up to today
-  const generateHeatmapDays = () => {
+  // MONTHLY CALENDAR NAVIGATION STATE
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(prev => prev - 1);
+    } else {
+      setSelectedMonth(prev => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedMonth(prev => prev + 1);
+    }
+  };
+
+  const handlePrevYear = () => {
+    setSelectedYear(prev => prev - 1);
+  };
+
+  const handleNextYear = () => {
+    setSelectedYear(prev => prev + 1);
+  };
+
+  // Get count of days in month
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  // Day index for first day of month (0 = Sun, 1 = Mon)
+  const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  // Generate standard 42-day calendar grid days
+  const generateMonthlyDays = () => {
     const days = [];
-    const today = new Date();
-    for (let i = 167; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateString = d.toISOString().split('T')[0];
+    const daysCount = getDaysInMonth(selectedYear, selectedMonth);
+    const firstDayIndex = getFirstDayOfMonth(selectedYear, selectedMonth);
+
+    // Padding days from the previous month
+    const prevMonthDaysCount = getDaysInMonth(
+      selectedMonth === 0 ? selectedYear - 1 : selectedYear,
+      selectedMonth === 0 ? 11 : selectedMonth - 1
+    );
+
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+      const prevMon = selectedMonth === 0 ? 11 : selectedMonth - 1;
+      const dayNum = prevMonthDaysCount - i;
+      const dateString = `${prevYear}-${String(prevMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
       days.push({
         date: dateString,
-        dayOfWeek: d.getDay(),
-        formattedDate: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        dayNum,
+        isCurrentMonth: false,
+        formattedDate: new Date(prevYear, prevMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
       });
     }
+
+    // Active month days
+    for (let dayNum = 1; dayNum <= daysCount; dayNum++) {
+      const dateString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+      days.push({
+        date: dateString,
+        dayNum,
+        isCurrentMonth: true,
+        formattedDate: new Date(selectedYear, selectedMonth, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      });
+    }
+
+    // Padding days from the next month to fill grid
+    const remainingCells = 42 - days.length;
+    for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
+      const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
+      const nextMon = selectedMonth === 11 ? 0 : selectedMonth + 1;
+      const dateString = `${nextYear}-${String(nextMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+      days.push({
+        date: dateString,
+        dayNum,
+        isCurrentMonth: false,
+        formattedDate: new Date(nextYear, nextMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      });
+    }
+
     return days;
   };
 
@@ -216,16 +296,31 @@ const ProfileDashboard = ({ onBack }) => {
   const heatmapData = progress.contribution_heatmap || {};
   const activityLog = (progress.activity_log || []).slice(-5).reverse(); // last 5 actions
 
-  // Generate heatmap grid days
-  const heatmapDays = generateHeatmapDays();
+  // Generate monthly grid days
+  const monthlyDays = generateMonthlyDays();
 
-  // Helper to color heatmap blocks
-  const getHeatmapColor = (count) => {
-    if (!count || count === 0) return 'bg-slate-200 dark:bg-slate-900';
-    if (count === 1) return 'bg-cyan-500/30 text-cyan-400';
-    if (count === 2) return 'bg-cyan-500/50 text-cyan-250';
-    if (count === 3) return 'bg-cyan-500/70 text-white';
-    return 'bg-cyber-cyan text-space-900 shadow-md shadow-cyan-400/10';
+  // Helper to color heatmap cells premium styling
+  const getCellStyles = (day) => {
+    const count = heatmapData[day.date] || 0;
+    
+    if (!day.isCurrentMonth) {
+      if (count === 0) return 'bg-slate-100/30 dark:bg-slate-900/10 border border-slate-200/10 dark:border-slate-850/10 text-slate-400/20 dark:text-slate-655/25 opacity-25 cursor-default pointer-events-none';
+      return 'bg-cyan-500/5 border border-cyan-550/10 text-cyan-500/20 dark:text-cyan-400/20 opacity-30';
+    }
+
+    if (count === 0) {
+      return 'bg-slate-50 dark:bg-[#121626]/40 border border-slate-200/50 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-cyber-cyan/35 dark:hover:border-cyber-cyan/30 hover:bg-slate-100 dark:hover:bg-[#121626]/90';
+    }
+    if (count === 1) {
+      return 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 hover:border-cyan-400/60 shadow-[0_0_6px_rgba(0,180,255,0.05)]';
+    }
+    if (count === 2) {
+      return 'bg-cyan-500/30 border border-cyan-500/50 text-cyan-700 dark:text-cyan-300 hover:border-cyan-300/70 shadow-[0_0_8px_rgba(0,180,255,0.1)]';
+    }
+    if (count === 3) {
+      return 'bg-cyan-500/65 border border-cyan-550/75 text-white dark:text-space-900 dark:font-extrabold hover:border-cyan-200 shadow-[0_0_12px_rgba(0,214,230,0.18)]';
+    }
+    return 'bg-cyber-cyan border border-cyber-cyan/90 text-space-900 font-extrabold shadow-[0_0_15px_rgba(0,240,255,0.28)] hover:scale-[1.04]';
   };
 
   return (
@@ -424,67 +519,109 @@ const ProfileDashboard = ({ onBack }) => {
 
         </div>
 
-        {/* Heatmap Contribution Section */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-4 relative overflow-hidden">
+        {/* Monthly Activity Calendar Section */}
+        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-5 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
           
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-850/60 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-850/60 pb-4">
             <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-cyber-cyan" />
-              Contribution Calendar (Last 6 Months)
+              Activity Calendar
             </h3>
-            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider hidden sm:inline">
-              TOTAL COMMITS RECORDED IN HEATMAP
-            </span>
-          </div>
-
-          {/* Heatmap Grid Wrapper */}
-          <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800">
-            <div className="flex gap-1 min-w-[760px] p-2 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-900 rounded-xl justify-between">
-              {/* Render columns of weeks */}
-              {Array.from({ length: 24 }).map((_, weekIdx) => {
-                const weekDays = heatmapDays.slice(weekIdx * 7, (weekIdx + 1) * 7);
-
-                return (
-                  <div key={weekIdx} className="flex flex-col gap-1">
-                    {weekDays.map((day, dIdx) => {
-                      const count = heatmapData[day.date] || 0;
-                      const cellColor = getHeatmapColor(count);
-
-                      return (
-                        <div
-                          key={day.date}
-                          className={`w-3.5 h-3.5 rounded-sm transition-all duration-300 relative group cursor-pointer ${cellColor}`}
-                          title={`${count} submissions on ${day.formattedDate}`}
-                        >
-                          {/* Custom hover tooltip */}
-                          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-44 bg-slate-900 border border-slate-800 text-white font-mono text-[9px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-55 text-center leading-normal shadow-xl">
-                            <strong>{count} {count === 1 ? 'commit' : 'commits'}</strong>
-                            <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
             
-            {/* Heatmap Legend */}
-            <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono mt-3 px-1">
-              <span className="italic">Grid represents last 24 weeks chronologically (columns = weeks, rows = days)</span>
-              <div className="flex items-center gap-1.5 select-none">
-                <span>Less</span>
-                <div className="w-2.5 h-2.5 rounded-sm bg-slate-200 dark:bg-slate-900"></div>
-                <div className="w-2.5 h-2.5 rounded-sm bg-cyan-500/30"></div>
-                <div className="w-2.5 h-2.5 rounded-sm bg-cyan-500/50"></div>
-                <div className="w-2.5 h-2.5 rounded-sm bg-cyan-500/70"></div>
-                <div className="w-2.5 h-2.5 rounded-sm bg-cyber-cyan shadow-sm"></div>
-                <span>More</span>
+            {/* Navigation Controls */}
+            <div className="flex items-center gap-3">
+              {/* Month navigation */}
+              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
+                <button 
+                  onClick={handlePrevMonth}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
+                  title="Previous Month"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="w-24 text-center font-sans font-extrabold text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-200 select-none">
+                  {MONTH_NAMES[selectedMonth]}
+                </span>
+                <button 
+                  onClick={handleNextMonth}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
+                  title="Next Month"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Year navigation */}
+              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
+                <button 
+                  onClick={handlePrevYear}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
+                  title="Previous Year"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="w-14 text-center font-mono font-bold text-[10px] text-slate-700 dark:text-slate-200 select-none">
+                  {selectedYear}
+                </span>
+                <button 
+                  onClick={handleNextYear}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
+                  title="Next Year"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
 
+          {/* Days of Week Header */}
+          <div className="grid grid-cols-7 gap-2 text-center text-[9px] font-sans font-extrabold text-slate-400 dark:text-slate-550 uppercase tracking-widest px-1 select-none">
+            <div>Sun</div>
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+          </div>
+
+          {/* Calendar Grid cells */}
+          <div className="grid grid-cols-7 gap-2 p-3 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-900 rounded-2xl">
+            {monthlyDays.map((day) => {
+              const count = heatmapData[day.date] || 0;
+              const cellStyles = getCellStyles(day);
+
+              return (
+                <div
+                  key={day.date}
+                  className={`aspect-square rounded-xl flex items-center justify-center font-sans text-xs font-black transition-all duration-300 relative group cursor-pointer ${cellStyles}`}
+                >
+                  <span>{day.dayNum}</span>
+
+                  {/* Hover Tooltip */}
+                  <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 w-40 bg-slate-900 border border-slate-800 text-white font-mono text-[9px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center leading-normal shadow-2xl">
+                    <strong>{count} {count === 1 ? 'commit' : 'commits'}</strong>
+                    <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend indicator bar */}
+          <div className="flex items-center justify-between text-[9px] text-slate-550 dark:text-slate-500 font-mono mt-1 px-1">
+            <span className="italic">Hover over days to view detailed submission counts.</span>
+            <div className="flex items-center gap-1.5 select-none">
+              <span>Less</span>
+              <div className="w-2.5 h-2.5 rounded bg-slate-500/10 dark:bg-[#121626]/40 border border-slate-200/50 dark:border-slate-850"></div>
+              <div className="w-2.5 h-2.5 rounded bg-cyan-500/15 border border-cyan-500/30"></div>
+              <div className="w-2.5 h-2.5 rounded bg-cyan-500/30 border border-cyan-500/50"></div>
+              <div className="w-2.5 h-2.5 rounded bg-cyan-500/65 border border-cyan-555/75"></div>
+              <div className="w-2.5 h-2.5 rounded bg-cyber-cyan border border-cyber-cyan/90"></div>
+              <span>More</span>
+            </div>
+          </div>
         </div>
 
         {/* Dash Grid Row 2 (Skills, Badges Showcase, & Recent Submissions Timeline) */}
