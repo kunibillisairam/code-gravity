@@ -575,38 +575,41 @@ const ProfileDashboard = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-2 text-center text-[9px] font-sans font-extrabold text-slate-400 dark:text-slate-550 uppercase tracking-widest px-1 select-none">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-          </div>
+          {/* Compact Calendar wrapper to limit cell sizes */}
+          <div className="max-w-[340px] mx-auto w-full space-y-3">
+            {/* Days of Week Header */}
+            <div className="grid grid-cols-7 gap-1.5 text-center text-[9px] font-sans font-extrabold text-slate-400 dark:text-slate-550 uppercase tracking-widest select-none">
+              <div>Su</div>
+              <div>Mo</div>
+              <div>Tu</div>
+              <div>We</div>
+              <div>Th</div>
+              <div>Fr</div>
+              <div>Sa</div>
+            </div>
 
-          {/* Calendar Grid cells */}
-          <div className="grid grid-cols-7 gap-2 p-3 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-900 rounded-2xl">
-            {monthlyDays.map((day) => {
-              const count = heatmapData[day.date] || 0;
-              const cellStyles = getCellStyles(day);
+            {/* Calendar Grid cells */}
+            <div className="grid grid-cols-7 gap-1.5 p-2 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-900 rounded-2xl">
+              {monthlyDays.map((day) => {
+                const count = heatmapData[day.date] || 0;
+                const cellStyles = getCellStyles(day);
 
-              return (
-                <div
-                  key={day.date}
-                  className={`aspect-square rounded-xl flex items-center justify-center font-sans text-xs font-black transition-all duration-300 relative group cursor-pointer ${cellStyles}`}
-                >
-                  <span>{day.dayNum}</span>
+                return (
+                  <div
+                    key={day.date}
+                    className={`aspect-square rounded-xl flex items-center justify-center font-sans text-[10px] font-black transition-all duration-300 relative group cursor-pointer ${cellStyles}`}
+                  >
+                    <span>{day.dayNum}</span>
 
-                  {/* Hover Tooltip */}
-                  <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 w-40 bg-slate-900 border border-slate-800 text-white font-mono text-[9px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center leading-normal shadow-2xl">
-                    <strong>{count} {count === 1 ? 'commit' : 'commits'}</strong>
-                    <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
+                    {/* Hover Tooltip */}
+                    <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 w-40 bg-slate-900 border border-slate-800 text-white font-mono text-[9px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center leading-normal shadow-2xl">
+                      <strong>{count} {count === 1 ? 'commit' : 'commits'}</strong>
+                      <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           {/* Legend indicator bar */}
