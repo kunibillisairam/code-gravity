@@ -302,12 +302,12 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         if prob_id not in progress.get("solved_problems", []):
             progress["solved_problems"].append(prob_id)
             
-            # XP Weight: Easy = 100, Medium = 200, Hard = 300
-            xp_to_award = 100
+            # XP Weight: Easy = 15, Medium = 20, Hard = 25
+            xp_to_award = 15
             if "medium" in prob_id.lower() or "water" in prob_id.lower():
-                xp_to_award = 200
+                xp_to_award = 20
             elif "hard" in prob_id.lower():
-                xp_to_award = 300
+                xp_to_award = 25
                 
             progress["xp"] = progress.get("xp", 0) + xp_to_award
             
