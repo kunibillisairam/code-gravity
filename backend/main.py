@@ -266,7 +266,65 @@ async def update_profile(profile_data: ProfileUpdate, current_user: dict = Depen
     
     return {"status": "success", "profile": existing_profile}
 
+@app.get("/leaderboard")
+async def get_leaderboard():
+    cursor = db.users.find({}, {
+        "username": 1,
+        "profile.display_name": 1,
+        "profile.profile_pic": 1,
+        "profile.interested_domains": 1,
+        "profile.skills": 1,
+        "progress.xp": 1,
+        "progress.level": 1,
+        "progress.solved_problems": 1,
+        "progress.badges": 1
+    }).sort("progress.xp", -1)
+    
+    leaderboard = []
+    rank = 1
+    async for user in cursor:
+        profile = user.get("profile") or {}
+        progress = user.get("progress") or {}
+        
+        solved_count = len(progress.get("solved_problems", []))
+        badges = progress.get("badges", [])
+        
+        active_badge = "Apprentice"
+        if badges:
+            active_badge = badges[-1].replace("_", " ").title()
+        elif solved_count >= 5:
+            active_badge = "Alchemist"
+        elif solved_count >= 1:
+            active_badge = "Achiever"
+            
+        domains = profile.get("interested_domains", [])
+        faction = "Singularity"
+        if domains:
+            primary_domain = domains[0].lower()
+            if any(x in primary_domain for x in ["web", "front", "back", "app", "dev", "design", "full"]):
+                faction = "Orbital"
+            elif any(x in primary_domain for x in ["ai", "ml", "machine", "data", "science", "deep", "learn"]):
+                faction = "Quark"
+            else:
+                faction = "Singularity"
+        
+        leaderboard.append({
+            "rank": rank,
+            "username": user.get("username"),
+            "display_name": profile.get("display_name") or user.get("username"),
+            "profile_pic": profile.get("profile_pic") or "",
+            "xp": progress.get("xp", 0),
+            "level": progress.get("level", 1),
+            "solved": solved_count,
+            "badge": active_badge,
+            "faction": faction
+        })
+        rank += 1
+        
+    return leaderboard
+
 from datetime import datetime
+
 
 @app.post("/submissions", status_code=201)
 async def create_submission(submission: SubmissionCreate, current_user: dict = Depends(get_current_user)):

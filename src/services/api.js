@@ -81,6 +81,15 @@ export const apiService = {
     }
   },
 
+  getLeaderboard: async () => {
+    try {
+      const response = await apiClient.get('/leaderboard');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch leaderboard');
+    }
+  },
+
   /**
    * Execute code on isolated sandbox backend via Judge0
    * @param {string} code Source code written in Monaco
