@@ -50,6 +50,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messageSendState, setMessageSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
+  const [toastMessage, setToastMessage] = useState('');
 
   // Calendar State
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -966,14 +967,44 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
                   </div>
 
                   <button 
-                    onClick={() => setShowMessageModal(false)}
+                    onClick={() => {
+                      setShowMessageModal(false);
+                      setToastMessage(`Transmission successfully broadcasted to @${username}!`);
+                      setTimeout(() => setToastMessage(''), 4000);
+                    }}
                     className="w-full mt-2 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-655 dark:text-slate-355 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-850"
                   >
-                    Close Connection
+                    Acknowledge Signal
                   </button>
                 </div>
               )}
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FLOATING TELEMETRY TOAST NOTIFICATION */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-50 p-4 bg-white/95 dark:bg-[#0e121e]/95 border border-emerald-500/30 dark:border-emerald-500/20 text-slate-800 dark:text-white rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.15)] backdrop-blur-md flex items-center gap-3 max-w-sm"
+          >
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+              <Check className="w-4 h-4 text-emerald-500 stroke-[3.5px]" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="text-[10px] font-sans font-black uppercase text-emerald-505 dark:text-emerald-400 tracking-widest text-left">TRANSMISSION SENT</div>
+              <p className="text-xs text-slate-655 dark:text-slate-300 font-light leading-normal text-left">{toastMessage}</p>
+            </div>
+            <button 
+              onClick={() => setToastMessage('')}
+              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-400 hover:text-slate-800 rounded-lg transition-colors cursor-pointer ml-2"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
