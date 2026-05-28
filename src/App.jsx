@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import { Bell } from 'lucide-react';
@@ -40,11 +41,18 @@ function App() {
     const loadNotifications = async () => {
       try {
         const list = await chatService.getNotifications();
-        setNotifications(list);
-        const unreads = list.filter(n => !n.is_read).length;
-        setUnreadNotificationsCount(unreads);
+        if (Array.isArray(list)) {
+          setNotifications(list);
+          const unreads = list.filter(n => !n.is_read).length;
+          setUnreadNotificationsCount(unreads);
+        } else {
+          setNotifications([]);
+          setUnreadNotificationsCount(0);
+        }
       } catch (err) {
         console.error('Failed to load global notifications:', err);
+        setNotifications([]);
+        setUnreadNotificationsCount(0);
       }
     };
 

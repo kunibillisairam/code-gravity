@@ -139,20 +139,20 @@ const Navbar = ({
                       <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-850 flex items-center justify-between">
                         <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-350 tracking-wider">Notifications</span>
                         <div className="flex gap-2">
-                          {notifications.length > 0 && (
+                          {Array.isArray(notifications) && notifications.length > 0 && (
                             <button
                               onClick={() => {
-                                onMarkAllRead();
+                                onMarkAllRead && onMarkAllRead();
                               }}
                               className="text-[8px] font-bold text-cyber-cyan hover:text-cyber-purple transition-all uppercase tracking-wider cursor-pointer"
                             >
                               Read All
                             </button>
                           )}
-                          {notifications.length > 0 && (
+                          {Array.isArray(notifications) && notifications.length > 0 && (
                             <button
                               onClick={() => {
-                                onClearNotifications();
+                                onClearNotifications && onClearNotifications();
                               }}
                               className="text-[8px] font-bold text-rose-450 hover:text-rose-500 transition-all uppercase tracking-wider cursor-pointer flex items-center gap-0.5"
                             >
@@ -165,7 +165,7 @@ const Navbar = ({
 
                       {/* Notifications List */}
                       <div className="flex-1 overflow-y-auto py-1 divide-y divide-slate-50 dark:divide-slate-850/30">
-                        {notifications.map((notif) => {
+                        {Array.isArray(notifications) && notifications.map((notif) => {
                           const isUnread = !notif.is_read;
                           
                           // Determine Type Icon
@@ -219,7 +219,7 @@ const Navbar = ({
                           );
                         })}
 
-                        {notifications.length === 0 && (
+                        {(!Array.isArray(notifications) || notifications.length === 0) && (
                           <div className="p-8 text-center text-slate-500 flex flex-col items-center gap-2 select-none">
                             <Sparkles className="w-6 h-6 text-slate-450 dark:text-slate-700 animate-pulse" />
                             <p className="text-[10px] font-bold italic tracking-wide">All caught up! 🌌</p>

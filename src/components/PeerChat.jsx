@@ -82,89 +82,91 @@ const PeerChat = ({ onBack }) => {
   useEffect(() => {
     if (!token) return;
 
+    // Define named handler to allow correct cleanup in chatService
+    const handleChatEvent = (event) => {
+      if (event.type === 'message') {
+        // Check if message belongs to active room or DM conversation
+        const isCurrentRoom = activeTab.type === 'room' && event.room_id === activeTab.id;
+        const isCurrentDM = activeTab.type === 'dm' && event.conversation_id === activeTab.id;
+
+        if (isCurrentRoom || isCurrentDM) {
+          setMessages((prev) => [...prev, event]);
+          // If viewing a DM, mark it as read immediately
+          if (isCurrentDM) {
+            chatService.markAsRead(activeTab.id).catch(err => console.error(err));
+          }
+        } else {
+          // Trigger floating toast notification if message is from a different conversation
+          if (event.conversation_id && event.sender_username !== myUsername) {
+            // Increment unread count locally
+            setConversations((prev) => 
+              prev.map((c) => {
+                if (c.id === event.conversation_id) {
+                  const counts = { ...c.unread_counts };
+                  counts[myUsername] = (counts[myUsername] || 0) + 1;
+                  return { ...c, last_message_text: event.content, unread_counts: counts, last_message_at: new Date().toISOString() };
+                }
+                return c;
+              }).sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at))
+            );
+
+            // Add toast popup
+            const toastId = Date.now();
+            setToasts((prev) => [...prev, {
+              id: toastId,
+              sender: event.sender_username,
+              text: event.content || 'Shared a logic snippet.',
+              convId: event.conversation_id
+            }]);
+
+            // Auto-remove toast in 4 seconds
+            setTimeout(() => {
+              setToasts((prev) => prev.filter(t => t.id !== toastId));
+            }, 4000);
+          }
+        }
+      } else if (event.type === 'typing') {
+        // Handle typing indicator
+        const isCurrentRoom = activeTab.type === 'room' && event.room_id === activeTab.id;
+        const isCurrentDM = activeTab.type === 'dm' && event.conversation_id === activeTab.id;
+
+        if ((isCurrentRoom || isCurrentDM) && event.sender !== myUsername) {
+          setTypingStatus((prev) => {
+            const updated = { ...prev };
+            if (event.is_typing) {
+              updated[event.sender] = Date.now();
+            } else {
+              delete updated[event.sender];
+            }
+            return updated;
+          });
+        }
+      } else if (event.type === 'status') {
+        // Handle online/offline statuses in real-time
+        setConversations((prev) => 
+          prev.map((c) => {
+            const hasUser = c.participants.includes(event.username);
+            if (hasUser) {
+              return { ...c, other_participant_status: event.status };
+            }
+            return c;
+          })
+        );
+        setUsers((prev) => 
+          prev.map((u) => {
+            if (u.username === event.username) {
+              return { ...u, online_status: event.status };
+            }
+            return u;
+          })
+        );
+      }
+    };
+
     // Connect to WebSocket gateway
     chatService.connect(
       token,
-      // Event Handler
-      (event) => {
-        if (event.type === 'message') {
-          // Check if message belongs to active room or DM conversation
-          const isCurrentRoom = activeTab.type === 'room' && event.room_id === activeTab.id;
-          const isCurrentDM = activeTab.type === 'dm' && event.conversation_id === activeTab.id;
-
-          if (isCurrentRoom || isCurrentDM) {
-            setMessages((prev) => [...prev, event]);
-            // If viewing a DM, mark it as read immediately
-            if (isCurrentDM) {
-              chatService.markAsRead(activeTab.id).catch(err => console.error(err));
-            }
-          } else {
-            // Trigger floating toast notification if message is from a different conversation
-            if (event.conversation_id && event.sender_username !== myUsername) {
-              // Increment unread count locally
-              setConversations((prev) => 
-                prev.map((c) => {
-                  if (c.id === event.conversation_id) {
-                    const counts = { ...c.unread_counts };
-                    counts[myUsername] = (counts[myUsername] || 0) + 1;
-                    return { ...c, last_message_text: event.content, unread_counts: counts, last_message_at: new Date().toISOString() };
-                  }
-                  return c;
-                }).sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at))
-              );
-
-              // Add toast popup
-              const toastId = Date.now();
-              setToasts((prev) => [...prev, {
-                id: toastId,
-                sender: event.sender_username,
-                text: event.content || 'Shared a logic snippet.',
-                convId: event.conversation_id
-              }]);
-
-              // Auto-remove toast in 4 seconds
-              setTimeout(() => {
-                setToasts((prev) => prev.filter(t => t.id !== toastId));
-              }, 4000);
-            }
-          }
-        } else if (event.type === 'typing') {
-          // Handle typing indicator
-          const isCurrentRoom = activeTab.type === 'room' && event.room_id === activeTab.id;
-          const isCurrentDM = activeTab.type === 'dm' && event.conversation_id === activeTab.id;
-
-          if ((isCurrentRoom || isCurrentDM) && event.sender !== myUsername) {
-            setTypingStatus((prev) => {
-              const updated = { ...prev };
-              if (event.is_typing) {
-                updated[event.sender] = Date.now();
-              } else {
-                delete updated[event.sender];
-              }
-              return updated;
-            });
-          }
-        } else if (event.type === 'status') {
-          // Handle online/offline statuses in real-time
-          setConversations((prev) => 
-            prev.map((c) => {
-              const hasUser = c.participants.includes(event.username);
-              if (hasUser) {
-                return { ...c, other_participant_status: event.status };
-              }
-              return c;
-            })
-          );
-          setUsers((prev) => 
-            prev.map((u) => {
-              if (u.username === event.username) {
-                return { ...u, online_status: event.status };
-              }
-              return u;
-            })
-          );
-        }
-      },
+      handleChatEvent,
       // Disconnect callback
       () => {
         console.warn('Socket closed. Connection manager is retrying...');
@@ -172,7 +174,7 @@ const PeerChat = ({ onBack }) => {
     );
 
     return () => {
-      chatService.disconnect();
+      chatService.disconnect(handleChatEvent);
     };
   }, [activeTab, token]);
 
