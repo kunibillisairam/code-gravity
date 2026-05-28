@@ -470,6 +470,25 @@ async def follow_user(username: str, current_user: dict = Depends(get_current_us
         status_action = "followed"
         new_count = len(followers) + 1
         
+        # Trigger follow notification in DB & WS
+        from chat import manager, serialize_doc
+        new_notif = {
+            "recipient_username": target_username,
+            "sender_username": follower_username,
+            "type": "follower",
+            "title": "New Follower",
+            "text": f"@{follower_username} started following your orbital logic!",
+            "link": { "view": "public-profile", "param": follower_username },
+            "is_read": False,
+            "created_at": datetime.utcnow()
+        }
+        res_notif = await db.notifications.insert_one(new_notif)
+        new_notif["_id"] = res_notif.inserted_id
+        await manager.send_to_user(target_username, {
+            "type": "global_notification",
+            **serialize_doc(new_notif)
+        })
+        
     return {
         "status": status_action,
         "followers_count": new_count
@@ -587,6 +606,25 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
                     "description": f"Reached Level {new_level}!",
                     "timestamp": datetime.utcnow().isoformat()
                 })
+                
+                # Trigger Level Up Notification in DB & WS
+                from chat import manager, serialize_doc
+                new_notif = {
+                    "recipient_username": current_user["username"],
+                    "sender_username": "System",
+                    "type": "badge",
+                    "title": "Level Up!",
+                    "text": f"Congratulations! You reached Level {new_level}!",
+                    "link": { "view": "profile", "param": "" },
+                    "is_read": False,
+                    "created_at": datetime.utcnow()
+                }
+                res_notif = await db.notifications.insert_one(new_notif)
+                new_notif["_id"] = res_notif.inserted_id
+                await manager.send_to_user(current_user["username"], {
+                    "type": "global_notification",
+                    **serialize_doc(new_notif)
+                })
             
             progress["activity_log"].append({
                 "type": "solved",
@@ -625,9 +663,11 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
     # Achievements Badges awarding logic
     badges = progress.get("badges") or []
     activity_log = progress.get("activity_log") or []
+    newly_unlocked_badges = []
     
     if len(progress["solved_problems"]) >= 1 and "first_success" not in badges:
         badges.append("first_success")
+        newly_unlocked_badges.append("First Success")
         activity_log.append({
             "type": "badge",
             "description": "Unlocked Badge: First Success!",
@@ -639,6 +679,7 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         runtime_val = float(runtime_str)
         if verdict.lower() == "accepted" and runtime_val < 100.0 and "speed_demon" not in badges:
             badges.append("speed_demon")
+            newly_unlocked_badges.append("Speed Demon")
             activity_log.append({
                 "type": "badge",
                 "description": "Unlocked Badge: Speed Demon (<100ms)!",
@@ -649,6 +690,7 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         
     if progress["daily_streak"] >= 3 and "streak_master" not in badges:
         badges.append("streak_master")
+        newly_unlocked_badges.append("Streak Master")
         activity_log.append({
             "type": "badge",
             "description": "Unlocked Badge: Streak Master (3 days consecutive)!",
@@ -657,6 +699,7 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         
     if len(progress["solved_problems"]) >= 5 and "algorithm_alchemist" not in badges:
         badges.append("algorithm_alchemist")
+        newly_unlocked_badges.append("Algorithm Alchemist")
         activity_log.append({
             "type": "badge",
             "description": "Unlocked Badge: Algorithm Alchemist (Solved 5 unique problems)!",
@@ -665,6 +708,26 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         
     progress["badges"] = badges
     progress["activity_log"] = activity_log
+    
+    # Trigger notifications for newly unlocked badges
+    from chat import manager, serialize_doc
+    for badge_name in newly_unlocked_badges:
+        new_notif = {
+            "recipient_username": current_user["username"],
+            "sender_username": "System",
+            "type": "badge",
+            "title": "Badge Unlocked!",
+            "text": f"You unlocked the badge: {badge_name}! Outstanding!",
+            "link": { "view": "profile", "param": "" },
+            "is_read": False,
+            "created_at": datetime.utcnow()
+        }
+        res_notif = await db.notifications.insert_one(new_notif)
+        new_notif["_id"] = res_notif.inserted_id
+        await manager.send_to_user(current_user["username"], {
+            "type": "global_notification",
+            **serialize_doc(new_notif)
+        })
     
     await db.users.update_one(
         {"email": current_user["email"]},

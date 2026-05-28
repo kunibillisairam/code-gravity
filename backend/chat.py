@@ -325,6 +325,42 @@ async def mark_as_read(conversation_id: str, current_user: dict = Depends(get_cu
     return {"status": "success"}
 
 
+# --- GLOBAL NOTIFICATIONS REST ENDPOINTS ---
+
+@router.get("/notifications")
+async def get_notifications(current_user: dict = Depends(get_current_user)):
+    username = current_user["username"]
+    notifications = []
+    cursor = db.notifications.find({"recipient_username": username}).sort("created_at", -1).limit(20)
+    async for notif in cursor:
+        notifications.append(serialize_doc(notif))
+    return notifications
+
+@router.post("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+    username = current_user["username"]
+    await db.notifications.update_one(
+        {"_id": ObjectId(notification_id), "recipient_username": username},
+        {"$set": {"is_read": True}}
+    )
+    return {"status": "success"}
+
+@router.post("/notifications/read-all")
+async def mark_all_notifications_read(current_user: dict = Depends(get_current_user)):
+    username = current_user["username"]
+    await db.notifications.update_many(
+        {"recipient_username": username, "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    return {"status": "success"}
+
+@router.post("/notifications/clear")
+async def clear_all_notifications(current_user: dict = Depends(get_current_user)):
+    username = current_user["username"]
+    await db.notifications.delete_many({"recipient_username": username})
+    return {"status": "success"}
+
+
 # --- WEBSOCKET CHAT CONNECTION GATEWAY ---
 
 @router.websocket("/ws")
@@ -455,6 +491,26 @@ async def chat_websocket_endpoint(websocket: WebSocket, token: str = None):
                         for p in conv["participants"]:
                             if p != username:
                                 update_unread[f"unread_counts.{p}"] = conv.get("unread_counts", {}).get(p, 0) + 1
+                                
+                                # Write persistent message notification in DB
+                                new_notif = {
+                                    "recipient_username": p,
+                                    "sender_username": username,
+                                    "type": "message",
+                                    "title": "New Message",
+                                    "text": f"@{username} sent you a message: {final_content[:30]}..." if final_content else f"@{username} shared code logic.",
+                                    "link": { "view": "chat", "param": username },
+                                    "is_read": False,
+                                    "created_at": datetime.utcnow()
+                                }
+                                res_notif = await db.notifications.insert_one(new_notif)
+                                new_notif["_id"] = res_notif.inserted_id
+                                
+                                # Dispatch global notification over WebSocket
+                                await manager.send_to_user(p, {
+                                    "type": "global_notification",
+                                    **serialize_doc(new_notif)
+                                })
                                 
                         await db.conversations.update_one(
                             {"_id": ObjectId(conversation_id)},

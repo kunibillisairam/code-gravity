@@ -15,6 +15,7 @@ let socket = null;
 let reconnectTimer = null;
 let reconnectDelay = 1000;
 const MAX_RECONNECT_DELAY = 16000;
+const listeners = new Set();
 
 export const chatService = {
   // --- REST ENDPOINTS ---
@@ -53,8 +54,32 @@ export const chatService = {
     return response.data;
   },
 
+  getNotifications: async () => {
+    const response = await axios.get(`${API_BASE_URL}/chat/notifications`, { headers: getHeaders() });
+    return response.data;
+  },
+
+  markNotificationRead: async (notificationId) => {
+    const response = await axios.post(`${API_BASE_URL}/chat/notifications/${notificationId}/read`, {}, { headers: getHeaders() });
+    return response.data;
+  },
+
+  markAllNotificationsRead: async () => {
+    const response = await axios.post(`${API_BASE_URL}/chat/notifications/read-all`, {}, { headers: getHeaders() });
+    return response.data;
+  },
+
+  clearNotifications: async () => {
+    const response = await axios.post(`${API_BASE_URL}/chat/notifications/clear`, {}, { headers: getHeaders() });
+    return response.data;
+  },
+
   // --- WEBSOCKET GATEWAY ---
   connect: (token, onEvent, onDisconnectCallback) => {
+    if (onEvent) {
+      listeners.add(onEvent);
+    }
+
     if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -74,7 +99,13 @@ export const chatService = {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        onEvent(data);
+        listeners.forEach((cb) => {
+          try {
+            cb(data);
+          } catch (e) {
+            console.error('Error inside WebSocket listener:', e);
+          }
+        });
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);
       }
@@ -89,7 +120,7 @@ export const chatService = {
       // Auto-reconnect logic with exponential backoff
       reconnectTimer = setTimeout(() => {
         reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
-        chatService.connect(token, onEvent, onDisconnectCallback);
+        chatService.connect(token, null, onDisconnectCallback);
       }, reconnectDelay);
     };
 
@@ -99,17 +130,24 @@ export const chatService = {
     };
   },
 
-  disconnect: () => {
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-      reconnectTimer = null;
+  disconnect: (onEvent) => {
+    if (onEvent) {
+      listeners.delete(onEvent);
     }
-    if (socket) {
-      socket.onclose = null; // Remove listener to avoid reconnect loop
-      socket.close();
-      socket = null;
+    
+    // Disconnect socket ONLY when there are no active observers left
+    if (listeners.size === 0) {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      if (socket) {
+        socket.onclose = null; // Prevent reconnect loop
+        socket.close();
+        socket = null;
+      }
+      console.log('Peer chat WebSocket disconnected.');
     }
-    console.log('Peer chat WebSocket disconnected.');
   },
 
   sendMessage: (messagePayload) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import { Bell } from 'lucide-react';
 import Features from './components/Features';
 import TopicExplorer from './components/TopicExplorer';
 import AIAssistant from './components/AIAssistant';
@@ -12,6 +13,7 @@ import Submissions from './components/Submissions';
 import ProfileDashboard from './components/ProfileDashboard';
 import PublicProfile from './components/PublicProfile';
 import PeerChat from './components/PeerChat';
+import { chatService } from './services/chatService';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
@@ -22,6 +24,110 @@ function App() {
   const [activeSection, setActiveSection] = useState('hero');
   const [user, setUser] = useState(() => localStorage.getItem('codegravity_user'));
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [globalToasts, setGlobalToasts] = useState([]);
+  const token = localStorage.getItem('codegravity_token');
+
+  // Load persistent notifications
+  useEffect(() => {
+    if (!user || !token) {
+      setNotifications([]);
+      setUnreadNotificationsCount(0);
+      return;
+    }
+
+    const loadNotifications = async () => {
+      try {
+        const list = await chatService.getNotifications();
+        setNotifications(list);
+        const unreads = list.filter(n => !n.is_read).length;
+        setUnreadNotificationsCount(unreads);
+      } catch (err) {
+        console.error('Failed to load global notifications:', err);
+      }
+    };
+
+    loadNotifications();
+  }, [user, token, view]);
+
+  // Hook real-time WebSocket global notifications
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const handleGlobalWebSocketEvent = (event) => {
+      if (event.type === 'global_notification') {
+        setNotifications(prev => [event, ...prev]);
+        setUnreadNotificationsCount(prev => prev + 1);
+
+        // Add toast
+        const toastId = Date.now();
+        setGlobalToasts(prev => [...prev, {
+          id: toastId,
+          title: event.title,
+          text: event.text,
+          link: event.link
+        }]);
+
+        // Auto-dismiss in 4s
+        setTimeout(() => {
+          setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
+        }, 4000);
+      }
+    };
+
+    chatService.connect(token, handleGlobalWebSocketEvent);
+
+    return () => {
+      chatService.disconnect(handleGlobalWebSocketEvent);
+    };
+  }, [token, user]);
+
+  const handleNotificationClick = async (notif) => {
+    try {
+      await chatService.markNotificationRead(notif.id);
+      setNotifications(prev =>
+        prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n)
+      );
+      setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
+
+      if (notif.link) {
+        const { view: targetView, param } = notif.link;
+        if (targetView === 'chat') {
+          if (param) localStorage.setItem('active_chat_recipient', param);
+          setView('chat');
+        } else if (targetView === 'public-profile') {
+          setSelectedUsername(param);
+          setView('public-profile');
+          window.scrollTo({ top: 0 });
+        } else if (targetView === 'profile') {
+          setView('profile');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to handle notification click:', err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await chatService.markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadNotificationsCount(0);
+    } catch (err) {
+      console.error('Failed to mark all read:', err);
+    }
+  };
+
+  const handleClearNotifications = async () => {
+    try {
+      await chatService.clearNotifications();
+      setNotifications([]);
+      setUnreadNotificationsCount(0);
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
+    }
+  };
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('codegravity_theme');
     return savedTheme || 'light';
@@ -177,6 +283,11 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAllRead={handleMarkAllRead}
+          onClearNotifications={handleClearNotifications}
         />
         <Submissions onBack={() => setView('landing')} />
         <Footer />
@@ -200,6 +311,11 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAllRead={handleMarkAllRead}
+          onClearNotifications={handleClearNotifications}
         />
         <ProfileDashboard onBack={() => setView('landing')} />
         <Footer />
@@ -223,6 +339,11 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAllRead={handleMarkAllRead}
+          onClearNotifications={handleClearNotifications}
         />
         <PublicProfile 
           username={selectedUsername} 
@@ -251,6 +372,11 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
+          notifications={notifications}
+          unreadNotificationsCount={unreadNotificationsCount}
+          onNotificationClick={handleNotificationClick}
+          onMarkAllRead={handleMarkAllRead}
+          onClearNotifications={handleClearNotifications}
         />
         <PeerChat onBack={() => setView('landing')} />
       </div>
@@ -279,6 +405,11 @@ function App() {
         onProfileClick={() => setView('profile')}
         onNavClick={handleNavigateToSection}
         onChatClick={() => setView('chat')}
+        notifications={notifications}
+        unreadNotificationsCount={unreadNotificationsCount}
+        onNotificationClick={handleNotificationClick}
+        onMarkAllRead={handleMarkAllRead}
+        onClearNotifications={handleClearNotifications}
       />
 
       <AuthModal 
@@ -312,6 +443,43 @@ function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* --- GLOBAL REAL-TIME NOTIFICATION TOASTER --- */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        <AnimatePresence>
+          {globalToasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+              onClick={() => {
+                if (toast.link) {
+                  const { view: targetView, param } = toast.link;
+                  if (targetView === 'chat') {
+                    if (param) localStorage.setItem('active_chat_recipient', param);
+                    setView('chat');
+                  } else if (targetView === 'public-profile') {
+                    setSelectedUsername(param);
+                    setView('public-profile');
+                    window.scrollTo({ top: 0 });
+                  } else if (targetView === 'profile') {
+                    setView('profile');
+                  }
+                }
+                setGlobalToasts(prev => prev.filter(t => t.id !== toast.id));
+              }}
+              className="bg-[#0b0c16] border-l-4 border-cyber-cyan p-4 rounded-r-xl shadow-neon-cyan cursor-pointer w-80 solid-card solid-card-hover text-left flex items-start gap-3 select-none z-50"
+            >
+              <Bell className="w-5 h-5 text-cyber-cyan shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] uppercase font-black text-cyber-cyan tracking-wider">{toast.title}</span>
+                <p className="text-[10px] text-slate-300 leading-relaxed mt-0.5 line-clamp-2">{toast.text}</p>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

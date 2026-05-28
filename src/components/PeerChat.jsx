@@ -43,20 +43,33 @@ const PeerChat = ({ onBack }) => {
       try {
         const fetchedRooms = await chatService.getRooms();
         setRooms(fetchedRooms);
-        
-        // Default active tab to general-chat room if available
-        const general = fetchedRooms.find(r => r.slug === 'general-chat');
-        if (general) {
-          setActiveTab({ type: 'room', id: general.id, name: general.name });
-        } else if (fetchedRooms.length > 0) {
-          setActiveTab({ type: 'room', id: fetchedRooms[0].id, name: fetchedRooms[0].name });
-        }
 
         const fetchedConversations = await chatService.getConversations();
         setConversations(fetchedConversations);
 
         const fetchedUsers = await chatService.getUsers();
         setUsers(fetchedUsers);
+
+        // Check if there is a target recipient passed from notifications
+        const activeRecipient = localStorage.getItem('active_chat_recipient');
+        if (activeRecipient) {
+          localStorage.removeItem('active_chat_recipient');
+          const existingConv = fetchedConversations.find(c => c.participants.includes(activeRecipient));
+          if (existingConv) {
+            setActiveTab({ type: 'dm', id: existingConv.id, name: activeRecipient });
+          } else {
+            const conv = await chatService.createConversation(activeRecipient);
+            setConversations(prev => [conv, ...prev]);
+            setActiveTab({ type: 'dm', id: conv.id, name: activeRecipient });
+          }
+        } else {
+          const general = fetchedRooms.find(r => r.slug === 'general-chat');
+          if (general) {
+            setActiveTab({ type: 'room', id: general.id, name: general.name });
+          } else if (fetchedRooms.length > 0) {
+            setActiveTab({ type: 'room', id: fetchedRooms[0].id, name: fetchedRooms[0].name });
+          }
+        }
       } catch (err) {
         console.error('Failed to load chat metadata:', err);
       }
