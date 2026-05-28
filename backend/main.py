@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -12,6 +12,9 @@ from auth import get_password_hash, verify_password, create_access_token, get_cu
 from models import UserCreate, UserLogin, Token, GoogleLoginRequest, SubmissionCreate, SubmissionResponse, ProfileUpdate
 from fastapi import status, Depends
 import requests
+from bson import ObjectId
+from discussion_models import DiscussionCreate, CommentCreate, ReplyCreate
+import re
 
 
 # Load env variables
@@ -32,6 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Import and mount Peer Chat router
+from chat import router as chat_router
+app.include_router(chat_router)
+
 # Instantiate Judge0 API Client
 judge_client = Judge0Client()
 
@@ -45,6 +52,53 @@ async def startup_db_client():
         import pymongo
         await db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
         print("MongoDB unique index applied for email.")
+        
+        # Seed topic chat rooms for Peer Learning
+        from datetime import datetime
+        chat_rooms = [
+            {
+                "name": "General Chat",
+                "slug": "general-chat",
+                "description": "Discuss coding, share ideas, and socialize with peers.",
+                "category": "General",
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "Ask for Hints",
+                "slug": "ask-for-hints",
+                "description": "Stuck on a problem? Ask peers for clues and visual hints rather than copying code!",
+                "category": "Peer Learning",
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "Discuss Algorithms",
+                "slug": "discuss-algorithms",
+                "description": "Analyze complexity, logic, data structures, and mathematical proofs.",
+                "category": "Algorithms",
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "React & Web Dev",
+                "slug": "react-web-dev",
+                "description": "Share tips and tricks about React, tailwind styling, next.js and frontend stacks.",
+                "category": "Development",
+                "created_at": datetime.utcnow()
+            },
+            {
+                "name": "Pythonistas",
+                "slug": "pythonistas",
+                "description": "Talk about elegant Python, list comprehensions, standard libs, and motor collections.",
+                "category": "Languages",
+                "created_at": datetime.utcnow()
+            }
+        ]
+        for room in chat_rooms:
+            await db.chat_rooms.update_one(
+                {"slug": room["slug"]},
+                {"$setOnInsert": room},
+                upsert=True
+            )
+        print("MongoDB chat rooms pre-seeded.")
         
     except Exception as e:
         print(f"Unable to connect to MongoDB: {e}")
@@ -111,6 +165,8 @@ async def register(user: UserCreate):
         "activity_log": [],
         "contribution_heatmap": {}
     }
+    user_dict["followers"] = []
+    user_dict["following"] = []
     
     new_user = await db.users.insert_one(user_dict)
     
@@ -199,7 +255,9 @@ async def google_auth(request: GoogleLoginRequest):
                 "badges": [],
                 "activity_log": [],
                 "contribution_heatmap": {}
-            }
+            },
+            "followers": [],
+            "following": []
         }
         await db.users.insert_one(new_user)
         username = name
@@ -265,6 +323,157 @@ async def update_profile(profile_data: ProfileUpdate, current_user: dict = Depen
     )
     
     return {"status": "success", "profile": existing_profile}
+
+def get_topic_title(topic_id: str) -> str:
+    mapping = {
+        "python-basics": "Python Basics",
+        "js-basics": "JavaScript Basics",
+        "cpp-basics": "C++ Basics",
+        "java-basics": "Java Basics",
+        "operators": "Operators",
+        "conditionals": "Conditionals",
+        "loops": "Loops",
+        "functions": "Functions",
+        "strings": "Strings",
+        "lists": "Arrays & Lists",
+        "tuples": "Objects & Pointers",
+        "sets": "Sets & Maps",
+        "dictionaries": "Key-Value Maps",
+        "list-comprehension": "Traversals & Streams",
+        "exceptions": "Exception Handling",
+        "file-handling": "File Streams",
+        "oops": "Object-Oriented Programming",
+        "searching": "Searching Algorithms",
+        "sorting": "Sorting Algorithms",
+        "stack": "Stack",
+        "queue": "Queue",
+        "linked-list": "Linked List",
+        "trees": "Trees",
+        "graphs": "Graphs",
+        "dynamic-programming": "Dynamic Programming"
+    }
+    return mapping.get(topic_id.lower(), topic_id.title())
+
+@app.get("/profile/{username}")
+async def get_public_profile(username: str, request: Request):
+    from jose import jwt
+    from auth import SECRET_KEY, ALGORITHM
+    
+    target_user = await db.users.find_one({"username": username})
+    if not target_user:
+        target_user = await db.users.find_one({"profile.display_name": username})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User profile not found in orbit.")
+            
+    profile = target_user.get("profile") or {
+        "display_name": target_user.get("username"),
+        "college_name": "",
+        "bio": "",
+        "github_url": "",
+        "linkedin_url": "",
+        "profile_pic": "",
+        "interested_domains": [],
+        "skills": []
+    }
+    
+    progress = target_user.get("progress") or {
+        "xp": 0,
+        "level": 1,
+        "solved_problems": [],
+        "attempted_problems": [],
+        "daily_streak": 0,
+        "longest_streak": 0,
+        "last_activity_date": "",
+        "badges": [],
+        "activity_log": [],
+        "contribution_heatmap": {}
+    }
+    
+    domains = profile.get("interested_domains", [])
+    faction = "Singularity"
+    if domains:
+        primary_domain = domains[0].lower()
+        if any(x in primary_domain for x in ["web", "front", "back", "app", "dev", "design", "full"]):
+            faction = "Orbital"
+        elif any(x in primary_domain for x in ["ai", "ml", "machine", "data", "science", "deep", "learn"]):
+            faction = "Quark"
+            
+    solved_problems = progress.get("solved_problems", [])
+    topic_counts = {}
+    for prob_id in solved_problems:
+        parts = prob_id.split('_')
+        if len(parts) >= 3:
+            topic_id = parts[1]
+        else:
+            if prob_id in ['two-sum', 'container-with-most-water']:
+                topic_id = 'lists'
+            elif prob_id == 'valid-parentheses':
+                topic_id = 'stack'
+            else:
+                topic_id = 'basics'
+        topic_title = get_topic_title(topic_id)
+        topic_counts[topic_title] = topic_counts.get(topic_title, 0) + 1
+        
+    sorted_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
+    strongest_topics = [t[0] for t in sorted_topics[:3]]
+    
+    followers = target_user.get("followers", [])
+    following = target_user.get("following", [])
+    
+    is_following = False
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            viewer_email = payload.get("sub")
+            if viewer_email:
+                viewer = await db.users.find_one({"email": viewer_email})
+                if viewer and viewer.get("username") in followers:
+                    is_following = True
+        except Exception:
+            pass
+            
+    return {
+        "username": target_user.get("username"),
+        "profile": profile,
+        "progress": progress,
+        "faction": faction,
+        "strongest_topics": strongest_topics,
+        "followers_count": len(followers),
+        "following_count": len(following),
+        "is_following": is_following
+    }
+
+@app.post("/profile/{username}/follow")
+async def follow_user(username: str, current_user: dict = Depends(get_current_user)):
+    target_username = username
+    follower_username = current_user.get("username")
+    
+    if target_username == follower_username:
+        raise HTTPException(status_code=400, detail="Gravitational forces prevent you from following yourself.")
+        
+    target = await db.users.find_one({"username": target_username})
+    if not target:
+        raise HTTPException(status_code=404, detail="Target developer not found in orbit.")
+        
+    followers = target.get("followers", [])
+    
+    if follower_username in followers:
+        await db.users.update_one({"username": target_username}, {"$pull": {"followers": follower_username}})
+        await db.users.update_one({"username": follower_username}, {"$pull": {"following": target_username}})
+        status_action = "unfollowed"
+        new_count = len(followers) - 1
+    else:
+        await db.users.update_one({"username": target_username}, {"$addToSet": {"followers": follower_username}})
+        await db.users.update_one({"username": follower_username}, {"$addToSet": {"following": target_username}})
+        status_action = "followed"
+        new_count = len(followers) + 1
+        
+    return {
+        "status": status_action,
+        "followers_count": new_count
+    }
 
 @app.get("/leaderboard")
 async def get_leaderboard():
@@ -614,6 +823,322 @@ async def submit_code(request: SubmitCodeRequest):
             "time": "0.0ms",
             "memory": "0 KB"
         }
+
+def check_code_dump_and_spam(content: str):
+    clean_text = content.strip()
+    
+    # 1. Detect code blocks
+    code_blocks = re.findall(r'```[\s\S]*?```|`[\s\S]*?`', clean_text)
+    total_code_len = sum(len(block) for block in code_blocks)
+    
+    if len(clean_text) > 0 and (total_code_len / len(clean_text)) > 0.45:
+        raise HTTPException(
+            status_code=400, 
+            detail="Strict Policy: Please do not dump raw full code solutions. Focus on explaining your core logic, approach, and pseudo-code."
+        )
+    
+    # 2. Check for long continuous unformatted code-like syntax (heuristics)
+    code_keywords = [
+        r'\bdef\b.*\(.*\):', 
+        r'\bpublic\s+static\s+void\b', 
+        r'\bclass\b.*\bextends\b', 
+        r'#include\s+<.*>', 
+        r'\bint\s+main\s*\(.*\)', 
+        r'const\s+\w+\s*=\s*\(.*\)\s*=>'
+    ]
+    for pattern in code_keywords:
+        if re.search(pattern, clean_text):
+            text_without_code = re.sub(r'```[\s\S]*?```|`[\s\S]*?`', '', clean_text)
+            if len(text_without_code.strip()) < 150:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Anti-Code Dumping Alert: Expose your logic first! Please expand your theoretical explanation to help others learn."
+                )
+
+@app.post("/problems/{problem_id}/discussions", status_code=201)
+async def create_discussion(problem_id: str, discussion: DiscussionCreate, current_user: dict = Depends(get_current_user)):
+    check_code_dump_and_spam(discussion.content)
+    
+    user_profile = current_user.get("profile") or {}
+    user_progress = current_user.get("progress") or {}
+    
+    doc = {
+        "problem_id": problem_id,
+        "author": current_user["username"],
+        "author_email": current_user["email"],
+        "author_level": user_progress.get("level", 1),
+        "author_xp": user_progress.get("xp", 0),
+        "author_pic": user_profile.get("profile_pic", ""),
+        "title": discussion.title,
+        "content": discussion.content,
+        "category": discussion.category,
+        "created_at": datetime.utcnow(),
+        "upvotes": [],
+        "is_pinned": False,
+        "is_resolved": False,
+        "helpful_comment_id": None,
+        "is_spam": False
+    }
+    
+    result = await db.discussions.insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    del doc["_id"]
+    return doc
+
+@app.get("/problems/{problem_id}/discussions")
+async def get_discussions(problem_id: str, current_user: dict = Depends(get_current_user)):
+    cursor = db.discussions.find({"problem_id": problem_id, "is_spam": False}).sort([("is_pinned", -1), ("created_at", -1)])
+    discussions = []
+    async for doc in cursor:
+        doc["id"] = str(doc["_id"])
+        del doc["_id"]
+        doc["upvote_count"] = len(doc.get("upvotes", []))
+        doc["has_upvoted"] = current_user["email"] in doc.get("upvotes", [])
+        discussions.append(doc)
+    return discussions
+
+@app.get("/discussions/{discussion_id}/thread")
+async def get_discussion_thread(discussion_id: str, current_user: dict = Depends(get_current_user)):
+    discussion_doc = await db.discussions.find_one({"_id": ObjectId(discussion_id)})
+    if not discussion_doc:
+        raise HTTPException(status_code=404, detail="Discussion thread not found")
+        
+    discussion_doc["id"] = str(discussion_doc["_id"])
+    del discussion_doc["_id"]
+    discussion_doc["upvote_count"] = len(discussion_doc.get("upvotes", []))
+    discussion_doc["has_upvoted"] = current_user["email"] in discussion_doc.get("upvotes", [])
+    
+    comments_cursor = db.comments.find({"discussion_id": discussion_id, "is_spam": False}).sort("created_at", 1)
+    comments = []
+    async for comment in comments_cursor:
+        comment["id"] = str(comment["_id"])
+        del comment["_id"]
+        comment["upvote_count"] = len(comment.get("upvotes", []))
+        comment["has_upvoted"] = current_user["email"] in comment.get("upvotes", [])
+        
+        replies_cursor = db.replies.find({"comment_id": comment["id"], "is_spam": False}).sort("created_at", 1)
+        replies = []
+        async for reply in replies_cursor:
+            reply["id"] = str(reply["_id"])
+            del reply["_id"]
+            replies.append(reply)
+            
+        comment["replies"] = replies
+        comments.append(comment)
+        
+    return {
+        "discussion": discussion_doc,
+        "comments": comments
+    }
+
+@app.post("/discussions/{discussion_id}/upvote")
+async def upvote_discussion(discussion_id: str, current_user: dict = Depends(get_current_user)):
+    discussion = await db.discussions.find_one({"_id": ObjectId(discussion_id)})
+    if not discussion:
+        raise HTTPException(status_code=404, detail="Discussion not found")
+        
+    upvotes = discussion.get("upvotes", [])
+    email = current_user["email"]
+    
+    if email in upvotes:
+        upvotes.remove(email)
+    else:
+        upvotes.append(email)
+        
+    await db.discussions.update_one(
+        {"_id": ObjectId(discussion_id)},
+        {"$set": {"upvotes": upvotes}}
+    )
+    return {"status": "success", "has_upvoted": email in upvotes, "upvote_count": len(upvotes)}
+
+@app.post("/discussions/{discussion_id}/resolve")
+async def resolve_discussion(discussion_id: str, current_user: dict = Depends(get_current_user)):
+    discussion = await db.discussions.find_one({"_id": ObjectId(discussion_id)})
+    if not discussion:
+        raise HTTPException(status_code=404, detail="Discussion not found")
+        
+    is_author = discussion.get("author_email") == current_user["email"]
+    is_admin = current_user.get("role") == "admin" or current_user["email"] == "kunibillisairam@gmail.com"
+    
+    if not (is_author or is_admin):
+        raise HTTPException(status_code=403, detail="Unauthorized to resolve this thread")
+        
+    new_resolved = not discussion.get("is_resolved", False)
+    await db.discussions.update_one(
+        {"_id": ObjectId(discussion_id)},
+        {"$set": {"is_resolved": new_resolved}}
+    )
+    return {"status": "success", "is_resolved": new_resolved}
+
+@app.post("/discussions/{discussion_id}/comments", status_code=201)
+async def create_comment(discussion_id: str, comment: CommentCreate, current_user: dict = Depends(get_current_user)):
+    check_code_dump_and_spam(comment.content)
+    
+    discussion = await db.discussions.find_one({"_id": ObjectId(discussion_id)})
+    if not discussion:
+        raise HTTPException(status_code=404, detail="Discussion thread not found")
+        
+    user_profile = current_user.get("profile") or {}
+    user_progress = current_user.get("progress") or {}
+    
+    doc = {
+        "discussion_id": discussion_id,
+        "author": current_user["username"],
+        "author_email": current_user["email"],
+        "author_level": user_progress.get("level", 1),
+        "author_xp": user_progress.get("xp", 0),
+        "author_pic": user_profile.get("profile_pic", ""),
+        "content": comment.content,
+        "created_at": datetime.utcnow(),
+        "upvotes": [],
+        "is_helpful": False,
+        "is_spam": False
+    }
+    
+    result = await db.comments.insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    del doc["_id"]
+    return doc
+
+@app.post("/comments/{comment_id}/upvote")
+async def upvote_comment(comment_id: str, current_user: dict = Depends(get_current_user)):
+    comment = await db.comments.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+        
+    upvotes = comment.get("upvotes", [])
+    email = current_user["email"]
+    
+    if email in upvotes:
+        upvotes.remove(email)
+    else:
+        upvotes.append(email)
+        
+    await db.comments.update_one(
+        {"_id": ObjectId(comment_id)},
+        {"$set": {"upvotes": upvotes}}
+    )
+    return {"status": "success", "has_upvoted": email in upvotes, "upvote_count": len(upvotes)}
+
+@app.post("/comments/{comment_id}/helpful")
+async def mark_comment_helpful(comment_id: str, current_user: dict = Depends(get_current_user)):
+    comment = await db.comments.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+        
+    discussion = await db.discussions.find_one({"_id": ObjectId(comment["discussion_id"])})
+    if not discussion:
+        raise HTTPException(status_code=404, detail="Discussion thread not found")
+        
+    is_author = discussion.get("author_email") == current_user["email"]
+    is_admin = current_user.get("role") == "admin" or current_user["email"] == "kunibillisairam@gmail.com"
+    
+    if not (is_author or is_admin):
+        raise HTTPException(status_code=403, detail="Unauthorized to mark helpful answers for this discussion")
+        
+    new_helpful = not comment.get("is_helpful", False)
+    
+    await db.comments.update_one(
+        {"_id": ObjectId(comment_id)},
+        {"$set": {"is_helpful": new_helpful}}
+    )
+    
+    await db.discussions.update_one(
+        {"_id": ObjectId(comment["discussion_id"])},
+        {"$set": {"helpful_comment_id": comment_id if new_helpful else None}}
+    )
+    
+    if new_helpful:
+        helper_user = await db.users.find_one({"email": comment["author_email"]})
+        if helper_user:
+            progress = helper_user.get("progress") or {
+                "xp": 0, "level": 1, "solved_problems": [], "attempted_problems": [],
+                "daily_streak": 0, "longest_streak": 0, "last_activity_date": "",
+                "badges": [], "activity_log": [], "contribution_heatmap": {}
+            }
+            progress["xp"] = progress.get("xp", 0) + 50
+            
+            new_level = (progress["xp"] // 500) + 1
+            if new_level > progress.get("level", 1):
+                progress["level"] = new_level
+                progress["activity_log"].append({
+                    "type": "level_up",
+                    "description": f"Reached Level {new_level}!",
+                    "timestamp": datetime.utcnow().isoformat()
+                })
+                
+            progress["activity_log"].append({
+                "type": "helpful_answer",
+                "description": f"Comment marked helpful on '{discussion['title']}' (+50 XP)",
+                "timestamp": datetime.utcnow().isoformat()
+            })
+            
+            await db.users.update_one(
+                {"email": comment["author_email"]},
+                {"$set": {"progress": progress}}
+            )
+            
+    return {"status": "success", "is_helpful": new_helpful}
+
+@app.post("/comments/{comment_id}/replies", status_code=201)
+async def create_reply(comment_id: str, reply: ReplyCreate, current_user: dict = Depends(get_current_user)):
+    check_code_dump_and_spam(reply.content)
+    
+    comment = await db.comments.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+        
+    user_profile = current_user.get("profile") or {}
+    user_progress = current_user.get("progress") or {}
+    
+    doc = {
+        "comment_id": comment_id,
+        "author": current_user["username"],
+        "author_email": current_user["email"],
+        "author_level": user_progress.get("level", 1),
+        "author_xp": user_progress.get("xp", 0),
+        "author_pic": user_profile.get("profile_pic", ""),
+        "content": reply.content,
+        "created_at": datetime.utcnow(),
+        "is_spam": False
+    }
+    
+    result = await db.replies.insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    del doc["_id"]
+    return doc
+
+@app.delete("/discussions/{discussion_id}")
+async def delete_discussion(discussion_id: str, current_user: dict = Depends(get_current_user)):
+    discussion = await db.discussions.find_one({"_id": ObjectId(discussion_id)})
+    if not discussion:
+        raise HTTPException(status_code=404, detail="Discussion not found")
+        
+    is_author = discussion.get("author_email") == current_user["email"]
+    is_admin = current_user.get("role") == "admin" or current_user["email"] == "kunibillisairam@gmail.com"
+    
+    if not (is_author or is_admin):
+        raise HTTPException(status_code=403, detail="Unauthorized moderation delete")
+        
+    await db.discussions.delete_one({"_id": ObjectId(discussion_id)})
+    await db.comments.delete_many({"discussion_id": discussion_id})
+    return {"status": "success", "detail": "Discussion thread successfully deleted"}
+
+@app.delete("/comments/{comment_id}")
+async def delete_comment(comment_id: str, current_user: dict = Depends(get_current_user)):
+    comment = await db.comments.find_one({"_id": ObjectId(comment_id)})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+        
+    is_author = comment.get("author_email") == current_user["email"]
+    is_admin = current_user.get("role") == "admin" or current_user["email"] == "kunibillisairam@gmail.com"
+    
+    if not (is_author or is_admin):
+        raise HTTPException(status_code=403, detail="Unauthorized moderation delete")
+        
+    await db.comments.delete_one({"_id": ObjectId(comment_id)})
+    await db.replies.delete_many({"comment_id": comment_id})
+    return {"status": "success", "detail": "Comment successfully deleted"}
 
 if __name__ == "__main__":
     host = os.getenv("HOST", "127.0.0.1")

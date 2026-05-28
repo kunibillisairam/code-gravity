@@ -12,7 +12,7 @@ const getInitials = (name) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const Leaderboard = () => {
+const Leaderboard = ({ onUserClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('global');
   const [leaders, setLeaders] = useState([]);
@@ -187,24 +187,27 @@ const Leaderboard = () => {
 
                           {/* Developer Name & Avatar */}
                           <td className="py-4.5 px-6">
-                            <div className="flex items-center gap-3">
+                            <div 
+                              onClick={() => onUserClick && onUserClick(leader.username)}
+                              className="flex items-center gap-3 cursor-pointer group/dev select-none"
+                            >
                               {leader.profile_pic ? (
                                 <img 
                                   src={leader.profile_pic} 
                                   alt={leader.display_name} 
-                                  className="w-8 h-8 rounded border border-slate-200 dark:border-slate-800 object-cover shadow-sm shrink-0"
+                                  className="w-8 h-8 rounded border border-slate-200 dark:border-slate-800 object-cover shadow-sm shrink-0 group-hover/dev:border-cyber-cyan/50 transition-all duration-300"
                                   onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                               ) : (
-                                <div className={`w-8 h-8 rounded flex items-center justify-center font-sans font-extrabold border ${
+                                <div className={`w-8 h-8 rounded flex items-center justify-center font-sans font-extrabold border transition-all duration-300 ${
                                   leader.rank === 1 
-                                    ? 'bg-amber-400/10 border-amber-450/20 text-amber-500 dark:text-amber-400' 
-                                    : 'bg-slate-100 dark:bg-[#080a10] border-slate-200 dark:border-slate-800 text-cyber-cyan shadow-sm'
+                                    ? 'bg-amber-400/10 border-amber-450/20 text-amber-500 dark:text-amber-400 group-hover/dev:border-amber-400/50' 
+                                    : 'bg-slate-100 dark:bg-[#080a10] border-slate-200 dark:border-slate-800 text-cyber-cyan shadow-sm group-hover/dev:border-cyber-cyan/50'
                                 }`}>
                                   {getInitials(leader.display_name)}
                                 </div>
                               )}
-                              <span className="font-sans font-bold text-xs text-slate-850 dark:text-white">
+                              <span className="font-sans font-bold text-xs text-slate-850 dark:text-white group-hover/dev:text-cyber-cyan dark:group-hover/dev:text-cyber-cyan transition-colors duration-300 underline-offset-4 group-hover/dev:underline">
                                 {leader.display_name}
                               </span>
                             </div>

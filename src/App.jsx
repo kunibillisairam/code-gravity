@@ -10,12 +10,15 @@ import Workspace from './components/Workspace';
 import AuthModal from './components/AuthModal';
 import Submissions from './components/Submissions';
 import ProfileDashboard from './components/ProfileDashboard';
+import PublicProfile from './components/PublicProfile';
+import PeerChat from './components/PeerChat';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
 function App() {
   const [view, setView] = useState('landing'); // 'landing' or 'workspace'
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [selectedUsername, setSelectedUsername] = useState(null);
   const [activeSection, setActiveSection] = useState('hero');
   const [user, setUser] = useState(() => localStorage.getItem('codegravity_user'));
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -118,7 +121,9 @@ function App() {
 
   const handleNavigateToSection = (sectionId) => {
     setView('landing');
-    setTimeout(() => {
+    
+    let attempts = 0;
+    const tryScroll = () => {
       const element = document.getElementById(sectionId);
       if (element) {
         const offset = 80;
@@ -131,8 +136,13 @@ function App() {
           top: offsetPosition,
           behavior: 'smooth'
         });
+      } else if (attempts < 10) {
+        attempts++;
+        setTimeout(tryScroll, 50);
       }
-    }, 50);
+    };
+    
+    setTimeout(tryScroll, 50);
   };
 
   const handleBackToExplorer = () => {
@@ -166,6 +176,7 @@ function App() {
           onSubmissionsClick={() => setView('submissions')}
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
+          onChatClick={() => setView('chat')}
         />
         <Submissions onBack={() => setView('landing')} />
         <Footer />
@@ -188,9 +199,60 @@ function App() {
           onSubmissionsClick={() => setView('submissions')}
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
+          onChatClick={() => setView('chat')}
         />
         <ProfileDashboard onBack={() => setView('landing')} />
         <Footer />
+      </div>
+    );
+  }
+
+  // If in Public Profile view, render Navbar shell + Public Profile component
+  if (view === 'public-profile') {
+    return (
+      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
+        <Navbar 
+          activeSection="" 
+          setActiveSection={() => {}} 
+          theme={theme} 
+          toggleTheme={toggleTheme} 
+          user={user}
+          onLoginClick={() => setShowAuthModal(true)}
+          onLogoutClick={handleLogout}
+          onSubmissionsClick={() => setView('submissions')}
+          onProfileClick={() => setView('profile')}
+          onNavClick={handleNavigateToSection}
+          onChatClick={() => setView('chat')}
+        />
+        <PublicProfile 
+          username={selectedUsername} 
+          onBack={() => setView('landing')} 
+          user={user}
+          onLoginClick={() => setShowAuthModal(true)}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
+  // If in Peer Chat view, render Navbar shell + Peer Learning Chat
+  if (view === 'chat') {
+    return (
+      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
+        <Navbar 
+          activeSection="" 
+          setActiveSection={() => {}} 
+          theme={theme} 
+          toggleTheme={toggleTheme} 
+          user={user}
+          onLoginClick={() => setShowAuthModal(true)}
+          onLogoutClick={handleLogout}
+          onSubmissionsClick={() => setView('submissions')}
+          onProfileClick={() => setView('profile')}
+          onNavClick={handleNavigateToSection}
+          onChatClick={() => setView('chat')}
+        />
+        <PeerChat onBack={() => setView('landing')} />
       </div>
     );
   }
@@ -216,6 +278,7 @@ function App() {
         onSubmissionsClick={() => setView('submissions')}
         onProfileClick={() => setView('profile')}
         onNavClick={handleNavigateToSection}
+        onChatClick={() => setView('chat')}
       />
 
       <AuthModal 
@@ -238,7 +301,13 @@ function App() {
         <AIAssistant />
         
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Leaderboard />
+        <Leaderboard 
+          onUserClick={(username) => {
+            setSelectedUsername(username);
+            setView('public-profile');
+            window.scrollTo({ top: 0 });
+          }} 
+        />
       </main>
 
       {/* Footer */}

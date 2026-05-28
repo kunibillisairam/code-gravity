@@ -5,6 +5,7 @@ import ProblemPanel from './ProblemPanel';
 import EditorPanel from './EditorPanel';
 import ConsolePanel from './ConsolePanel';
 import { apiService } from '../services/api';
+import DiscussionPanel from './DiscussionPanel';
 
 const getLanguageFromProblemId = (probId) => {
   if (!probId) return 'javascript';
@@ -37,6 +38,9 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
   
   // Submit modal overlay
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+
+  // Community Discussion left tab state
+  const [leftTab, setLeftTab] = useState('description');
 
   // Panel split-resizing and responsive states
   const [leftWidth, setLeftWidth] = useState(50);
@@ -296,12 +300,58 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
       {/* Main Splits Workspace Body (Left Description pane, Right Monaco Panel + Console Pane) */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative z-10">
         
-        {/* Left Half Description */}
+        {/* Left Half Pane (Description vs Discussion tabs) */}
         <div 
-          className="w-full md:h-full min-h-0 shrink-0"
+          className="w-full md:h-full min-h-0 shrink-0 flex flex-col bg-white dark:bg-[#0e121e] border-r border-slate-200 dark:border-slate-800"
           style={!isMobile ? { width: `calc(${leftWidth}% - 4px)` } : {}}
         >
-          <ProblemPanel problem={problem} />
+          {/* Tab selector bar */}
+          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0b0e17] px-4 py-1 shrink-0 gap-2 select-none">
+            <button
+              onClick={() => setLeftTab('description')}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors relative cursor-pointer ${
+                leftTab === 'description'
+                  ? 'text-cyber-cyan font-black'
+                  : 'text-slate-400 hover:text-slate-850 dark:hover:text-white'
+              }`}
+            >
+              <span>Description</span>
+              {leftTab === 'description' && (
+                <motion.div 
+                  layoutId="activeLeftTabGlow"
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-cyber-cyan shadow-[0_0_8px_rgba(0,240,255,0.8)]"
+                />
+              )}
+            </button>
+            <button
+              onClick={() => setLeftTab('discussion')}
+              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors relative cursor-pointer ${
+                leftTab === 'discussion'
+                  ? 'text-cyber-purple font-black'
+                  : 'text-slate-400 hover:text-slate-850 dark:hover:text-white'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                Community Discussion
+                <span className="h-1.5 w-1.5 rounded-full bg-cyber-purple animate-pulse" />
+              </span>
+              {leftTab === 'discussion' && (
+                <motion.div 
+                  layoutId="activeLeftTabGlow"
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-cyber-purple shadow-[0_0_8px_rgba(180,90,255,0.8)]"
+                />
+              )}
+            </button>
+          </div>
+
+          {/* View panel viewport */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {leftTab === 'description' ? (
+              <ProblemPanel problem={problem} />
+            ) : (
+              <DiscussionPanel problem={problem} />
+            )}
+          </div>
         </div>
 
         {/* Resizable Divider Line */}

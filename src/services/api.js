@@ -81,6 +81,24 @@ export const apiService = {
     }
   },
 
+  getPublicProfile: async (username) => {
+    try {
+      const response = await apiClient.get(`/profile/${username}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch public profile details');
+    }
+  },
+
+  toggleFollowUser: async (username) => {
+    try {
+      const response = await apiClient.post(`/profile/${username}/follow`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to toggle follow status');
+    }
+  },
+
   getLeaderboard: async () => {
     try {
       const response = await apiClient.get('/leaderboard');
@@ -144,6 +162,105 @@ export const apiService = {
         time: '0.0ms',
         memory: '0 KB',
       };
+    }
+  },
+
+  getDiscussions: async (problemId) => {
+    try {
+      const response = await apiClient.get(`/problems/${problemId}/discussions`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch discussions');
+    }
+  },
+
+  createDiscussion: async (problemId, discussionData) => {
+    try {
+      const response = await apiClient.post(`/problems/${problemId}/discussions`, discussionData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to post discussion');
+    }
+  },
+
+  getDiscussionThread: async (discussionId) => {
+    try {
+      const response = await apiClient.get(`/discussions/${discussionId}/thread`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch discussion thread');
+    }
+  },
+
+  upvoteDiscussion: async (discussionId) => {
+    try {
+      const response = await apiClient.post(`/discussions/${discussionId}/upvote`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to upvote discussion');
+    }
+  },
+
+  resolveDiscussion: async (discussionId) => {
+    try {
+      const response = await apiClient.post(`/discussions/${discussionId}/resolve`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to resolve discussion');
+    }
+  },
+
+  createComment: async (discussionId, commentData) => {
+    try {
+      const response = await apiClient.post(`/discussions/${discussionId}/comments`, commentData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to post comment');
+    }
+  },
+
+  upvoteComment: async (commentId) => {
+    try {
+      const response = await apiClient.post(`/comments/${commentId}/upvote`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to upvote comment');
+    }
+  },
+
+  markCommentHelpful: async (commentId) => {
+    try {
+      const response = await apiClient.post(`/comments/${commentId}/helpful`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to toggle helpful flag');
+    }
+  },
+
+  createReply: async (commentId, replyData) => {
+    try {
+      const response = await apiClient.post(`/comments/${commentId}/replies`, replyData);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to post reply');
+    }
+  },
+
+  deleteDiscussion: async (discussionId) => {
+    try {
+      const response = await apiClient.delete(`/discussions/${discussionId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete discussion');
+    }
+  },
+
+  deleteComment: async (commentId) => {
+    try {
+      const response = await apiClient.delete(`/comments/${commentId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || 'Failed to delete comment');
     }
   },
 };

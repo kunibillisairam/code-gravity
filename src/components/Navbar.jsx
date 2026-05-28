@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Orbit, Sun, Moon, User, LogOut, List, ChevronDown } from 'lucide-react';
+import { Orbit, Sun, Moon, User, LogOut, List, ChevronDown, MessageSquare } from 'lucide-react';
 
-const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick, onProfileClick, onNavClick }) => {
+const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onLoginClick, onLogoutClick, onSubmissionsClick, onProfileClick, onNavClick, onChatClick }) => {
   const navItems = [
     { id: 'hero', label: 'Home' },
     { id: 'features', label: 'Features' },
@@ -130,6 +130,17 @@ const Navbar = ({ activeSection, setActiveSection, theme, toggleTheme, user, onL
                     >
                       <List className="w-4 h-4 text-slate-400" />
                       <span>My Submissions</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        onChatClick();
+                      }}
+                      className="w-full px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-[#121626] text-slate-700 dark:text-slate-300 hover:text-cyber-cyan dark:hover:text-cyber-cyan text-xs font-bold font-sans flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <MessageSquare className="w-4 h-4 text-slate-400" />
+                      <span>Peer Learning Chat</span>
                     </button>
                     
                     <div className="h-[1px] bg-slate-100 dark:bg-slate-850 my-1"></div>
