@@ -51,6 +51,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
   const [messageText, setMessageText] = useState('');
   const [messageSendState, setMessageSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
   const [toastMessage, setToastMessage] = useState('');
+  const [messageStatus, setMessageStatus] = useState(null); // null | 'unseen' | 'seen'
 
   // Calendar State
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -98,6 +99,12 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
     setMessageSendState('sending');
     setTimeout(() => {
       setMessageSendState('success');
+      setMessageStatus('unseen');
+      
+      // Simulate target user seeing the transmission after 8 seconds
+      setTimeout(() => {
+        setMessageStatus('seen');
+      }, 8000);
     }, 1200);
   };
 
@@ -444,13 +451,24 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
                 )}
               </button>
 
-              <button
-                onClick={() => setShowMessageModal(true)}
-                className="p-3 bg-white dark:bg-[#121626] border border-slate-200 dark:border-slate-800 hover:border-cyber-cyan/45 text-slate-500 dark:text-cyber-cyan rounded-xl transition-all cursor-pointer hover:scale-[1.02] shadow-sm"
-                title="Establish Neural Transmission"
-              >
-                <MessageSquare className="w-4.5 h-4.5" />
-              </button>
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setShowMessageModal(true)}
+                  className="p-3 bg-white dark:bg-[#121626] border border-slate-200 dark:border-slate-800 hover:border-cyber-cyan/45 text-slate-500 dark:text-cyber-cyan rounded-xl transition-all cursor-pointer hover:scale-[1.02] shadow-sm"
+                  title="Establish Neural Transmission"
+                >
+                  <MessageSquare className="w-4.5 h-4.5" />
+                </button>
+                {messageStatus && (
+                  <span className={`text-[8.5px] font-sans font-black uppercase tracking-widest ${
+                    messageStatus === 'seen' 
+                      ? 'text-emerald-500 dark:text-emerald-450' 
+                      : 'text-amber-500 dark:text-amber-400 animate-pulse'
+                  }`}>
+                    {messageStatus}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
