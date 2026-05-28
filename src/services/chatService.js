@@ -88,46 +88,57 @@ export const chatService = {
       clearTimeout(reconnectTimer);
     }
 
-    const wsUrl = `${WS_BASE_URL}?token=${token}`;
-    socket = new WebSocket(wsUrl);
+    try {
+      const wsUrl = `${WS_BASE_URL}?token=${token}`;
+      socket = new WebSocket(wsUrl);
 
-    socket.onopen = () => {
-      console.log('Peer chat WebSocket connected.');
-      reconnectDelay = 1000; // Reset delay
-    };
+      socket.onopen = () => {
+        console.log('Peer chat WebSocket connected.');
+        reconnectDelay = 1000; // Reset delay
+      };
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        listeners.forEach((cb) => {
-          try {
-            cb(data);
-          } catch (e) {
-            console.error('Error inside WebSocket listener:', e);
-          }
-        });
-      } catch (err) {
-        console.error('Failed to parse WebSocket message:', err);
-      }
-    };
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          listeners.forEach((cb) => {
+            try {
+              cb(data);
+            } catch (e) {
+              console.error('Error inside WebSocket listener:', e);
+            }
+          });
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
+        }
+      };
 
-    socket.onclose = (event) => {
-      console.warn(`WebSocket closed. Code: ${event.code}. Attempting reconnect...`);
-      if (onDisconnectCallback) {
-        onDisconnectCallback();
-      }
-      
-      // Auto-reconnect logic with exponential backoff
+      socket.onclose = (event) => {
+        console.warn(`WebSocket closed. Code: ${event.code}. Attempting reconnect...`);
+        if (onDisconnectCallback) {
+          onDisconnectCallback();
+        }
+        
+        // Auto-reconnect logic with exponential backoff
+        reconnectTimer = setTimeout(() => {
+          reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+          chatService.connect(token, null, onDisconnectCallback);
+        }, reconnectDelay);
+      };
+
+      socket.onerror = (error) => {
+        console.error('WebSocket encountered error:', error);
+        try {
+          socket.close();
+        } catch (e) {}
+      };
+    } catch (err) {
+      console.error('WebSocket connection failed to initialize:', err);
+      // Fallback reconnect with exponential backoff
       reconnectTimer = setTimeout(() => {
         reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
         chatService.connect(token, null, onDisconnectCallback);
-      }, reconnectDelay);
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket encountered error:', error);
-      socket.close();
-    };
+      }, reconnectDelay * 2);
+    }
   },
 
   disconnect: (onEvent) => {
