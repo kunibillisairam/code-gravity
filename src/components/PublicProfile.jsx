@@ -48,6 +48,8 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
   const [followersCount, setFollowersCount] = useState(0);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageSendState, setMessageSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
 
   // Calendar State
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -79,6 +81,24 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
       fetchPublicProfile();
     }
   }, [username]);
+
+  // Reset message states on modal state toggle
+  useEffect(() => {
+    if (showMessageModal) {
+      setMessageText('');
+      setMessageSendState('idle');
+    }
+  }, [showMessageModal]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!messageText.trim()) return;
+
+    setMessageSendState('sending');
+    setTimeout(() => {
+      setMessageSendState('success');
+    }, 1200);
+  };
 
   const handleFollowToggle = async () => {
     if (!user) {
@@ -869,32 +889,90 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="space-y-4 text-center pt-4">
-                <div className={`mx-auto w-12 h-12 rounded-2xl flex items-center justify-center text-cyber-cyan ${fColors.bg} border ${fColors.border} ${fColors.glow}`}>
-                  <MessageSquare className="w-6 h-6 animate-pulse" />
-                </div>
-                
-                <h3 className="font-sans font-black text-base uppercase tracking-widest text-slate-905 dark:text-white">
-                  Direct Transmissions
-                </h3>
-                
-                <p className="text-xs text-slate-505 dark:text-slate-400 font-light leading-relaxed">
-                  Establishing secure neural connection with target: <span className="font-mono font-bold text-cyber-cyan">@{username}</span>.
-                </p>
+              {messageSendState === 'idle' && (
+                <form onSubmit={handleSendMessage} className="space-y-4 pt-4 text-center">
+                  <div className={`mx-auto w-12 h-12 rounded-2xl flex items-center justify-center text-cyber-cyan ${fColors.bg} border ${fColors.border} ${fColors.glow}`}>
+                    <MessageSquare className="w-6 h-6 text-cyber-cyan animate-pulse" />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <h3 className="font-sans font-black text-base uppercase tracking-widest text-slate-905 dark:text-white">
+                      Direct Transmission
+                    </h3>
+                    <p className="text-xs text-slate-505 dark:text-slate-400 font-light leading-relaxed">
+                      Compose encrypted telepathic payload for: <span className="font-mono font-bold text-cyber-cyan">@{username}</span>
+                    </p>
+                  </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-slate-900 text-left font-mono text-[10px] leading-relaxed text-slate-550 dark:text-slate-400 relative">
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyber-cyan animate-ping" />
-                  <div className="font-bold text-cyber-cyan mb-1">&gt; SYSTEM WARNING:</div>
-                  Neural bandwidth is undergoing planetary alignment. Gravitational messaging streams will unlock in the next orbital quadrant shift!
-                </div>
+                  <div className="text-left space-y-1.5">
+                    <label className="text-[9px] font-sans font-black uppercase text-slate-405 tracking-wider">Secure Signal Message</label>
+                    <textarea
+                      required
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder="Compose neural packet transmission details..."
+                      className="w-full bg-slate-50 dark:bg-slate-900/65 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white outline-none focus:border-cyber-cyan/40 h-28 resize-none leading-relaxed font-sans"
+                    />
+                  </div>
 
-                <button 
-                  onClick={() => setShowMessageModal(false)}
-                  className="w-full mt-4 py-3 bg-cyber-cyan hover:bg-cyan-405 text-space-900 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md"
-                >
-                  Acknowledge Signal
-                </button>
-              </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-955/40 border border-slate-150 dark:border-slate-850 text-left font-mono text-[9px] leading-relaxed text-slate-500 dark:text-slate-450 relative flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_6px_rgba(16,185,129,0.5)] animate-pulse" />
+                    <span>Neural P2P signal aligned. Bandwidth secured.</span>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={!messageText.trim()}
+                    className="w-full py-3 bg-cyber-cyan hover:bg-cyan-400 text-space-900 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
+                  >
+                    Transmit Signal
+                  </button>
+                </form>
+              )}
+
+              {messageSendState === 'sending' && (
+                <div className="space-y-6 text-center pt-8 pb-4">
+                  <div className="relative mx-auto w-16 h-16 flex items-center justify-center">
+                    <div className="absolute inset-0 border-4 border-cyber-cyan/15 rounded-full" />
+                    <div className="absolute inset-0 border-4 border-t-cyber-cyan border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
+                    <MessageSquare className="w-6 h-6 text-cyber-cyan animate-bounce" />
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <h4 className="font-sans font-black text-sm uppercase tracking-wider text-slate-800 dark:text-white">Broadcasting Signal...</h4>
+                    <p className="text-[10px] text-slate-450 font-mono">Modulating quantum frequency to target receiver terminal</p>
+                  </div>
+                </div>
+              )}
+
+              {messageSendState === 'success' && (
+                <div className="space-y-5 text-center pt-6">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-emerald-555/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                    <Check className="w-8 h-8 text-emerald-500 stroke-[3px]" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <h3 className="font-sans font-black text-base uppercase tracking-widest text-emerald-505 dark:text-emerald-450">
+                      Message Sent!
+                    </h3>
+                    <p className="text-xs text-slate-505 dark:text-slate-400 font-light leading-relaxed px-2">
+                      Your direct telepathic transmission has successfully bridged orbits and logged in <span className="font-mono font-bold text-cyber-cyan">@{username}</span>'s incoming neural inbox!
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-left font-mono text-[9px] leading-relaxed text-emerald-600 dark:text-emerald-450">
+                    <div className="font-bold uppercase tracking-wider mb-0.5">&gt; Quantum Receipt:</div>
+                    Signal delivered successfully over Gravity Hub channel.
+                  </div>
+
+                  <button 
+                    onClick={() => setShowMessageModal(false)}
+                    className="w-full mt-2 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-655 dark:text-slate-355 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-850"
+                  >
+                    Close Connection
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
