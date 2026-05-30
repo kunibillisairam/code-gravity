@@ -14,7 +14,6 @@ import Submissions from './components/Submissions';
 import ProfileDashboard from './components/ProfileDashboard';
 import PublicProfile from './components/PublicProfile';
 import PeerChat from './components/PeerChat';
-import ChartsDashboard from './components/ChartsDashboard';
 import { chatService } from './services/chatService';
 import { apiService } from './services/api';
 import { getVirtualProblem } from './data/virtualProblems';
@@ -359,7 +358,6 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
-          onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           unreadMessagesCount={unreadMessagesCount}
@@ -389,7 +387,6 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
-          onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           unreadMessagesCount={unreadMessagesCount}
@@ -427,7 +424,6 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
-          onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           unreadMessagesCount={unreadMessagesCount}
@@ -468,7 +464,6 @@ function App() {
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
-          onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           unreadMessagesCount={0}
@@ -481,35 +476,6 @@ function App() {
     );
   }
 
-  // If in Charts dashboard view, render Navbar shell + Charts Dashboard
-  if (view === 'charts') {
-    return (
-      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
-        <Navbar 
-          activeSection="" 
-          setActiveSection={() => {}} 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogoutClick={handleLogout}
-          onSubmissionsClick={() => setView('submissions')}
-          onProfileClick={() => setView('profile')}
-          onNavClick={handleNavigateToSection}
-          onChatClick={() => setView('chat')}
-          onChartsClick={() => setView('charts')}
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          unreadMessagesCount={unreadMessagesCount}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={handleMarkAllRead}
-          onClearNotifications={handleClearNotifications}
-        />
-        <ChartsDashboard onBack={() => setView('landing')} user={user} />
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white">
@@ -533,7 +499,6 @@ function App() {
         onProfileClick={() => setView('profile')}
         onNavClick={handleNavigateToSection}
         onChatClick={() => setView('chat')}
-        onChartsClick={() => setView('charts')}
         notifications={notifications}
         unreadNotificationsCount={unreadNotificationsCount}
         unreadMessagesCount={unreadMessagesCount}
