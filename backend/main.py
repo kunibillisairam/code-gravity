@@ -53,6 +53,10 @@ async def startup_db_client():
         await db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
         print("MongoDB unique index applied for email.")
         
+        # Add index for fast leaderboard sorting by XP
+        await db.users.create_index([("progress.xp", pymongo.DESCENDING)])
+        print("MongoDB descending index applied for progress.xp.")
+        
         # Seed topic chat rooms for Peer Learning
         from datetime import datetime
         chat_rooms = [
@@ -494,8 +498,27 @@ async def follow_user(username: str, current_user: dict = Depends(get_current_us
         "followers_count": new_count
     }
 
+# In-memory leaderboard cache to prevent database load
+LEADERBOARD_CACHE = {
+    "data": None,
+    "last_updated": None
+}
+CACHE_TTL_SECONDS = 30
+
 @app.get("/leaderboard")
 async def get_leaderboard():
+    global LEADERBOARD_CACHE
+    from datetime import datetime
+    
+    now = datetime.utcnow()
+    
+    # Check if cache is still fresh
+    if LEADERBOARD_CACHE["data"] is not None and LEADERBOARD_CACHE["last_updated"] is not None:
+        elapsed = (now - LEADERBOARD_CACHE["last_updated"]).total_seconds()
+        if elapsed < CACHE_TTL_SECONDS:
+            return LEADERBOARD_CACHE["data"]
+
+    # If cache is stale or empty, retrieve top 200 records using the indexed cursor
     cursor = db.users.find({}, {
         "username": 1,
         "profile.display_name": 1,
@@ -506,7 +529,7 @@ async def get_leaderboard():
         "progress.level": 1,
         "progress.solved_problems": 1,
         "progress.badges": 1
-    }).sort("progress.xp", -1)
+    }).sort("progress.xp", -1).limit(200)
     
     leaderboard = []
     rank = 1
@@ -549,6 +572,10 @@ async def get_leaderboard():
         })
         rank += 1
         
+    # Update cache
+    LEADERBOARD_CACHE["data"] = leaderboard
+    LEADERBOARD_CACHE["last_updated"] = now
+    
     return leaderboard
 
 from datetime import datetime
