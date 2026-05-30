@@ -223,7 +223,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
       }
 
       if (allPassed) {
-        localStorage.setItem(`solved_${problem.id}`, 'true');
+        const userScope = activeUser || 'anonymous';
+        localStorage.setItem(`solved_${userScope}_${problem.id}`, 'true');
         setShowSubmitModal(true);
       }
     } catch(e) {

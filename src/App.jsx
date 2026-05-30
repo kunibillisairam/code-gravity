@@ -15,6 +15,7 @@ import ProfileDashboard from './components/ProfileDashboard';
 import PublicProfile from './components/PublicProfile';
 import PeerChat from './components/PeerChat';
 import { chatService } from './services/chatService';
+import { apiService } from './services/api';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
@@ -29,6 +30,26 @@ function App() {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [globalToasts, setGlobalToasts] = useState([]);
   const token = localStorage.getItem('codegravity_token');
+
+  // Sync solved problems from backend to local storage scoped keys upon login / mount
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const syncSolvedProblems = async () => {
+      try {
+        const profileData = await apiService.getUserProfile();
+        if (profileData && profileData.progress && Array.isArray(profileData.progress.solved_problems)) {
+          profileData.progress.solved_problems.forEach((probId) => {
+            localStorage.setItem(`solved_${user}_${probId}`, 'true');
+          });
+        }
+      } catch (err) {
+        console.error('Failed to sync solved problems from backend:', err);
+      }
+    };
+
+    syncSolvedProblems();
+  }, [user, token]);
 
   // Load persistent notifications
   useEffect(() => {

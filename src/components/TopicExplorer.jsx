@@ -125,9 +125,10 @@ const TopicExplorer = ({ onSolveProblem }) => {
     clearAllFilters();
   }, [activeLang]);
 
-  // Read solved state directly from localStorage closed loop
+  // Read solved state directly from localStorage closed loop (scoped per user)
   const getProblemStatus = (probId) => {
-    return localStorage.getItem(`solved_${probId}`) === 'true' ? 'Solved' : 'Unsolved';
+    const activeUser = localStorage.getItem('codegravity_user') || 'anonymous';
+    return localStorage.getItem(`solved_${activeUser}_${probId}`) === 'true' ? 'Solved' : 'Unsolved';
   };
 
   const getProblemDifficulty = (title) => {
