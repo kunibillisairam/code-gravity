@@ -271,6 +271,24 @@ async def google_auth(request: GoogleLoginRequest):
     access_token = create_access_token(data={"sub": email})
     return {"access_token": access_token, "token_type": "bearer", "username": username}
 
+async def resolve_usernames(usernames: list) -> list:
+    if not usernames:
+        return []
+    cursor = db.users.find({"username": {"$in": usernames}}, {
+        "username": 1,
+        "profile.display_name": 1,
+        "profile.profile_pic": 1
+    })
+    resolved = []
+    async for u in cursor:
+        prof = u.get("profile") or {}
+        resolved.append({
+            "username": u["username"],
+            "display_name": prof.get("display_name") or u["username"],
+            "profile_pic": prof.get("profile_pic") or ""
+        })
+    return resolved
+
 @app.get("/profile")
 async def get_profile(current_user: dict = Depends(get_current_user)):
     profile = current_user.get("profile") or {
@@ -297,11 +315,16 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         "contribution_heatmap": {}
     }
     
+    followers_resolved = await resolve_usernames(current_user.get("followers", []))
+    following_resolved = await resolve_usernames(current_user.get("following", []))
+    
     return {
         "username": current_user.get("username"),
         "email": current_user.get("email"),
         "profile": profile,
-        "progress": progress
+        "progress": progress,
+        "followers": followers_resolved,
+        "following": following_resolved
     }
 
 @app.put("/profile")
@@ -438,6 +461,9 @@ async def get_public_profile(username: str, request: Request):
         except Exception:
             pass
             
+    followers_resolved = await resolve_usernames(followers)
+    following_resolved = await resolve_usernames(following)
+            
     return {
         "username": target_user.get("username"),
         "profile": profile,
@@ -446,6 +472,8 @@ async def get_public_profile(username: str, request: Request):
         "strongest_topics": strongest_topics,
         "followers_count": len(followers),
         "following_count": len(following),
+        "followers": followers_resolved,
+        "following": following_resolved,
         "is_following": is_following
     }
 

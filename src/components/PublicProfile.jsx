@@ -41,7 +41,7 @@ const getRankTitle = (solvedCount) => {
   return "Platinum";
 };
 
-const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
+const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserClick }) => {
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,6 +53,32 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
   const [messageSendState, setMessageSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
   const [toastMessage, setToastMessage] = useState('');
   const [messageStatus, setMessageStatus] = useState(null); // null | 'unseen' | 'seen'
+
+  // Followers & Following Modal States
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState('followers'); // 'followers' | 'following'
+  const [followSearchQuery, setFollowSearchQuery] = useState('');
+
+  const handleOpenFollowModal = (type) => {
+    setFollowModalType(type);
+    setFollowSearchQuery('');
+    setShowFollowModal(true);
+  };
+
+  const handleMessageUser = (targetUsername) => {
+    localStorage.setItem('active_chat_recipient', targetUsername);
+    setShowFollowModal(false);
+    if (setView) {
+      setView('chat');
+    }
+  };
+
+  const handleUserClick = (targetUsername) => {
+    setShowFollowModal(false);
+    if (onUserClick) {
+      onUserClick(targetUsername);
+    }
+  };
 
   // Calendar State
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -254,6 +280,15 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
   }
 
   const { profile, progress, faction, strongest_topics, following_count } = profileData;
+
+  const targetList = followModalType === 'followers' 
+    ? (profileData?.followers || []) 
+    : (profileData?.following || []);
+
+  const filteredList = targetList.filter(u => 
+    u.username.toLowerCase().includes(followSearchQuery.toLowerCase()) ||
+    u.display_name.toLowerCase().includes(followSearchQuery.toLowerCase())
+  );
 
   // Level XP progress calculation
   const xp = progress.xp || 0;
@@ -592,15 +627,21 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
                 <span className="text-xl font-black text-cyber-purple mt-1 uppercase">{rank}</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Followers</span>
-                <span className="text-xl font-black text-slate-805 dark:text-white mt-1">{followersCount}</span>
-              </div>
+              <button 
+                onClick={() => handleOpenFollowModal('followers')}
+                className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
+              >
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Followers</span>
+                <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{followersCount}</span>
+              </button>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Following</span>
-                <span className="text-xl font-black text-slate-805 dark:text-white mt-1">{following_count}</span>
-              </div>
+              <button 
+                onClick={() => handleOpenFollowModal('following')}
+                className="p-4 rounded-2xl bg-[#ffffff] dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
+              >
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Following</span>
+                <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{following_count}</span>
+              </button>
             </div>
 
             {/* Level progression cards */}
@@ -1034,6 +1075,129 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
               <X className="w-3.5 h-3.5" />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* FOLLOWERS / FOLLOWING INTERACTIVE MODAL */}
+      <AnimatePresence>
+        {showFollowModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Glassmorphic Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFollowModal(false)}
+              className="absolute inset-0 bg-[#04060a]/80 backdrop-blur-sm"
+            />
+
+            {/* Modal Body */}
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="w-full max-w-sm bg-white dark:bg-[#0c0f1a] border border-slate-200 dark:border-slate-850 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] z-10"
+            >
+              {/* Branded futuristic line top */}
+              <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
+              
+              {/* Header */}
+              <div className="p-5 pb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-850/60">
+                <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-2">
+                  <span>{followModalType === 'followers' ? 'Orbital Followers' : 'Orbital Following'}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[10px] font-mono text-cyber-cyan">
+                    {targetList.length}
+                  </span>
+                </h3>
+                <button 
+                  onClick={() => setShowFollowModal(false)}
+                  className="p-1.5 bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl hover:border-rose-500/40 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-4 pb-2">
+                <div className="relative flex items-center">
+                  <Compass className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                  <input 
+                    type="text" 
+                    value={followSearchQuery} 
+                    onChange={(e) => setFollowSearchQuery(e.target.value)} 
+                    placeholder="Search developers in grid..."
+                    className="w-full bg-slate-50 dark:bg-slate-900/65 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 dark:text-white outline-none focus:border-cyber-cyan/40 leading-relaxed font-sans placeholder-slate-400"
+                  />
+                  {followSearchQuery && (
+                    <button 
+                      onClick={() => setFollowSearchQuery('')}
+                      className="absolute right-3 text-slate-400 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* List items */}
+              <div className="p-4 pt-1 overflow-y-auto max-h-[320px] space-y-2.5 scrollbar-thin scrollbar-thumb-slate-800">
+                {filteredList.length > 0 ? (
+                  filteredList.map((u) => (
+                    <div 
+                      key={u.username}
+                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50/50 dark:bg-slate-900/10 hover:bg-slate-50 dark:hover:bg-slate-900/40 border border-transparent hover:border-slate-100 dark:hover:border-slate-850/50 transition-all group"
+                    >
+                      {/* Left side: Avatar + Username info */}
+                      <button 
+                        onClick={() => handleUserClick(u.username)}
+                        className="flex items-center gap-3 text-left focus:outline-none bg-transparent border-0 cursor-pointer p-0 shrink-0"
+                      >
+                        {u.profile_pic ? (
+                          <img 
+                            src={u.profile_pic} 
+                            alt={u.display_name} 
+                            className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-800 object-cover shadow-sm shrink-0"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-purple flex items-center justify-center text-space-900 font-black text-sm shadow shrink-0 select-none">
+                            {u.display_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-black text-slate-800 dark:text-white truncate group-hover:text-cyber-cyan transition-colors leading-tight">
+                            {u.display_name}
+                          </h4>
+                          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                            @{u.username}
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Right side: Action - message */}
+                      <button 
+                        onClick={() => handleMessageUser(u.username)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-cyber-cyan/10 hover:bg-cyber-cyan text-cyber-cyan hover:text-space-900 border border-cyber-cyan/35 rounded-lg text-[10px] font-sans font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:scale-[1.03]"
+                      >
+                        <MessageSquare className="w-3 h-3 shrink-0 stroke-[2.5px]" />
+                        <span>Message</span>
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-505 font-light italic leading-normal">
+                    No developers found in quadrant grid.
+                  </div>
+                )}
+              </div>
+
+              {/* Secure orbital footer */}
+              <div className="p-3 bg-slate-50/50 dark:bg-slate-900/25 border-t border-slate-100 dark:border-slate-850/60 text-center font-mono text-[8px] tracking-wider text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyber-cyan shrink-0 animate-pulse shadow-[0_0_4px_rgba(0,214,230,0.5)]" />
+                <span>Secure live neural signal connection active</span>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

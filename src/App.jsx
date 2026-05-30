@@ -346,7 +346,15 @@ function App() {
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
         />
-        <ProfileDashboard onBack={() => setView('landing')} />
+        <ProfileDashboard 
+          onBack={() => setView('landing')} 
+          setView={setView} 
+          onUserClick={(uname) => {
+            setSelectedUsername(uname);
+            setView('public-profile');
+            window.scrollTo({ top: 0 });
+          }}
+        />
         <Footer />
       </div>
     );
@@ -377,8 +385,14 @@ function App() {
         <PublicProfile 
           username={selectedUsername} 
           onBack={() => setView('landing')} 
+          setView={setView}
           user={user}
           onLoginClick={() => setShowAuthModal(true)}
+          onUserClick={(uname) => {
+            setSelectedUsername(uname);
+            setView('public-profile');
+            window.scrollTo({ top: 0 });
+          }}
         />
         <Footer />
       </div>
