@@ -44,6 +44,15 @@ export const chatService = {
     return response.data;
   },
 
+  sendDirectMessage: async (conversationId, content) => {
+    const response = await axios.post(
+      `${API_BASE_URL}/chat/conversations/${conversationId}/messages`,
+      { content, msg_type: 'text' },
+      { headers: getHeaders() }
+    );
+    return response.data;
+  },
+
   getUsers: async () => {
     const response = await axios.get(`${API_BASE_URL}/chat/users`, { headers: getHeaders() });
     return response.data;

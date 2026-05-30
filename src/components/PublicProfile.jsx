@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
+import { chatService } from '../services/chatService';
 import { 
   ChevronLeft, Loader2, Award, Zap, Flame, Calendar, 
   Code2, User, Globe, BookOpen, 
@@ -92,20 +93,29 @@ const PublicProfile = ({ username, onBack, user, onLoginClick }) => {
     }
   }, [showMessageModal]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!messageText.trim()) return;
 
     setMessageSendState('sending');
-    setTimeout(() => {
+    try {
+      // 1. Create or retrieve direct conversation with this user
+      const conv = await chatService.createConversation(username);
+      // 2. Deliver message securely via REST endpoint
+      await chatService.sendDirectMessage(conv.id, messageText);
+      
       setMessageSendState('success');
       setMessageStatus('unseen');
       
-      // Simulate target user seeing the transmission after 8 seconds
+      // Transition to seen status indicator after 8 seconds as configured
       setTimeout(() => {
         setMessageStatus('seen');
       }, 8000);
-    }, 1200);
+    } catch (err) {
+      console.error("Failed to transmit direct message:", err);
+      alert(err.response?.data?.detail || "Neural signal transmission failed. Please ensure you are logged in.");
+      setMessageSendState('idle');
+    }
   };
 
   const handleFollowToggle = async () => {

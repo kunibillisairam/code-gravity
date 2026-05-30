@@ -248,6 +248,12 @@ async def get_conversation_messages(conversation_id: str, current_user: dict = D
         {"$set": {f"unread_counts.{my_username}": 0}}
     )
     
+    # Mark individual messages in this conversation as read
+    await db.chat_messages.update_many(
+        {"conversation_id": conversation_id, "sender_username": {"$ne": my_username}},
+        {"$set": {"is_read": True}}
+    )
+    
     return messages
 
 @router.post("/conversations")
@@ -286,6 +292,89 @@ async def create_conversation(req: ConversationCreate, current_user: dict = Depe
     new_conv["_id"] = res.inserted_id
     return serialize_doc(new_conv)
 
+@router.post("/conversations/{conversation_id}/messages")
+async def send_rest_message(conversation_id: str, payload: MessageSend, current_user: dict = Depends(get_current_user)):
+    username = current_user["username"]
+    
+    # 1. Verify user is a participant of the conversation
+    conv = await db.conversations.find_one({"_id": ObjectId(conversation_id), "participants": username})
+    if not conv:
+        raise HTTPException(status_code=403, detail="Not authorized to participate in this conversation")
+        
+    # 2. Moderate message for spam/toxicity/reasoning
+    moderation_status, final_content, final_snippet = moderate_message(username, payload)
+    
+    if moderation_status == "blocked":
+        raise HTTPException(status_code=400, detail=final_content)
+        
+    # 3. Store message in DB
+    db_message = {
+        "sender_username": username,
+        "sender_avatar": current_user.get("profile", {}).get("profile_pic", ""),
+        "content": final_content,
+        "type": payload.type,
+        "moderation_status": "approved",
+        "created_at": datetime.utcnow(),
+        "conversation_id": conversation_id
+    }
+    if final_snippet:
+        db_message["code_snippet"] = final_snippet
+        
+    res = await db.chat_messages.insert_one(db_message)
+    db_message["_id"] = res.inserted_id
+    
+    serialized_msg = serialize_doc(db_message)
+    
+    # 4. Update conversation status and increment unread counts
+    update_unread = {}
+    for p in conv["participants"]:
+        if p != username:
+            update_unread[f"unread_counts.{p}"] = conv.get("unread_counts", {}).get(p, 0) + 1
+            
+            # Write notification in DB
+            new_notif = {
+                "recipient_username": p,
+                "sender_username": username,
+                "type": "message",
+                "title": "New Message",
+                "text": f"@{username} sent you a message: {final_content[:30]}..." if final_content else f"@{username} shared code logic.",
+                "link": { "view": "chat", "param": username },
+                "is_read": False,
+                "created_at": datetime.utcnow()
+            }
+            res_notif = await db.notifications.insert_one(new_notif)
+            new_notif["_id"] = res_notif.inserted_id
+            
+            # Dispatch WebSocket global notification
+            await manager.send_to_user(p, {
+                "type": "global_notification",
+                **serialize_doc(new_notif)
+            })
+            
+    await db.conversations.update_one(
+        {"_id": ObjectId(conversation_id)},
+        {
+            "$set": {
+                "last_message_at": datetime.utcnow(),
+                "last_message_text": final_content[:50] if final_content else "Shared code logic."
+            },
+            "$inc": update_unread
+        }
+    )
+    
+    # Send message event to other participants if they are online in chat
+    for p in conv["participants"]:
+        await manager.send_to_user(p, {"type": "message", **serialized_msg})
+        if p != username:
+            await manager.send_to_user(p, {
+                "type": "notification",
+                "conversation_id": conversation_id,
+                "sender": username,
+                "text": final_content[:60] if final_content else "Shared code logic."
+            })
+            
+    return serialized_msg
+
 @router.get("/users")
 async def get_chat_users(current_user: dict = Depends(get_current_user)):
     my_username = current_user["username"]
@@ -321,6 +410,11 @@ async def mark_as_read(conversation_id: str, current_user: dict = Depends(get_cu
     await db.conversations.update_one(
         {"_id": ObjectId(conversation_id)},
         {"$set": {f"unread_counts.{my_username}": 0}}
+    )
+    # Mark individual messages as read in DB
+    await db.chat_messages.update_many(
+        {"conversation_id": conversation_id, "sender_username": {"$ne": my_username}},
+        {"$set": {"is_read": True}}
     )
     return {"status": "success"}
 
@@ -464,7 +558,8 @@ async def chat_websocket_endpoint(websocket: WebSocket, token: str = None):
                     "content": final_content,
                     "type": msg_type,
                     "moderation_status": "approved",
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow(),
+                    "is_read": False if conversation_id else True
                 }
                 
                 if room_id:

@@ -487,8 +487,7 @@ const PeerChat = ({ onBack }) => {
                 <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            <div className="space-y-0.5">
+            <div className="space-y-1 mt-1">
               {conversations.map((conv) => {
                 const other = conv.participants.find(p => p !== myUsername);
                 const isSelected = activeTab.type === 'dm' && activeTab.id === conv.id;
@@ -498,31 +497,54 @@ const PeerChat = ({ onBack }) => {
                   <button
                     key={conv.id}
                     onClick={() => setActiveTab({ type: 'dm', id: conv.id, name: other })}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all ${
+                    className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition-all text-left relative overflow-hidden select-none border ${
                       isSelected
-                        ? 'bg-slate-800 text-cyber-purple border border-cyber-purple/30'
-                        : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
+                        ? 'bg-gradient-to-r from-cyber-purple/15 to-transparent border-cyber-purple/20 text-white shadow-[0_0_12px_rgba(180,0,255,0.04)]'
+                        : 'border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200'
                     }`}
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <div className="relative shrink-0">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-cyber-cyan to-cyber-purple flex items-center justify-center text-[10px] text-space-900 font-black">
-                          {other?.charAt(0).toUpperCase()}
-                        </div>
-                        {/* Presence Dot */}
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0a0d17] ${
-                          conv.other_participant_status === 'online' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-slate-650'
-                        }`} />
+                    {/* Active strip */}
+                    {isSelected && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyber-purple" />
+                    )}
+                    
+                    {/* User Avatar with Presence Dot */}
+                    <div className="relative shrink-0 mt-0.5">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyber-cyan/20 to-cyber-purple/20 border border-slate-700 flex items-center justify-center text-[11px] font-black text-white uppercase shadow-inner select-none">
+                        {other?.charAt(0).toUpperCase()}
                       </div>
-                      <span className="truncate">@{other}</span>
+                      {/* Presence Dot */}
+                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-[#0a0d17] ${
+                        conv.other_participant_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-600'
+                      }`} />
                     </div>
 
-                    {/* Unread badge */}
-                    {unread > 0 && (
-                      <span className="bg-cyber-magenta text-white font-extrabold text-[9px] px-1.5 py-0.5 rounded-full animate-bounce">
-                        {unread}
-                      </span>
-                    )}
+                    {/* Metadata & Message Text Snippet */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11.5px] font-black truncate ${isSelected ? 'text-white' : 'text-slate-350'}`}>
+                          @{other}
+                        </span>
+                        <span className="text-[8px] font-mono text-slate-500 font-bold">
+                          {conv.last_message_at ? new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between gap-1.5 mt-0.5">
+                        <p className={`text-[10px] truncate flex-1 leading-normal ${
+                          unread > 0 ? 'text-cyber-purple font-black' : 'text-slate-500 font-medium'
+                        }`}>
+                          {conv.last_message_text || 'No messages yet.'}
+                        </p>
+                        
+                        {/* Unread count badge */}
+                        {unread > 0 && (
+                          <span className="bg-cyber-magenta text-white font-black text-[8px] min-w-[14px] h-[14px] px-1 rounded-full flex items-center justify-center shrink-0">
+                            {unread}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </button>
                 );
               })}
@@ -629,96 +651,159 @@ const PeerChat = ({ onBack }) => {
               );
             }
 
-            // Normal and styled message cards
+            // Normal and styled message cards (aligned left vs right like WhatsApp/Instagram)
             return (
-              <div key={msg.id || index} className={`flex gap-3 justify-start items-start`}>
-                
-                {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyber-cyan to-cyber-purple flex items-center justify-center text-xs font-black text-space-900 shrink-0 select-none">
-                  {msg.sender_username.charAt(0).toUpperCase()}
-                </div>
+              <div key={msg.id || index} className={`flex w-full mb-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                {isMe ? (
+                  /* Outgoing message (Right side, WhatsApp/Instagram speech bubble style) */
+                  <div className="flex flex-col items-end max-w-[70%] text-right group/msg relative">
+                    <div className="bg-gradient-to-br from-cyber-cyan/20 to-cyber-cyan/5 border border-cyber-cyan/25 text-slate-100 rounded-2xl rounded-tr-none px-4 py-2.5 shadow-[0_0_12px_rgba(0,240,255,0.03)] text-left select-text">
+                      
+                      {isHint ? (
+                        <div className="p-4 border border-cyber-cyan/40 bg-[#0a1622] rounded-xl my-1 relative shadow-lg overflow-hidden space-y-2 max-w-xl">
+                          <div className="absolute top-0 right-0 px-2 py-0.5 bg-cyber-cyan text-slate-900 font-extrabold text-[8px] uppercase tracking-widest rounded-bl">
+                            HINT REQUEST
+                          </div>
+                          <p className="text-xs font-black text-cyber-cyan tracking-wide flex items-center gap-1.5">
+                            <HelpCircle className="w-4 h-4" />
+                            Topic: {msg.content.split('\n\n')[0].replace('💡 **[Hint Request: ', '').replace(']**', '')}
+                          </p>
+                          <div className="text-[11px] space-y-2.5 mt-2 border-t border-slate-800/80 pt-2.5">
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">My Thought Logic:</span>
+                              <p className="text-slate-300 italic">{msg.content.includes('**My Approach / Logic:**') ? msg.content.split('**My Approach / Logic:**')[1].split('**Where I am Stuck / Confused:**')[0].trim() : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Stuck Point:</span>
+                              <p className="text-slate-200 font-bold">{msg.content.includes('**Where I am Stuck / Confused:**') ? msg.content.split('**Where I am Stuck / Confused:**')[1].trim() : ''}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : isCodeDiscuss && msg.code_snippet ? (
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 my-1.5 max-w-4xl">
+                          <div className="md:col-span-5 p-4 border border-cyber-purple/45 bg-[#140c1d] rounded-xl flex flex-col justify-between shadow-lg">
+                            <div>
+                              <div className="flex items-center gap-1.5 text-cyber-purple font-extrabold text-[10px] uppercase tracking-widest mb-2">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                Algorithm & Logic
+                              </div>
+                              <p className="text-[11px] text-slate-300 leading-relaxed italic whitespace-pre-wrap">
+                                "{msg.code_snippet.explanation}"
+                              </p>
+                            </div>
+                            <div className="mt-3 pt-2.5 border-t border-slate-900 flex items-center justify-between">
+                              <span className="text-[9px] text-slate-500 font-mono font-bold">EXPLANATION CARD</span>
+                              <Check className="w-3.5 h-3.5 text-cyber-cyan" />
+                            </div>
+                          </div>
+                          <div className="md:col-span-7 border border-slate-800 rounded-xl overflow-hidden bg-[#070911]/90 shadow-2xl flex flex-col justify-between">
+                            <div className="px-3.5 py-1.5 bg-[#05060b] border-b border-slate-850 flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Terminal className="w-3.5 h-3.5 text-slate-400" />
+                                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">{msg.code_snippet.language}</span>
+                              </div>
+                              <span className="text-[9px] font-mono font-bold text-cyber-purple">SECURE SNIPPET</span>
+                            </div>
+                            <pre className="p-3.5 overflow-x-auto text-[10px] font-mono text-emerald-400 text-left bg-[#05060b]/40">
+                              <code>{msg.code_snippet.code}</code>
+                            </pre>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs leading-relaxed">{msg.content}</p>
+                      )}
 
-                <div className="flex-1 min-w-0 text-left space-y-1">
-                  
-                  {/* Name and time */}
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-xs font-black tracking-wide ${isMe ? 'text-cyber-cyan' : 'text-slate-200'}`}>
-                      @{msg.sender_username}
-                    </span>
-                    <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">
-                      {formatTime(msg.created_at)}
-                    </span>
+                    </div>
+                    {/* Read Receipt seen indicators */}
+                    <div className="flex items-center gap-1 mt-1 px-1.5 select-none">
+                      <span className="text-[8px] font-mono text-slate-550 font-bold uppercase tracking-wider">
+                        {formatTime(msg.created_at)}
+                      </span>
+                      {activeTab.type === 'dm' && (
+                        <div className="flex items-center shrink-0">
+                          <Check className={`w-3.5 h-3.5 ${msg.is_read ? 'text-cyber-cyan' : 'text-slate-650'}`} />
+                          <Check className={`w-3.5 h-3.5 -ml-1.5 ${msg.is_read ? 'text-cyber-cyan' : 'text-slate-650'}`} />
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  {/* Message body */}
-                  <div className="max-w-4xl text-xs text-slate-300 leading-relaxed font-sans whitespace-pre-wrap">
+                ) : (
+                  /* Incoming message (Left side, classic Instagram/WhatsApp dark bubble layout) */
+                  <div className="flex gap-2.5 justify-start items-start max-w-[70%] text-left">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyber-purple/20 to-cyber-cyan/20 border border-slate-700 flex items-center justify-center text-xs font-black text-slate-200 shrink-0 select-none shadow-inner">
+                      {msg.sender_username.charAt(0).toUpperCase()}
+                    </div>
                     
-                    {/* Render Hint Card */}
-                    {isHint ? (
-                      <div className="p-4 border border-cyber-cyan/40 bg-[#0a1622] rounded-xl my-1 relative shadow-lg overflow-hidden space-y-2">
-                        <div className="absolute top-0 right-0 px-2 py-0.5 bg-cyber-cyan text-slate-900 font-extrabold text-[8px] uppercase tracking-widest rounded-bl">
-                          HINT REQUEST
-                        </div>
-                        <p className="text-xs font-black text-cyber-cyan tracking-wide flex items-center gap-1.5">
-                          <HelpCircle className="w-4 h-4" />
-                          Topic: {msg.content.split('\n\n')[0].replace('💡 **[Hint Request: ', '').replace(']**', '')}
-                        </p>
-                        <div className="text-[11px] space-y-2.5 mt-2 border-t border-slate-800/80 pt-2.5">
-                          <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">My Thought Logic:</span>
-                            <p className="text-slate-300 italic">{msg.content.includes('**My Approach / Logic:**') ? msg.content.split('**My Approach / Logic:**')[1].split('**Where I am Stuck / Confused:**')[0].trim() : ''}</p>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Stuck Point:</span>
-                            <p className="text-slate-200 font-bold">{msg.content.includes('**Where I am Stuck / Confused:**') ? msg.content.split('**Where I am Stuck / Confused:**')[1].trim() : ''}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : isCodeDiscuss && msg.code_snippet ? (
-                      /* Render Code Discussion Card with Mandatory Explanation Sidecard */
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 my-1.5">
+                    <div className="flex flex-col items-start">
+                      {/* Name Header */}
+                      <span className="text-[9px] font-black text-slate-505 mb-0.5 tracking-wider uppercase px-1.5 select-none">
+                        @{msg.sender_username}
+                      </span>
+                      
+                      <div className="bg-[#121626]/80 border border-slate-800/80 text-slate-200 rounded-2xl rounded-tl-none px-4 py-2.5 text-left select-text shadow-sm">
                         
-                        {/* Explanation Card */}
-                        <div className="md:col-span-5 p-4 border border-cyber-purple/45 bg-[#140c1d] rounded-xl flex flex-col justify-between shadow-lg">
-                          <div>
-                            <div className="flex items-center gap-1.5 text-cyber-purple font-extrabold text-[10px] uppercase tracking-widest mb-2">
-                              <Sparkles className="w-3.5 h-3.5" />
-                              Algorithm & Logic
+                        {isHint ? (
+                          <div className="p-4 border border-cyber-cyan/40 bg-[#0a1622] rounded-xl my-1 relative shadow-lg overflow-hidden space-y-2 max-w-xl">
+                            <div className="absolute top-0 right-0 px-2 py-0.5 bg-cyber-cyan text-slate-900 font-extrabold text-[8px] uppercase tracking-widest rounded-bl">
+                              HINT REQUEST
                             </div>
-                            <p className="text-[11px] text-slate-300 leading-relaxed italic whitespace-pre-wrap">
-                              "{msg.code_snippet.explanation}"
+                            <p className="text-xs font-black text-cyber-cyan tracking-wide flex items-center gap-1.5">
+                              <HelpCircle className="w-4 h-4" />
+                              Topic: {msg.content.split('\n\n')[0].replace('💡 **[Hint Request: ', '').replace(']**', '')}
                             </p>
-                          </div>
-                          <div className="mt-3 pt-2.5 border-t border-slate-900 flex items-center justify-between">
-                            <span className="text-[9px] text-slate-500 font-mono font-bold">EXPLANATION CARD</span>
-                            <Check className="w-3.5 h-3.5 text-cyber-cyan" />
-                          </div>
-                        </div>
-
-                        {/* Code Block Card */}
-                        <div className="md:col-span-7 border border-slate-800 rounded-xl overflow-hidden bg-[#070911]/90 shadow-2xl flex flex-col justify-between">
-                          <div className="px-3.5 py-1.5 bg-[#05060b] border-b border-slate-850 flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">{msg.code_snippet.language}</span>
+                            <div className="text-[11px] space-y-2.5 mt-2 border-t border-slate-800/80 pt-2.5">
+                              <div>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">My Thought Logic:</span>
+                                <p className="text-slate-300 italic">{msg.content.includes('**My Approach / Logic:**') ? msg.content.split('**My Approach / Logic:**')[1].split('**Where I am Stuck / Confused:**')[0].trim() : ''}</p>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Stuck Point:</span>
+                                <p className="text-slate-200 font-bold">{msg.content.includes('**Where I am Stuck / Confused:**') ? msg.content.split('**Where I am Stuck / Confused:**')[1].trim() : ''}</p>
+                              </div>
                             </div>
-                            <span className="text-[9px] font-mono font-bold text-cyber-purple">SECURE SNIPPET</span>
                           </div>
-                          <pre className="p-3.5 overflow-x-auto text-[10px] font-mono text-emerald-400 text-left bg-[#05060b]/40">
-                            <code>{msg.code_snippet.code}</code>
-                          </pre>
-                        </div>
+                        ) : isCodeDiscuss && msg.code_snippet ? (
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 my-1.5 max-w-4xl">
+                            <div className="md:col-span-5 p-4 border border-cyber-purple/45 bg-[#140c1d] rounded-xl flex flex-col justify-between shadow-lg">
+                              <div>
+                                <div className="flex items-center gap-1.5 text-cyber-purple font-extrabold text-[10px] uppercase tracking-widest mb-2">
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  Algorithm & Logic
+                                </div>
+                                <p className="text-[11px] text-slate-300 leading-relaxed italic whitespace-pre-wrap">
+                                  "{msg.code_snippet.explanation}"
+                                </p>
+                              </div>
+                              <div className="mt-3 pt-2.5 border-t border-slate-900 flex items-center justify-between">
+                                <span className="text-[9px] text-slate-500 font-mono font-bold">EXPLANATION CARD</span>
+                                <Check className="w-3.5 h-3.5 text-cyber-cyan" />
+                              </div>
+                            </div>
+                            <div className="md:col-span-7 border border-slate-800 rounded-xl overflow-hidden bg-[#070911]/90 shadow-2xl flex flex-col justify-between">
+                              <div className="px-3.5 py-1.5 bg-[#05060b] border-b border-slate-850 flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <Terminal className="w-3.5 h-3.5 text-slate-400" />
+                                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">{msg.code_snippet.language}</span>
+                                </div>
+                                <span className="text-[9px] font-mono font-bold text-cyber-purple">SECURE SNIPPET</span>
+                              </div>
+                              <pre className="p-3.5 overflow-x-auto text-[10px] font-mono text-emerald-400 text-left bg-[#05060b]/40">
+                                <code>{msg.code_snippet.code}</code>
+                              </pre>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs leading-relaxed">{msg.content}</p>
+                        )}
 
                       </div>
-                    ) : (
-                      /* Standard Text */
-                      <p>{msg.content}</p>
-                    )}
-
+                      {/* Timestamp */}
+                      <span className="text-[8px] font-mono text-slate-550 font-bold uppercase tracking-wider mt-1 px-1.5 select-none">
+                        {formatTime(msg.created_at)}
+                      </span>
+                    </div>
                   </div>
-
-                </div>
-
+                )}
               </div>
             );
           })}
