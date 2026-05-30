@@ -125,8 +125,8 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
     setMessageSendState('sending');
     try {
-      // 1. Create or retrieve direct conversation with this user
-      const conv = await chatService.createConversation(username);
+      // 1. Create or retrieve direct conversation with this user using unique database username
+      const conv = await chatService.createConversation(profileData.username);
       // 2. Deliver message securely via REST endpoint
       await chatService.sendDirectMessage(conv.id, messageText);
       
@@ -152,7 +152,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
     setIsActionLoading(true);
     try {
-      const res = await apiService.toggleFollowUser(username);
+      const res = await apiService.toggleFollowUser(profileData.username);
       setIsFollowing(res.status === 'followed');
       setFollowersCount(res.followers_count);
     } catch (err) {
