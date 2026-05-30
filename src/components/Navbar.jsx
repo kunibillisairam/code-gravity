@@ -105,20 +105,21 @@ const Navbar = ({
       {/* Theme & Auth Buttons */}
       <div className="flex items-center gap-4">
         {user ? (
-          <div className="flex items-center gap-3">
-            {/* Bell Notification Dropdown */}
-            <div className="relative">
+          <div className="flex items-center gap-2">
+            {/* Bell — Follows, Badges, System Alerts ONLY */}
+            <div className="relative group">
               <button
                 onClick={() => {
                   setNotifOpen(!notifOpen);
                   setDropdownOpen(false);
                 }}
-                className="relative p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] text-slate-550 dark:text-cyber-cyan hover:text-slate-900 bg-transparent cursor-pointer transition-all duration-200"
-                title="Notifications"
+                className="relative flex flex-col items-center gap-0.5 p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] bg-transparent cursor-pointer transition-all duration-200"
+                title="Activity Notifications (Follows, Badges)"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-4 h-4 text-slate-500 dark:text-cyber-cyan" />
+                <span className="text-[7px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 leading-none hidden sm:block">Activity</span>
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyber-magenta text-[8px] font-extrabold text-white animate-pulse">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyber-cyan text-[8px] font-extrabold text-slate-900 animate-pulse">
                     {unreadNotificationsCount}
                   </span>
                 )}
@@ -138,13 +139,15 @@ const Navbar = ({
                     >
                       {/* Header */}
                       <div className="px-4 pb-2 border-b border-slate-100 dark:border-slate-850 flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-350 tracking-wider">Notifications</span>
+                        <div className="flex items-center gap-1.5">
+                          <Bell className="w-3 h-3 text-cyber-cyan" />
+                          <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300 tracking-wider">Activity</span>
+                          <span className="text-[8px] text-slate-400 dark:text-slate-500 font-medium">(follows &amp; badges)</span>
+                        </div>
                         <div className="flex gap-2">
                           {Array.isArray(notifications) && notifications.length > 0 && (
                             <button
-                              onClick={() => {
-                                onMarkAllRead && onMarkAllRead();
-                              }}
+                              onClick={() => { onMarkAllRead && onMarkAllRead(); }}
                               className="text-[8px] font-bold text-cyber-cyan hover:text-cyber-purple transition-all uppercase tracking-wider cursor-pointer"
                             >
                               Read All
@@ -152,9 +155,7 @@ const Navbar = ({
                           )}
                           {Array.isArray(notifications) && notifications.length > 0 && (
                             <button
-                              onClick={() => {
-                                onClearNotifications && onClearNotifications();
-                              }}
+                              onClick={() => { onClearNotifications && onClearNotifications(); }}
                               className="text-[8px] font-bold text-rose-450 hover:text-rose-500 transition-all uppercase tracking-wider cursor-pointer flex items-center gap-0.5"
                             >
                               <Trash className="w-2.5 h-2.5" />
@@ -164,23 +165,23 @@ const Navbar = ({
                         </div>
                       </div>
 
-                      {/* Notifications List */}
+                      {/* Notifications List — message-type filtered out upstream */}
                       <div className="flex-1 overflow-y-auto py-1 divide-y divide-slate-50 dark:divide-slate-850/30">
                         {Array.isArray(notifications) && notifications.map((notif) => {
                           const isUnread = !notif.is_read;
                           
-                          // Determine Type Icon
+                          // Icon per type — no 'message' type appears here
                           let IconComponent = Bell;
                           let iconColorClass = "text-cyber-cyan";
-                          if (notif.type === 'message') {
-                            IconComponent = MessageSquare;
-                            iconColorClass = "text-cyber-magenta";
-                          } else if (notif.type === 'follower') {
+                          let dotColor = "bg-cyber-cyan shadow-[0_0_6px_#00f0ff]";
+                          if (notif.type === 'follower') {
                             IconComponent = UserPlus;
                             iconColorClass = "text-cyber-cyan";
+                            dotColor = "bg-cyber-cyan shadow-[0_0_6px_#00f0ff]";
                           } else if (notif.type === 'badge') {
                             IconComponent = Award;
                             iconColorClass = "text-cyber-purple";
+                            dotColor = "bg-cyber-purple shadow-[0_0_6px_#9b5cf6]";
                           }
 
                           return (
@@ -191,28 +192,25 @@ const Navbar = ({
                                 onNotificationClick(notif);
                               }}
                               className={`px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-[#121626]/80 flex items-start gap-2.5 cursor-pointer transition-colors ${
-                                isUnread ? 'bg-cyber-cyan/5 dark:bg-cyber-cyan/5' : ''
+                                isUnread ? 'bg-cyber-cyan/5' : ''
                               }`}
                             >
-                              {/* Left Icon Container */}
                               <div className={`p-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 ${iconColorClass}`}>
                                 <IconComponent className="w-3.5 h-3.5" />
                               </div>
-
-                              {/* Center Message details */}
                               <div className="flex-1 min-w-0 text-left">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-black text-slate-850 dark:text-slate-200 tracking-wide uppercase truncate block pr-1.5">
+                                  <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 tracking-wide uppercase truncate block pr-1.5">
                                     {notif.title}
                                   </span>
                                   {isUnread && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-cyber-cyan shadow-[0_0_6px_#00f0ff] shrink-0" />
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
                                   )}
                                 </div>
                                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
                                   {notif.text}
                                 </p>
-                                <span className="text-[7.5px] font-mono text-slate-450 dark:text-slate-500 mt-1 block">
+                                <span className="text-[7.5px] font-mono text-slate-400 dark:text-slate-500 mt-1 block">
                                   {new Date(notif.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                 </span>
                               </div>
@@ -222,8 +220,9 @@ const Navbar = ({
 
                         {(!Array.isArray(notifications) || notifications.length === 0) && (
                           <div className="p-8 text-center text-slate-500 flex flex-col items-center gap-2 select-none">
-                            <Sparkles className="w-6 h-6 text-slate-450 dark:text-slate-700 animate-pulse" />
+                            <Sparkles className="w-6 h-6 text-slate-400 dark:text-slate-700 animate-pulse" />
                             <p className="text-[10px] font-bold italic tracking-wide">All caught up! 🌌</p>
+                            <p className="text-[9px] text-slate-400">New follows &amp; badges appear here</p>
                           </div>
                         )}
                       </div>
@@ -233,17 +232,18 @@ const Navbar = ({
               </AnimatePresence>
             </div>
 
-            {/* Dedicated Chat Button */}
+            {/* Chat Button — Direct Messages ONLY */}
             <button
               onClick={() => {
                 onChatClick && onChatClick();
                 setNotifOpen(false);
                 setDropdownOpen(false);
               }}
-              className="relative p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] text-slate-550 dark:text-cyber-magenta hover:text-slate-900 bg-transparent cursor-pointer transition-all duration-200"
-              title="Messages"
+              className="relative flex flex-col items-center gap-0.5 p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] bg-transparent cursor-pointer transition-all duration-200"
+              title="Direct Messages"
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 text-slate-500 dark:text-cyber-magenta" />
+              <span className="text-[7px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 leading-none hidden sm:block">Messages</span>
               {unreadMessagesCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyber-magenta text-[8px] font-extrabold text-white animate-pulse">
                   {unreadMessagesCount}

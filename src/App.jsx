@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import { Bell } from 'lucide-react';
+import { Bell, MessageSquare } from 'lucide-react';
 import Features from './components/Features';
 import TopicExplorer from './components/TopicExplorer';
 import AIAssistant from './components/AIAssistant';
@@ -52,7 +52,9 @@ function App() {
     syncSolvedProblems();
   }, [user, token]);
 
-  // Load persistent notifications
+  // Load persistent notifications — split by type:
+  // Bell (🔔) = follower, badge, system alerts
+  // Chat (💬) = message-type notifications counted as unread DMs
   useEffect(() => {
     if (!user || !token) {
       setNotifications([]);
@@ -64,8 +66,10 @@ function App() {
       try {
         const list = await chatService.getNotifications();
         if (Array.isArray(list)) {
-          setNotifications(list);
-          const unreads = list.filter(n => !n.is_read).length;
+          // Bell only shows non-message notifications
+          const bellNotifs = list.filter(n => n.type !== 'message');
+          setNotifications(bellNotifs);
+          const unreads = bellNotifs.filter(n => !n.is_read).length;
           setUnreadNotificationsCount(unreads);
         } else {
           setNotifications([]);
@@ -127,27 +131,46 @@ function App() {
     return () => chatService.disconnect(handleDMEvent);
   }, [token, user, view]);
   // Hook real-time WebSocket global notifications
+  // Message-type → increments chat badge; everything else → bell
   useEffect(() => {
     if (!token || !user) return;
 
     const handleGlobalWebSocketEvent = (event) => {
       if (event.type === 'global_notification') {
-        setNotifications(prev => [event, ...prev]);
-        setUnreadNotificationsCount(prev => prev + 1);
+        if (event.notif_type === 'message' || event.type_tag === 'message' || (event.link && event.link.view === 'chat')) {
+          // This is a DM notification — route to chat button badge, not bell
+          if (view !== 'chat') {
+            setUnreadMessagesCount(prev => prev + 1);
+          }
+          // Still show a toast so user sees it
+          const toastId = Date.now();
+          setGlobalToasts(prev => [...prev, {
+            id: toastId,
+            title: event.title,
+            text: event.text,
+            link: event.link,
+            isMessage: true
+          }]);
+          setTimeout(() => {
+            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
+          }, 4000);
+        } else {
+          // Bell notification (follower, badge, system)
+          setNotifications(prev => [event, ...prev]);
+          setUnreadNotificationsCount(prev => prev + 1);
 
-        // Add toast
-        const toastId = Date.now();
-        setGlobalToasts(prev => [...prev, {
-          id: toastId,
-          title: event.title,
-          text: event.text,
-          link: event.link
-        }]);
-
-        // Auto-dismiss in 4s
-        setTimeout(() => {
-          setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
-        }, 4000);
+          const toastId = Date.now();
+          setGlobalToasts(prev => [...prev, {
+            id: toastId,
+            title: event.title,
+            text: event.text,
+            link: event.link,
+            isMessage: false
+          }]);
+          setTimeout(() => {
+            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
+          }, 4000);
+        }
       }
     };
 
@@ -156,7 +179,7 @@ function App() {
     return () => {
       chatService.disconnect(handleGlobalWebSocketEvent);
     };
-  }, [token, user]);
+  }, [token, user, view]);
 
   const handleNotificationClick = async (notif) => {
     try {
@@ -564,12 +587,29 @@ function App() {
                 }
                 setGlobalToasts(prev => prev.filter(t => t.id !== toast.id));
               }}
-              className="bg-[#0b0c16] border-l-4 border-cyber-cyan p-4 rounded-r-xl shadow-neon-cyan cursor-pointer w-80 solid-card solid-card-hover text-left flex items-start gap-3 select-none z-50"
+              className={`p-4 rounded-xl shadow-2xl cursor-pointer w-80 text-left flex items-start gap-3 select-none z-50 border-l-4 ${
+                toast.isMessage
+                  ? 'bg-white dark:bg-[#100b18] border-cyber-magenta shadow-[0_0_20px_rgba(255,0,255,0.15)]'
+                  : 'bg-white dark:bg-[#080f1a] border-cyber-cyan shadow-[0_0_20px_rgba(0,240,255,0.12)]'
+              }`}
             >
-              <Bell className="w-5 h-5 text-cyber-cyan shrink-0 mt-0.5" />
-              <div>
-                <span className="text-[10px] uppercase font-black text-cyber-cyan tracking-wider">{toast.title}</span>
-                <p className="text-[10px] text-slate-300 leading-relaxed mt-0.5 line-clamp-2">{toast.text}</p>
+              {toast.isMessage ? (
+                <div className="p-1.5 rounded-lg bg-cyber-magenta/10 shrink-0 mt-0.5">
+                  <MessageSquare className="w-4 h-4 text-cyber-magenta" />
+                </div>
+              ) : (
+                <div className="p-1.5 rounded-lg bg-cyber-cyan/10 shrink-0 mt-0.5">
+                  <Bell className="w-4 h-4 text-cyber-cyan" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className={`text-[10px] uppercase font-black tracking-wider block ${
+                  toast.isMessage ? 'text-cyber-magenta' : 'text-cyber-cyan'
+                }`}>{toast.title}</span>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5 line-clamp-2">{toast.text}</p>
+                <span className={`text-[9px] font-bold mt-1 block uppercase tracking-widest ${
+                  toast.isMessage ? 'text-cyber-magenta/60' : 'text-cyber-cyan/60'
+                }`}>{toast.isMessage ? 'Direct Message' : 'Notification'}</span>
               </div>
             </motion.div>
           ))}
