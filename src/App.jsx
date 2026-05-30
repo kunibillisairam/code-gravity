@@ -29,6 +29,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [globalToasts, setGlobalToasts] = useState([]);
   const token = localStorage.getItem('codegravity_token');
 
@@ -81,6 +82,51 @@ function App() {
     loadNotifications();
   }, [user, token, view]);
 
+  // Poll unread DM count every 10 seconds so navbar badge stays fresh
+  useEffect(() => {
+    if (!user || !token) {
+      setUnreadMessagesCount(0);
+      return;
+    }
+
+    const refreshUnreadDMs = async () => {
+      try {
+        const convs = await chatService.getConversations();
+        if (Array.isArray(convs)) {
+          const total = convs.reduce((sum, c) => {
+            return sum + (c.unread_counts?.[user] || 0);
+          }, 0);
+          setUnreadMessagesCount(total);
+        }
+      } catch (err) {
+        // silently fail
+      }
+    };
+
+    // When user navigates away from chat page, refresh badge
+    if (view !== 'chat') {
+      refreshUnreadDMs();
+      const interval = setInterval(refreshUnreadDMs, 10000);
+      return () => clearInterval(interval);
+    } else {
+      // On chat page, clear the badge
+      setUnreadMessagesCount(0);
+    }
+  }, [user, token, view]);
+
+  // Also increment badge from WebSocket message events when not on chat page
+  useEffect(() => {
+    if (!token || !user || view === 'chat') return;
+
+    const handleDMEvent = (event) => {
+      if (event.type === 'message' && event.conversation_id && event.sender_username !== user) {
+        setUnreadMessagesCount(prev => prev + 1);
+      }
+    };
+
+    chatService.connect(token, handleDMEvent);
+    return () => chatService.disconnect(handleDMEvent);
+  }, [token, user, view]);
   // Hook real-time WebSocket global notifications
   useEffect(() => {
     if (!token || !user) return;
@@ -316,6 +362,7 @@ function App() {
           onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={unreadMessagesCount}
           onNotificationClick={handleNotificationClick}
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
@@ -345,6 +392,7 @@ function App() {
           onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={unreadMessagesCount}
           onNotificationClick={handleNotificationClick}
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
@@ -382,6 +430,7 @@ function App() {
           onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={unreadMessagesCount}
           onNotificationClick={handleNotificationClick}
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
@@ -422,6 +471,7 @@ function App() {
           onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={0}
           onNotificationClick={handleNotificationClick}
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
@@ -450,6 +500,7 @@ function App() {
           onChartsClick={() => setView('charts')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          unreadMessagesCount={unreadMessagesCount}
           onNotificationClick={handleNotificationClick}
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
@@ -485,6 +536,7 @@ function App() {
         onChartsClick={() => setView('charts')}
         notifications={notifications}
         unreadNotificationsCount={unreadNotificationsCount}
+        unreadMessagesCount={unreadMessagesCount}
         onNotificationClick={handleNotificationClick}
         onMarkAllRead={handleMarkAllRead}
         onClearNotifications={handleClearNotifications}

@@ -919,7 +919,7 @@ const PeerChat = ({ onBack, theme }) => {
         </div>
 
         {/* Typing indicator bubble */}
-        <div className="px-6 h-5 text-left select-none bg-[#0e1220]">
+        <div className={`px-6 h-5 text-left select-none ${styles.chatWindow}`}>
           {getTypingText() && (
             <div className="flex items-center gap-1 text-[10px] font-bold text-cyber-cyan animate-pulse">
               <span className="typing-cursor mr-1"></span>
@@ -929,8 +929,8 @@ const PeerChat = ({ onBack, theme }) => {
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 bg-[#0a0c16] border-t border-slate-800">
-          <div className="flex items-center gap-3 bg-[#0e1224] border border-slate-800 rounded-lg p-2.5 focus-within:border-cyber-cyan/50 focus-within:shadow-neon-cyan transition-all">
+        <div className={`p-4 border-t ${styles.inputPanel}`}>
+          <div className={`flex items-center gap-3 border rounded-lg p-2.5 focus-within:border-cyber-cyan/50 focus-within:shadow-neon-cyan transition-all ${styles.textarea}`}>
             <textarea
               rows={1}
               value={inputText}
@@ -942,7 +942,9 @@ const PeerChat = ({ onBack, theme }) => {
                 }
               }}
               placeholder={activeTab.type === 'room' ? `Message #${activeTab.name}...` : `Direct message @${activeTab.name}...`}
-              className="flex-1 bg-transparent text-xs text-slate-200 outline-none border-none resize-none font-sans max-h-24 py-1 pr-2 leading-relaxed"
+              className={`flex-1 bg-transparent text-xs outline-none border-none resize-none font-sans max-h-24 py-1 pr-2 leading-relaxed ${
+                isDark ? 'text-slate-200' : 'text-slate-800'
+              }`}
             />
             <button
               onClick={handleSendText}
@@ -950,7 +952,7 @@ const PeerChat = ({ onBack, theme }) => {
               className={`p-2.5 rounded-md transition-all ${
                 inputText.trim() 
                   ? 'bg-cyber-cyan text-slate-900 shadow-neon-cyan cursor-pointer' 
-                  : 'bg-slate-800 text-slate-650 cursor-not-allowed'
+                  : isDark ? 'bg-slate-800 text-slate-650 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
             >
               <Send className="w-4 h-4" />
