@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { chatService } from '../services/chatService';
 
-const PeerChat = ({ onBack }) => {
+const PeerChat = ({ onBack, theme }) => {
   const myUsername = localStorage.getItem('codegravity_user') || 'anonymous';
   const token = localStorage.getItem('codegravity_token');
 
@@ -475,8 +475,42 @@ const PeerChat = ({ onBack }) => {
     }
   };
 
+  const isDark = theme === 'dark';
+  
+  const styles = {
+    container: isDark ? "bg-slate-900 text-slate-100 border-slate-800" : "bg-[#f8fafc] text-slate-800 border-slate-200",
+    sidebar: isDark ? "bg-[#0a0d17] border-slate-800" : "bg-[#ffffff] border-slate-200",
+    banner: isDark ? "bg-[#070912] border-slate-800/80" : "bg-[#f1f5f9] border-slate-200/80",
+    bannerText: isDark ? "text-slate-200" : "text-slate-800",
+    sidebarTitle: isDark ? "text-slate-500" : "text-slate-550 font-bold",
+    sidebarButtonActive: isDark ? "bg-slate-800 text-cyber-cyan border-cyber-cyan/30" : "bg-cyber-cyan/15 text-cyber-blue border-cyber-cyan/30",
+    sidebarButtonInactive: isDark ? "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200" : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900",
+    dmButtonActive: isDark ? "bg-gradient-to-r from-cyber-purple/15 to-transparent border-cyber-purple/20 text-white shadow-[0_0_12px_rgba(180,0,255,0.04)]" : "bg-gradient-to-r from-cyber-purple/10 to-transparent border-cyber-purple/15 text-slate-900 shadow-sm",
+    dmButtonInactive: isDark ? "border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200" : "border-transparent text-slate-600 hover:bg-slate-100/50 hover:text-slate-900",
+    dmUserText: isDark ? "text-white" : "text-slate-800",
+    dmUserAvatar: isDark ? "border-slate-700 bg-gradient-to-tr from-cyber-cyan/20 to-cyber-purple/20 text-white" : "border-slate-200 bg-gradient-to-tr from-cyber-cyan/15 to-cyber-purple/15 text-slate-800",
+    userCard: isDark ? "bg-[#070911] border-slate-800" : "bg-[#f1f5f9] border-slate-200",
+    userCardText: isDark ? "text-slate-200" : "text-slate-850",
+    chatWindow: isDark ? "bg-[#0e1220]" : "bg-[#ffffff]",
+    chatHeader: isDark ? "border-slate-800 bg-[#090b14]/70" : "border-slate-200 bg-[#f1f5f9]/70",
+    chatHeaderTitle: isDark ? "text-slate-200" : "text-slate-850",
+    chatHeaderText: isDark ? "text-slate-500" : "text-slate-550",
+    rulesSidebar: isDark ? "bg-[#0a0d17] border-slate-800" : "bg-[#ffffff] border-slate-200",
+    ruleCard: isDark ? "bg-slate-900/60 border-slate-850 text-slate-300" : "bg-[#f8fafc] border-slate-200 text-slate-700",
+    ruleTitle: isDark ? "text-cyber-cyan" : "text-cyber-blue font-extrabold",
+    inputPanel: isDark ? "bg-[#090b14] border-slate-800" : "bg-[#f8fafc] border-slate-200",
+    textarea: isDark ? "bg-[#121626] border-slate-800 text-white focus:border-cyber-cyan/40" : "bg-[#ffffff] border-slate-200 text-slate-800 focus:border-cyber-cyan/40",
+    incomingBubble: isDark ? "bg-[#121626]/80 border-slate-800/80 text-slate-200" : "bg-[#f1f5f9] border-slate-200/90 text-slate-800",
+    outgoingBubble: isDark ? "bg-gradient-to-br from-cyber-cyan/20 to-cyber-cyan/5 border-cyber-cyan/25 text-slate-100" : "bg-gradient-to-br from-cyber-cyan/15 to-cyber-cyan/5 border border-cyber-cyan/35 text-slate-850",
+    messageLog: isDark ? "bg-[#0a0c16]/30" : "bg-[#f8fafc]/50",
+    welcomeCard: isDark ? "border-slate-800/80 bg-[#0f1324]/50 text-slate-200" : "border-slate-200 bg-[#f1f5f9]/60 text-slate-850",
+    welcomeTitle: isDark ? "text-slate-200" : "text-slate-850 font-black",
+    welcomeText: isDark ? "text-slate-400" : "text-slate-600",
+    presenceBorder: isDark ? "border-[#0a0d17]" : "border-[#ffffff]",
+  };
+
   return (
-    <div className="flex w-full h-[calc(100vh-80px)] mt-20 bg-slate-900 text-slate-100 overflow-hidden font-sans border-t border-slate-800">
+    <div className={`flex w-full h-[calc(100vh-80px)] mt-20 overflow-hidden font-sans border-t ${styles.container}`}>
       
       {/* --- FLOATING TOAST BAR --- */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
@@ -505,17 +539,17 @@ const PeerChat = ({ onBack }) => {
       </div>
 
       {/* --- COLUMN 1: LEFT SIDEBAR --- */}
-      <div className="w-64 bg-[#0a0d17] border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div className={`w-64 border-r flex flex-col justify-between shrink-0 ${styles.sidebar}`}>
         
         {/* Banner */}
-        <div className="p-4 border-b border-slate-800/80 bg-[#070912] flex items-center justify-between">
+        <div className={`p-4 border-b flex items-center justify-between ${styles.banner}`}>
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyber-cyan animate-pulse" />
-            <span className="font-extrabold text-sm tracking-wider uppercase text-slate-200">PEER HUB</span>
+            <span className={`font-extrabold text-sm tracking-wider uppercase ${styles.bannerText}`}>PEER HUB</span>
           </div>
           <button 
             onClick={onBack}
-            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-white"
+            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-white cursor-pointer"
             title="Back to CodeGravity"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -528,34 +562,35 @@ const PeerChat = ({ onBack }) => {
           {/* Chat Rooms */}
           <div>
             <div className="px-2 mb-2 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Learning Rooms</span>
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${styles.sidebarTitle}`}>Learning Rooms</span>
             </div>
             
             <div className="space-y-0.5">
-              {rooms.map((room) => (
-                <button
-                  key={room.id}
-                  onClick={() => setActiveTab({ type: 'room', id: room.id, name: room.name })}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all ${
-                    activeTab.type === 'room' && activeTab.id === room.id
-                      ? 'bg-slate-800 text-cyber-cyan border border-cyber-cyan/30'
-                      : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
-                  }`}
-                >
-                  <Hash className={`w-3.5 h-3.5 shrink-0 ${activeTab.type === 'room' && activeTab.id === room.id ? 'text-cyber-cyan' : 'text-slate-500'}`} />
-                  <span className="truncate">{room.name}</span>
-                </button>
-              ))}
+              {rooms.map((room) => {
+                const isActive = activeTab.type === 'room' && activeTab.id === room.id;
+                return (
+                  <button
+                    key={room.id}
+                    onClick={() => setActiveTab({ type: 'room', id: room.id, name: room.name })}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all cursor-pointer ${
+                      isActive ? styles.sidebarButtonActive : styles.sidebarButtonInactive
+                    }`}
+                  >
+                    <Hash className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyber-cyan' : 'text-slate-500'}`} />
+                    <span className="truncate">{room.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Direct Messages */}
           <div>
             <div className="px-2 mb-2 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Direct Messages</span>
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${styles.sidebarTitle}`}>Direct Messages</span>
               <button 
                 onClick={() => setShowDMModal(true)}
-                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-cyber-cyan transition-colors"
+                className="p-1 hover:bg-slate-800 rounded text-slate-405 hover:text-cyber-cyan transition-colors cursor-pointer"
                 title="Start Direct Message"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -571,10 +606,8 @@ const PeerChat = ({ onBack }) => {
                   <button
                     key={conv.id}
                     onClick={() => setActiveTab({ type: 'dm', id: conv.id, name: other })}
-                    className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition-all text-left relative overflow-hidden select-none border ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-cyber-purple/15 to-transparent border-cyber-purple/20 text-white shadow-[0_0_12px_rgba(180,0,255,0.04)]'
-                        : 'border-transparent text-slate-400 hover:bg-slate-800/30 hover:text-slate-200'
+                    className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition-all text-left relative overflow-hidden select-none border cursor-pointer ${
+                      isSelected ? styles.dmButtonActive : styles.dmButtonInactive
                     }`}
                   >
                     {/* Active strip */}
@@ -584,19 +617,19 @@ const PeerChat = ({ onBack }) => {
                     
                     {/* User Avatar with Presence Dot */}
                     <div className="relative shrink-0 mt-0.5">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyber-cyan/20 to-cyber-purple/20 border border-slate-700 flex items-center justify-center text-[11px] font-black text-white uppercase shadow-inner select-none">
+                      <div className={`w-9 h-9 rounded-full border flex items-center justify-center text-[11px] font-black uppercase shadow-inner select-none ${styles.dmUserAvatar}`}>
                         {other?.charAt(0).toUpperCase()}
                       </div>
                       {/* Presence Dot */}
-                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-[#0a0d17] ${
-                        conv.other_participant_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-600'
+                      <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border ${styles.presenceBorder} ${
+                        conv.other_participant_status === 'online' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-500'
                       }`} />
                     </div>
 
                     {/* Metadata & Message Text Snippet */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className={`text-[11.5px] font-black truncate ${isSelected ? 'text-white' : 'text-slate-350'}`}>
+                        <span className={`text-[11.5px] font-black truncate ${styles.dmUserText}`}>
                           @{other}
                         </span>
                         <span className="text-[8px] font-mono text-slate-500 font-bold">
@@ -623,7 +656,7 @@ const PeerChat = ({ onBack }) => {
                 );
               })}
               {conversations.length === 0 && (
-                <div className="text-[10px] text-slate-600 font-bold px-2 py-4 italic">No active conversations. Click + to start!</div>
+                <div className="text-[10px] text-slate-500 font-bold px-2 py-4 italic">No active conversations. Click + to start!</div>
               )}
             </div>
           </div>
@@ -631,12 +664,12 @@ const PeerChat = ({ onBack }) => {
         </div>
 
         {/* User Card */}
-        <div className="p-3 bg-[#070911] border-t border-slate-800 flex items-center gap-2">
+        <div className={`p-3 border-t flex items-center gap-2 ${styles.userCard}`}>
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-purple flex items-center justify-center text-xs font-extrabold text-slate-900">
             {myUsername.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-xs font-black text-slate-200 truncate">@{myUsername}</p>
+            <p className={`text-xs font-black truncate ${styles.userCardText}`}>@{myUsername}</p>
             <span className="text-[9px] font-mono font-bold text-cyber-cyan uppercase tracking-wider">Level 1 Alchemist</span>
           </div>
         </div>
@@ -644,10 +677,10 @@ const PeerChat = ({ onBack }) => {
       </div>
 
       {/* --- COLUMN 2: CENTRAL CHAT WINDOW --- */}
-      <div className="flex-1 flex flex-col bg-[#0e1220] justify-between">
+      <div className={`flex-1 flex flex-col justify-between ${styles.chatWindow}`}>
         
         {/* Header Bar */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-[#090b14]/70 flex items-center justify-between">
+        <div className={`px-6 py-4 border-b flex items-center justify-between ${styles.chatHeader}`}>
           <div className="flex items-center gap-2.5">
             {activeTab.type === 'room' ? (
               <Hash className="w-5 h-5 text-cyber-cyan" />
@@ -657,10 +690,10 @@ const PeerChat = ({ onBack }) => {
               </div>
             )}
             <div className="text-left">
-              <h1 className="text-sm font-extrabold text-slate-200 uppercase tracking-wide">
+              <h1 className={`text-sm font-extrabold uppercase tracking-wide ${styles.chatHeaderTitle}`}>
                 {activeTab.type === 'room' ? activeTab.name : `@${activeTab.name}`}
               </h1>
-              <p className="text-[10px] text-slate-500 font-bold">
+              <p className={`text-[10px] font-bold ${styles.chatHeaderText}`}>
                 {activeTab.type === 'room' 
                   ? (rooms.find(r => r.id === activeTab.id)?.description || 'Topic room discussion.') 
                   : 'Direct encrypted collaborative session.'}
@@ -687,15 +720,15 @@ const PeerChat = ({ onBack }) => {
         </div>
 
         {/* Message Log */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-[#0a0c16]/30">
+        <div className={`flex-1 overflow-y-auto px-6 py-4 space-y-4 ${styles.messageLog}`}>
           
           {/* Welcome Message */}
-          <div className="p-5 border border-slate-800/80 rounded-xl bg-[#0f1324]/50 max-w-2xl mx-auto text-center my-6 space-y-3">
+          <div className={`p-5 border rounded-xl max-w-2xl mx-auto text-center my-6 space-y-3 ${styles.welcomeCard}`}>
             <Sparkles className="w-7 h-7 text-cyber-purple mx-auto animate-pulse" />
-            <h2 className="text-sm font-black text-slate-200 uppercase tracking-wider">
+            <h2 className={`text-sm uppercase tracking-wider ${styles.welcomeTitle}`}>
               {activeTab.type === 'room' ? `Welcome to #${activeTab.name}!` : `Direct Session with @${activeTab.name}`}
             </h2>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans">
+            <p className={`text-xs leading-relaxed font-sans ${styles.welcomeText}`}>
               {activeTab.type === 'room'
                 ? "This is the start of an educational discussion. Ask queries, clarify algorithms, and prompt logic guidelines with peers. Let's grow together!"
                 : `Collaborate directly on solving problems with @${activeTab.name}. Remember, to paste code, you must explain the underlying reasoning to support growth!`}
@@ -731,7 +764,7 @@ const PeerChat = ({ onBack }) => {
                 {isMe ? (
                   /* Outgoing message (Right side, WhatsApp/Instagram speech bubble style) */
                   <div className="flex flex-col items-end max-w-[70%] text-right group/msg relative">
-                    <div className="bg-gradient-to-br from-cyber-cyan/20 to-cyber-cyan/5 border border-cyber-cyan/25 text-slate-100 rounded-2xl rounded-tr-none px-4 py-2.5 shadow-[0_0_12px_rgba(0,240,255,0.03)] text-left select-text">
+                    <div className={`rounded-2xl rounded-tr-none px-4 py-2.5 shadow-[0_0_12px_rgba(0,240,255,0.03)] text-left select-text border ${styles.outgoingBubble}`}>
                       
                       {isHint ? (
                         <div className="p-4 border border-cyber-cyan/40 bg-[#0a1622] rounded-xl my-1 relative shadow-lg overflow-hidden space-y-2 max-w-xl">
@@ -814,7 +847,7 @@ const PeerChat = ({ onBack }) => {
                         @{msg.sender_username}
                       </span>
                       
-                      <div className="bg-[#121626]/80 border border-slate-800/80 text-slate-200 rounded-2xl rounded-tl-none px-4 py-2.5 text-left select-text shadow-sm">
+                      <div className={`rounded-2xl rounded-tl-none px-4 py-2.5 text-left select-text shadow-sm border ${styles.incomingBubble}`}>
                         
                         {isHint ? (
                           <div className="p-4 border border-cyber-cyan/40 bg-[#0a1622] rounded-xl my-1 relative shadow-lg overflow-hidden space-y-2 max-w-xl">
