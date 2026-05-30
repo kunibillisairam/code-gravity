@@ -37,10 +37,10 @@ export const chatService = {
     return response.data;
   },
 
-  sendDirectMessage: async (conversationId, content) => {
+  sendDirectMessage: async (conversationId, content, msgType = 'text', codeSnippet = null) => {
     const response = await apiClient.post(
       `/chat/conversations/${conversationId}/messages`,
-      { content, type: 'text', msg_type: 'text' }
+      { content, type: msgType, msg_type: msgType, ...(codeSnippet ? { code_snippet: codeSnippet } : {}) }
     );
     return response.data;
   },

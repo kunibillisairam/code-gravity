@@ -178,38 +178,62 @@ const PeerChat = ({ onBack }) => {
     };
   }, [activeTab, token]);
 
-  // --- FETCH MESSAGES ON TAB CHANGE ---
+  // --- FETCH MESSAGES ON TAB CHANGE & CONTINUOUS REAL-TIME POLLING ---
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (!activeTab.id) return;
-      setMessages([]);
-      setTypingStatus({});
+    if (!activeTab.id) return;
+    
+    setTypingStatus({});
+    let isSubscribed = true;
+
+    const fetchMessages = async (isInitial = false) => {
       try {
+        let history = [];
         if (activeTab.type === 'room') {
-          const history = await chatService.getRoomMessages(activeTab.id);
-          setMessages(history);
+          history = await chatService.getRoomMessages(activeTab.id);
         } else {
-          const history = await chatService.getConversationMessages(activeTab.id);
-          setMessages(history);
+          history = await chatService.getConversationMessages(activeTab.id);
           
-          // Clear notification counts for this conversation locally
-          setConversations((prev) => 
-            prev.map((c) => {
-              if (c.id === activeTab.id) {
-                const counts = { ...c.unread_counts };
-                counts[myUsername] = 0;
-                return { ...c, unread_counts: counts };
-              }
-              return c;
-            })
-          );
+          if (isInitial) {
+            // Clear notification counts for this conversation locally
+            setConversations((prev) => 
+              prev.map((c) => {
+                if (c.id === activeTab.id) {
+                  const counts = { ...c.unread_counts };
+                  counts[myUsername] = 0;
+                  return { ...c, unread_counts: counts };
+                }
+                return c;
+              })
+            );
+          }
+        }
+
+        if (isSubscribed) {
+          // Compare previous and fetched length or last message ID to prevent infinite loop or unnecessary re-renders
+          setMessages((prev) => {
+            if (prev.length !== history.length || (prev.length > 0 && history.length > 0 && prev[prev.length - 1].id !== history[history.length - 1].id)) {
+              return history;
+            }
+            return prev;
+          });
         }
       } catch (err) {
         console.error('Failed to load message history:', err);
       }
     };
 
-    fetchMessages();
+    // Load initial history immediately
+    fetchMessages(true);
+
+    // Setup polling every 2 seconds
+    const intervalId = setInterval(() => {
+      fetchMessages(false);
+    }, 2000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(intervalId);
+    };
   }, [activeTab]);
 
   // --- AUTO SCROLL TO BOTTOM ---
@@ -238,7 +262,7 @@ const PeerChat = ({ onBack }) => {
   }, []);
 
   // --- HANDLE SEND TEXT MESSAGE ---
-  const handleSendText = () => {
+  const handleSendText = async () => {
     if (!inputText.trim()) return;
 
     const payload = {
@@ -252,7 +276,22 @@ const PeerChat = ({ onBack }) => {
       payload.conversation_id = activeTab.id;
     }
 
-    const success = chatService.sendMessage(payload);
+    let success = false;
+    
+    // 1. Try sending via WebSocket first
+    success = chatService.sendMessage(payload);
+    
+    // 2. Fall back to REST API if WebSocket fails and active tab is DM
+    if (!success && activeTab.type === 'dm') {
+      try {
+        const newMsg = await chatService.sendDirectMessage(activeTab.id, inputText, 'text');
+        setMessages(prev => [...prev, newMsg]);
+        success = true;
+      } catch (err) {
+        console.error("Failed to send message via REST fallback:", err);
+      }
+    }
+
     if (success) {
       setInputText('');
       
@@ -291,7 +330,7 @@ const PeerChat = ({ onBack }) => {
   };
 
   // --- SHARE CODE SUBMIT ---
-  const handleShareCode = () => {
+  const handleShareCode = async () => {
     const { code, language, explanation } = codeSnippet;
     
     if (!code.trim()) {
@@ -321,7 +360,27 @@ const PeerChat = ({ onBack }) => {
       payload.conversation_id = activeTab.id;
     }
 
-    const success = chatService.sendMessage(payload);
+    let success = false;
+    
+    // 1. Try sending via WebSocket first
+    success = chatService.sendMessage(payload);
+    
+    // 2. Fall back to REST API if WebSocket fails and active tab is DM
+    if (!success && activeTab.type === 'dm') {
+      try {
+        const newMsg = await chatService.sendDirectMessage(
+          activeTab.id, 
+          '', 
+          'algorithm_discuss', 
+          { code, language, explanation }
+        );
+        setMessages(prev => [...prev, newMsg]);
+        success = true;
+      } catch (err) {
+        console.error("Failed to share code via REST fallback:", err);
+      }
+    }
+
     if (success) {
       setCodeSnippet({ code: '', language: 'python', explanation: '' });
       setShowShareCodeModal(false);
@@ -329,7 +388,7 @@ const PeerChat = ({ onBack }) => {
   };
 
   // --- ASK FOR HINT SUBMIT ---
-  const handleAskForHint = () => {
+  const handleAskForHint = async () => {
     const { problemTitle, approach, stuckOn } = hintRequest;
 
     if (!approach.trim() || !stuckOn.trim()) {
@@ -356,7 +415,22 @@ const PeerChat = ({ onBack }) => {
       payload.conversation_id = activeTab.id;
     }
 
-    const success = chatService.sendMessage(payload);
+    let success = false;
+    
+    // 1. Try sending via WebSocket first
+    success = chatService.sendMessage(payload);
+    
+    // 2. Fall back to REST API if WebSocket fails and active tab is DM
+    if (!success && activeTab.type === 'dm') {
+      try {
+        const newMsg = await chatService.sendDirectMessage(activeTab.id, formattedContent, 'hint_request');
+        setMessages(prev => [...prev, newMsg]);
+        success = true;
+      } catch (err) {
+        console.error("Failed to ask for hint via REST fallback:", err);
+      }
+    }
+
     if (success) {
       setHintRequest({ problemTitle: 'Two Sum', approach: '', stuckOn: '' });
       setShowHintModal(false);
