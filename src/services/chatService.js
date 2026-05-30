@@ -1,15 +1,8 @@
 import axios from 'axios';
+import { apiClient } from './api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws') + '/chat/ws';
-
-const getHeaders = () => {
-  const token = localStorage.getItem('codegravity_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-  };
-};
 
 let socket = null;
 let reconnectTimer = null;
@@ -20,66 +13,65 @@ const listeners = new Set();
 export const chatService = {
   // --- REST ENDPOINTS ---
   getRooms: async () => {
-    const response = await axios.get(`${API_BASE_URL}/chat/rooms`, { headers: getHeaders() });
+    const response = await apiClient.get('/chat/rooms');
     return response.data;
   },
 
   getRoomMessages: async (roomId) => {
-    const response = await axios.get(`${API_BASE_URL}/chat/rooms/${roomId}/messages`, { headers: getHeaders() });
+    const response = await apiClient.get(`/chat/rooms/${roomId}/messages`);
     return response.data;
   },
 
   getConversations: async () => {
-    const response = await axios.get(`${API_BASE_URL}/chat/conversations`, { headers: getHeaders() });
+    const response = await apiClient.get('/chat/conversations');
     return response.data;
   },
 
   getConversationMessages: async (convId) => {
-    const response = await axios.get(`${API_BASE_URL}/chat/conversations/${convId}/messages`, { headers: getHeaders() });
+    const response = await apiClient.get(`/chat/conversations/${convId}/messages`);
     return response.data;
   },
 
   createConversation: async (recipientUsername) => {
-    const response = await axios.post(`${API_BASE_URL}/chat/conversations`, { recipient_username: recipientUsername }, { headers: getHeaders() });
+    const response = await apiClient.post('/chat/conversations', { recipient_username: recipientUsername });
     return response.data;
   },
 
   sendDirectMessage: async (conversationId, content) => {
-    const response = await axios.post(
-      `${API_BASE_URL}/chat/conversations/${conversationId}/messages`,
-      { content, msg_type: 'text' },
-      { headers: getHeaders() }
+    const response = await apiClient.post(
+      `/chat/conversations/${conversationId}/messages`,
+      { content, type: 'text', msg_type: 'text' }
     );
     return response.data;
   },
 
   getUsers: async () => {
-    const response = await axios.get(`${API_BASE_URL}/chat/users`, { headers: getHeaders() });
+    const response = await apiClient.get('/chat/users');
     return response.data;
   },
 
   markAsRead: async (convId) => {
-    const response = await axios.post(`${API_BASE_URL}/chat/conversations/${convId}/read`, {}, { headers: getHeaders() });
+    const response = await apiClient.post(`/chat/conversations/${convId}/read`, {});
     return response.data;
   },
 
   getNotifications: async () => {
-    const response = await axios.get(`${API_BASE_URL}/chat/notifications`, { headers: getHeaders() });
+    const response = await apiClient.get('/chat/notifications');
     return response.data;
   },
 
   markNotificationRead: async (notificationId) => {
-    const response = await axios.post(`${API_BASE_URL}/chat/notifications/${notificationId}/read`, {}, { headers: getHeaders() });
+    const response = await apiClient.post(`/chat/notifications/${notificationId}/read`, {});
     return response.data;
   },
 
   markAllNotificationsRead: async () => {
-    const response = await axios.post(`${API_BASE_URL}/chat/notifications/read-all`, {}, { headers: getHeaders() });
+    const response = await apiClient.post('/chat/notifications/read-all', {});
     return response.data;
   },
 
   clearNotifications: async () => {
-    const response = await axios.post(`${API_BASE_URL}/chat/notifications/clear`, {}, { headers: getHeaders() });
+    const response = await apiClient.post('/chat/notifications/clear', {});
     return response.data;
   },
 
