@@ -3,43 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import { chatService } from '../services/chatService';
 import { 
-  ChevronLeft, Loader2, Award, Zap, Flame, Calendar, 
+  ChevronLeft, Loader2, Award, Zap, Flame, 
   Code2, User, Globe, BookOpen, 
   MapPin, Check, Plus, X, MessageSquare, UserPlus, UserMinus,
   Compass, History, Trophy
 } from 'lucide-react';
-
-const Github = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-    <path d="M9 18c-4.51 2-5-2-7-2" />
-  </svg>
-);
-
-const Linkedin = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-    <rect width="4" height="12" x="2" y="9" rx="1" />
-    <circle cx="4" cy="4" r="2" />
-  </svg>
-);
-
-// Level title helper
-const getLevelTitle = (level) => {
-  if (level <= 1) return "Code Apprentice";
-  if (level === 2) return "Syntax Scholar";
-  if (level === 3) return "Algorithm Alchemist";
-  if (level === 4) return "Byte Overlord";
-  return "Legendary Wizard";
-};
-
-// Rank title helper
-const getRankTitle = (solvedCount) => {
-  if (solvedCount === 0) return "Bronze";
-  if (solvedCount <= 2) return "Silver";
-  if (solvedCount <= 4) return "Gold";
-  return "Platinum";
-};
+import { getLevelTitle, getRankTitle, GithubIcon, LinkedinIcon } from '../utils/profileHelpers';
+import ContributionHeatmap from './ContributionHeatmap';
+import BadgeShowcase from './BadgeShowcase';
 
 const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserClick }) => {
   const [profileData, setProfileData] = useState(null);
@@ -51,7 +22,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [messageSendState, setMessageSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
-  const [toastMessage, setToastMessage] = useState('');
   const [messageStatus, setMessageStatus] = useState(null); // null | 'unseen' | 'seen'
 
   // Followers & Following Modal States
@@ -79,15 +49,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
       onUserClick(targetUsername);
     }
   };
-
-  // Calendar State
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-  const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
 
   const fetchPublicProfile = async () => {
     setIsLoading(true);
@@ -162,88 +123,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
     }
   };
 
-  // Calendar calculations
-  const handlePrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(prev => prev - 1);
-    } else {
-      setSelectedMonth(prev => prev - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(prev => prev + 1);
-    } else {
-      setSelectedMonth(prev => prev + 1);
-    }
-  };
-
-  const handlePrevYear = () => {
-    setSelectedYear(prev => prev - 1);
-  };
-
-  const handleNextYear = () => {
-    setSelectedYear(prev => prev + 1);
-  };
-
-  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-
-  const generateMonthlyDays = () => {
-    const days = [];
-    const daysCount = getDaysInMonth(selectedYear, selectedMonth);
-    const firstDayIndex = getFirstDayOfMonth(selectedYear, selectedMonth);
-
-    // Prev Month padding
-    const prevMonthDaysCount = getDaysInMonth(
-      selectedMonth === 0 ? selectedYear - 1 : selectedYear,
-      selectedMonth === 0 ? 11 : selectedMonth - 1
-    );
-
-    for (let i = firstDayIndex - 1; i >= 0; i--) {
-      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-      const prevMon = selectedMonth === 0 ? 11 : selectedMonth - 1;
-      const dayNum = prevMonthDaysCount - i;
-      const dateString = `${prevYear}-${String(prevMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: false,
-        formattedDate: new Date(prevYear, prevMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    // Current Month days
-    for (let dayNum = 1; dayNum <= daysCount; dayNum++) {
-      const dateString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: true,
-        formattedDate: new Date(selectedYear, selectedMonth, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    // Next Month padding
-    const remainingCells = 42 - days.length;
-    for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
-      const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
-      const nextMon = selectedMonth === 11 ? 0 : selectedMonth + 1;
-      const dateString = `${nextYear}-${String(nextMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: false,
-        formattedDate: new Date(nextYear, nextMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    return days;
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-[#080a10] text-slate-400">
@@ -256,7 +135,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
   if (error || !profileData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-[#080a10] text-center p-6">
-        <div className="p-4 bg-rose-500/10 text-rose-500 rounded-full">
+        <div className="p-4 bg-rose-500/10 text-rose-555 rounded-full">
           <X className="w-8 h-8" />
         </div>
         <h3 className="text-lg font-bold text-rose-550">Target User Offline</h3>
@@ -307,62 +186,9 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
   const attemptedCount = (progress.attempted_problems || []).length;
   const successRate = attemptedCount > 0 ? ((solvedCount / attemptedCount) * 100).toFixed(1) : 0;
 
-  // Badges database
-  const badgeDetails = {
-    first_success: {
-      id: "first_success",
-      title: "First Success",
-      desc: "Unlock your first Accepted code challenge.",
-      icon: <Trophy className="w-5 h-5" />
-    },
-    speed_demon: {
-      id: "speed_demon",
-      title: "Speed Demon",
-      desc: "Compile and execute code successfully in under 100ms.",
-      icon: <Zap className="w-5 h-5" />
-    },
-    streak_master: {
-      id: "streak_master",
-      title: "Streak Master",
-      desc: "Maintain a consecutive 3-day active coding streak.",
-      icon: <Flame className="w-5 h-5" />
-    },
-    algorithm_alchemist: {
-      id: "algorithm_alchemist",
-      title: "Algorithm Alchemist",
-      desc: "Complete 5 unique programming problems successfully.",
-      icon: <Award className="w-5 h-5" />
-    }
-  };
-
   const unlockedBadges = progress.badges || [];
   const heatmapData = progress.contribution_heatmap || {};
   const activityLog = (progress.activity_log || []).slice(-5).reverse();
-  const monthlyDays = generateMonthlyDays();
-
-  // Legend cell rendering colors
-  const getCellStyles = (day) => {
-    const count = heatmapData[day.date] || 0;
-    
-    if (!day.isCurrentMonth) {
-      if (count === 0) return 'bg-slate-105/20 dark:bg-slate-900/10 border border-slate-200/5 dark:border-slate-850/5 text-slate-400/10 opacity-20 cursor-default pointer-events-none';
-      return 'bg-cyan-500/5 border border-cyan-500/10 text-cyan-500/10 opacity-25';
-    }
-
-    if (count === 0) {
-      return 'bg-slate-50 dark:bg-[#121626]/30 border border-slate-200/40 dark:border-slate-850 text-slate-405 dark:text-slate-400 hover:border-cyber-cyan/30 hover:bg-slate-100 dark:hover:bg-[#121626]/80';
-    }
-    if (count === 1) {
-      return 'bg-cyan-500/15 border border-cyan-500/25 text-cyan-600 dark:text-cyan-400 hover:border-cyan-400/50 shadow-[0_0_4px_rgba(0,180,255,0.03)]';
-    }
-    if (count === 2) {
-      return 'bg-cyan-500/25 border border-cyan-500/45 text-cyan-650 dark:text-cyan-300 hover:border-cyan-300/60 shadow-[0_0_6px_rgba(0,180,255,0.08)]';
-    }
-    if (count === 3) {
-      return 'bg-cyan-500/55 border border-cyan-500/65 text-white dark:text-space-900 dark:font-bold hover:border-cyan-200 shadow-[0_0_10px_rgba(0,214,230,0.15)]';
-    }
-    return 'bg-cyber-cyan border border-cyber-cyan/80 text-space-900 font-extrabold shadow-[0_0_12px_rgba(0,240,255,0.22)] hover:scale-[1.03]';
-  };
 
   // Faction design colors
   const getFactionColors = () => {
@@ -477,7 +303,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 disabled={isActionLoading}
                 className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer border ${
                   isFollowing
-                    ? 'bg-transparent border-rose-500/40 hover:border-rose-500/80 text-rose-505 dark:text-rose-400 hover:bg-rose-500/5'
+                    ? 'bg-transparent border-rose-500/40 hover:border-rose-500/80 text-rose-505 dark:text-rose-405 hover:bg-rose-500/5'
                     : 'bg-cyber-cyan hover:bg-cyan-400 text-space-900 border-transparent shadow-md hover:scale-[1.02]'
                 }`}
               >
@@ -508,7 +334,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                   <span className={`text-[8.5px] font-sans font-black uppercase tracking-widest ${
                     messageStatus === 'seen' 
                       ? 'text-emerald-500 dark:text-emerald-450' 
-                      : 'text-amber-500 dark:text-amber-400 animate-pulse'
+                      : 'text-amber-500 dark:text-amber-405 animate-pulse'
                   }`}>
                     {messageStatus}
                   </span>
@@ -529,7 +355,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan to-cyber-blue" />
               <h3 className="font-sans font-black text-xs uppercase tracking-widest text-slate-905 dark:text-white">Developer Bio</h3>
               
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-light leading-relaxed italic">
+              <p className="text-xs text-slate-500 dark:text-slate-404 font-light leading-relaxed italic">
                 {profile.bio ? `"${profile.bio}"` : '"This developer operates silently, traversing gravity tracks without transmitting a core logs broadcast."'}
               </p>
 
@@ -542,7 +368,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                     rel="noreferrer"
                     className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-550 hover:text-cyber-cyan hover:border-cyber-cyan/30 transition-colors cursor-pointer"
                   >
-                    <Github className="w-4.5 h-4.5" />
+                    <GithubIcon className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {profile.linkedin_url && (
@@ -552,7 +378,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                     rel="noreferrer"
                     className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-550 hover:text-cyber-cyan hover:border-cyber-cyan/30 transition-colors cursor-pointer"
                   >
-                    <Linkedin className="w-4.5 h-4.5" />
+                    <LinkedinIcon className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {!profile.github_url && !profile.linkedin_url && (
@@ -618,12 +444,12 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
             {/* Quick Metrics Dashboard Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">XP Points</span>
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest">XP Points</span>
                 <span className="text-xl font-black text-cyber-cyan mt-1 select-all">{xp.toLocaleString()}</span>
               </div>
               
               <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Rank Tier</span>
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest">Rank Tier</span>
                 <span className="text-xl font-black text-cyber-purple mt-1 uppercase">{rank}</span>
               </div>
 
@@ -631,7 +457,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 onClick={() => handleOpenFollowModal('followers')}
                 className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
               >
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Followers</span>
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Followers</span>
                 <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{followersCount}</span>
               </button>
 
@@ -639,7 +465,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 onClick={() => handleOpenFollowModal('following')}
                 className="p-4 rounded-2xl bg-[#ffffff] dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
               >
-                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Following</span>
+                <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Following</span>
                 <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{following_count}</span>
               </button>
             </div>
@@ -745,158 +571,41 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
         </div>
 
-        {/* MONTHLY ACTIVITY Heatmap GRID */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-850/60 pb-4">
-            <h3 className="font-sans font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-cyber-cyan" />
-              Developer Activity Grid
-            </h3>
-            
-            {/* Controls */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
-                <button 
-                  onClick={handlePrevMonth}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-24 text-center font-sans font-extrabold text-[9px] uppercase tracking-wider text-slate-700 dark:text-slate-205 select-none">
-                  {MONTH_NAMES[selectedMonth]}
-                </span>
-                <button 
-                  onClick={handleNextMonth}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
-                </button>
-              </div>
+        {/* Contribution Heatmap component */}
+        <ContributionHeatmap heatmapData={heatmapData} />
 
-              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
-                <button 
-                  onClick={handlePrevYear}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-12 text-center font-mono font-bold text-[9px] text-slate-700 dark:text-slate-205 select-none">
-                  {selectedYear}
-                </span>
-                <button 
-                  onClick={handleNextYear}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Grid Layout scaled very small */}
-          <div className="max-w-[300px] mx-auto w-full space-y-2">
-            <div className="grid grid-cols-7 gap-1 text-center text-[8px] font-sans font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest select-none">
-              <div>Su</div>
-              <div>Mo</div>
-              <div>Tu</div>
-              <div>We</div>
-              <div>Th</div>
-              <div>Fr</div>
-              <div>Sa</div>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 p-1.5 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-150 dark:border-slate-900 rounded-xl">
-              {monthlyDays.map((day) => {
-                const count = heatmapData[day.date] || 0;
-                const cellStyles = getCellStyles(day);
-
-                return (
-                  <div
-                    key={day.date}
-                    className={`aspect-square rounded-lg flex items-center justify-center font-sans text-[9px] font-bold transition-all duration-300 relative group cursor-pointer ${cellStyles}`}
-                  >
-                    <span>{day.dayNum}</span>
-
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 bg-slate-900 border border-slate-800 text-white font-mono text-[8px] p-1.5 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center leading-normal shadow-xl">
-                      <strong>{count} {count === 1 ? 'solution' : 'solutions'}</strong>
-                      <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* ACHIEVEMENTS GRID */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-4 relative overflow-hidden">
+        {/* Gamified Achievements showcase */}
+        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col space-y-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
           
           <div className="border-b border-slate-100 dark:border-slate-850/60 pb-3 flex items-center justify-between">
-            <h3 className="font-sans font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5">
+            <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-1.5">
               <Trophy className="w-4 h-4 text-cyber-cyan" />
-              Achievements Room ({unlockedBadges.length} unlocked)
+              Achievement Room ({unlockedBadges.length} Unlocked)
             </h3>
-            <span className="text-[7px] font-mono font-extrabold text-slate-400 uppercase tracking-widest">System Awards</span>
+            <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">
+              GAMIFICATION SYSTEM AWARDS
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {Object.values(badgeDetails).map((badge) => {
-              const isUnlocked = unlockedBadges.includes(badge.id);
-
-              return (
-                <div 
-                  key={badge.id}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all ${
-                    isUnlocked 
-                      ? 'border-emerald-500/20 bg-emerald-50/5 dark:bg-emerald-950/5 shadow-inner' 
-                      : 'border-slate-200 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-950/5 opacity-40 grayscale'
-                  }`}
-                >
-                  <div className={`p-2.5 rounded-xl border shrink-0 ${
-                    isUnlocked
-                      ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-space-900 border-transparent shadow-md'
-                      : 'bg-slate-105 dark:bg-slate-900 border-slate-250 dark:border-slate-800 text-slate-400'
-                  }`}>
-                    {badge.icon}
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <h4 className={`text-[10px] font-black font-sans uppercase ${isUnlocked ? 'text-slate-850 dark:text-white' : 'text-slate-500 dark:text-slate-455'}`}>
-                      {badge.title}
-                    </h4>
-                    <p className="text-[9px] text-slate-500 dark:text-slate-500 font-light leading-normal">
-                      {badge.desc}
-                    </p>
-                    {isUnlocked && (
-                      <div className="text-[7.5px] font-mono text-emerald-500 font-bold uppercase tracking-wider mt-1.5 flex items-center gap-0.5">
-                        <Check className="w-2.5 h-2.5" /> Unlocked
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <BadgeShowcase unlockedBadges={unlockedBadges} />
         </div>
 
-        {/* TIMELINE ACTIVITIES */}
+        {/* Timeline Log */}
         <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-4 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
           
-          <h3 className="font-sans font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-850/60 pb-3">
+          <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-850/60 pb-3">
             <History className="w-4 h-4 text-cyber-cyan" />
-            Orbit Activity Feed
+            Quadrant Activity Log
           </h3>
 
           {activityLog.length === 0 ? (
-            <div className="p-6 text-center text-slate-400 text-xs font-light">
-              No transmission logs recorded in this quadrant.
+            <div className="p-8 text-center text-slate-400 text-xs font-light">
+              No recent logs emitted from this node.
             </div>
           ) : (
-            <div className="relative border-l border-slate-200 dark:border-slate-800 ml-4 py-1 space-y-5">
+            <div className="relative border-l border-slate-200 dark:border-slate-800 ml-4 py-2 space-y-6">
               {activityLog.map((log, idx) => {
                 const dateStr = new Date(log.timestamp).toLocaleString(undefined, {
                   month: 'short',
@@ -907,20 +616,12 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
                 return (
                   <div key={idx} className="relative pl-6">
-                    <div className={`absolute -left-1.5 top-1.5 w-3 h-3 rounded-full border ${
-                      log.type === 'level_up' 
-                        ? 'bg-cyber-purple border-cyber-purple shadow-[0_0_6px_rgba(157,78,221,0.5)]' 
-                        : (log.type === 'badge' 
-                            ? 'bg-cyber-cyan border-cyber-cyan shadow-[0_0_6px_rgba(0,240,255,0.5)]' 
-                            : 'bg-emerald-500 border-emerald-500')
-                    }`} />
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <div className="font-bold text-xs text-slate-800 dark:text-slate-250">
+                    <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full border bg-cyber-cyan border-cyber-cyan" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 select-none">
+                      <div className="font-bold text-xs text-slate-750 dark:text-slate-250">
                         {log.description}
                       </div>
-                      <div className="text-[9px] text-slate-400 font-mono flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-400" />
+                      <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
                         <span>{dateStr}</span>
                       </div>
                     </div>
@@ -933,147 +634,101 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
       </div>
 
-      {/* DYNAMIC TELEMETRY MESSAGE MODAL */}
+      {/* NEURAL MESSAGE MODAL */}
       <AnimatePresence>
         {showMessageModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/85 backdrop-blur-sm"
           >
-            {/* Modal Box */}
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', duration: 0.5 }}
-              className="w-full max-w-md bg-white dark:bg-[#0e121e] border border-slate-250 dark:border-slate-800 rounded-3xl p-6 relative overflow-hidden shadow-2xl"
+            <motion.div
+              initial={{ scale: 0.95, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 15, opacity: 0 }}
+              className="w-full max-w-md bg-white dark:bg-[#0c0f1a] border border-slate-200 dark:border-slate-850 rounded-2xl p-6 relative overflow-hidden shadow-2xl"
             >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyber-cyan to-cyber-purple" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan to-cyber-purple" />
               
-              <button 
-                onClick={() => setShowMessageModal(false)}
-                className="absolute top-4 right-4 p-2 bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl hover:border-rose-500/40 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-850/60 pb-3.5">
+                <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-805 dark:text-white flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-cyber-cyan" />
+                  <span>Transmit Neural Signal</span>
+                </h3>
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="p-1.5 rounded-lg border border-slate-250 dark:border-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
 
-              {messageSendState === 'idle' && (
-                <form onSubmit={handleSendMessage} className="space-y-4 pt-4 text-center">
-                  <div className={`mx-auto w-12 h-12 rounded-2xl flex items-center justify-center text-cyber-cyan ${fColors.bg} border ${fColors.border} ${fColors.glow}`}>
-                    <MessageSquare className="w-6 h-6 text-cyber-cyan animate-pulse" />
+              {messageSendState === 'success' ? (
+                <div className="py-8 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 mx-auto">
+                    <Check className="w-6 h-6" />
                   </div>
-                  
                   <div className="space-y-1">
-                    <h3 className="font-sans font-black text-base uppercase tracking-widest text-slate-905 dark:text-white">
-                      Direct Transmission
-                    </h3>
-                    <p className="text-xs text-slate-505 dark:text-slate-400 font-light leading-relaxed">
-                      Compose encrypted telepathic payload for: <span className="font-mono font-bold text-cyber-cyan">@{username}</span>
+                    <h4 className="text-sm font-black text-slate-805 dark:text-white uppercase tracking-wider">Transmission Delivered</h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                      Your signal has successfully targeted @{profileData.username}'s orbital core.
                     </p>
                   </div>
-
-                  <div className="text-left space-y-1.5">
-                    <label className="text-[9px] font-sans font-black uppercase text-slate-405 tracking-wider">Secure Signal Message</label>
+                  <button
+                    onClick={() => setShowMessageModal(false)}
+                    className="px-5 py-2 border border-slate-200 dark:border-slate-800 text-slate-655 dark:text-slate-400 text-xs font-bold uppercase rounded-lg cursor-pointer hover:border-cyber-cyan/30 hover:text-cyber-cyan"
+                  >
+                    Close Channel
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSendMessage} className="space-y-4 pt-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-bold text-slate-400 dark:text-slate-505 uppercase tracking-widest">Payload Message</label>
                     <textarea
                       required
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
-                      placeholder="Compose neural packet transmission details..."
-                      className="w-full bg-slate-50 dark:bg-slate-900/65 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-800 dark:text-white outline-none focus:border-cyber-cyan/40 h-28 resize-none leading-relaxed font-sans"
+                      maxLength={350}
+                      rows={4}
+                      className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-white outline-none focus:border-cyber-cyan/40 resize-none font-sans leading-relaxed"
+                      placeholder={`Write a direct message payload to @${profileData.username}...`}
                     />
+                    <div className="text-[8.5px] font-mono text-slate-455 text-right">
+                      {messageText.length}/350 chars
+                    </div>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-955/40 border border-slate-150 dark:border-slate-850 text-left font-mono text-[9px] leading-relaxed text-slate-500 dark:text-slate-450 relative flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_6px_rgba(16,185,129,0.5)] animate-pulse" />
-                    <span>Neural P2P signal aligned. Bandwidth secured.</span>
+                  <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-850/60">
+                    <button
+                      type="button"
+                      onClick={() => setShowMessageModal(false)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-850 text-xs font-bold text-slate-700 dark:text-slate-350 rounded-lg cursor-pointer"
+                    >
+                      Abort
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={messageSendState === 'sending'}
+                      className="px-5 py-2 bg-cyber-cyan text-space-900 font-extrabold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shadow-md flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {messageSendState === 'sending' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Transmitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>Transmit</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-
-                  <button 
-                    type="submit"
-                    disabled={!messageText.trim()}
-                    className="w-full py-3 bg-cyber-cyan hover:bg-cyan-400 text-space-900 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
-                  >
-                    Transmit Signal
-                  </button>
                 </form>
               )}
-
-              {messageSendState === 'sending' && (
-                <div className="space-y-6 text-center pt-8 pb-4">
-                  <div className="relative mx-auto w-16 h-16 flex items-center justify-center">
-                    <div className="absolute inset-0 border-4 border-cyber-cyan/15 rounded-full" />
-                    <div className="absolute inset-0 border-4 border-t-cyber-cyan border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                    <MessageSquare className="w-6 h-6 text-cyber-cyan animate-bounce" />
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <h4 className="font-sans font-black text-sm uppercase tracking-wider text-slate-800 dark:text-white">Broadcasting Signal...</h4>
-                    <p className="text-[10px] text-slate-450 font-mono">Modulating quantum frequency to target receiver terminal</p>
-                  </div>
-                </div>
-              )}
-
-              {messageSendState === 'success' && (
-                <div className="space-y-5 text-center pt-6">
-                  <div className="mx-auto w-14 h-14 rounded-full bg-emerald-555/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                    <Check className="w-8 h-8 text-emerald-500 stroke-[3px]" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <h3 className="font-sans font-black text-base uppercase tracking-widest text-emerald-505 dark:text-emerald-450">
-                      Message Sent!
-                    </h3>
-                    <p className="text-xs text-slate-505 dark:text-slate-400 font-light leading-relaxed px-2">
-                      Your direct telepathic transmission has successfully bridged orbits and logged in <span className="font-mono font-bold text-cyber-cyan">@{username}</span>'s incoming neural inbox!
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-left font-mono text-[9px] leading-relaxed text-emerald-600 dark:text-emerald-450">
-                    <div className="font-bold uppercase tracking-wider mb-0.5">&gt; Quantum Receipt:</div>
-                    Signal delivered successfully over Gravity Hub channel.
-                  </div>
-
-                  <button 
-                    onClick={() => {
-                      setShowMessageModal(false);
-                      setToastMessage(`Transmission successfully broadcasted to @${username}!`);
-                      setTimeout(() => setToastMessage(''), 4000);
-                    }}
-                    className="w-full mt-2 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-655 dark:text-slate-355 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-850"
-                  >
-                    Acknowledge Signal
-                  </button>
-                </div>
-              )}
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* FLOATING TELEMETRY TOAST NOTIFICATION */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-50 p-4 bg-white/95 dark:bg-[#0e121e]/95 border border-emerald-500/30 dark:border-emerald-500/20 text-slate-800 dark:text-white rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.15)] backdrop-blur-md flex items-center gap-3 max-w-sm"
-          >
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
-              <Check className="w-4 h-4 text-emerald-500 stroke-[3.5px]" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-[10px] font-sans font-black uppercase text-emerald-505 dark:text-emerald-400 tracking-widest text-left">TRANSMISSION SENT</div>
-              <p className="text-xs text-slate-655 dark:text-slate-300 font-light leading-normal text-left">{toastMessage}</p>
-            </div>
-            <button 
-              onClick={() => setToastMessage('')}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-400 hover:text-slate-800 rounded-lg transition-colors cursor-pointer ml-2"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1082,7 +737,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
       <AnimatePresence>
         {showFollowModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Glassmorphic Backdrop */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1091,17 +745,14 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
               className="absolute inset-0 bg-[#04060a]/80 backdrop-blur-sm"
             />
 
-            {/* Modal Body */}
             <motion.div 
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               className="w-full max-w-sm bg-white dark:bg-[#0c0f1a] border border-slate-200 dark:border-slate-850 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] z-10"
             >
-              {/* Branded futuristic line top */}
               <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
               
-              {/* Header */}
               <div className="p-5 pb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-850/60">
                 <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-2">
                   <span>{followModalType === 'followers' ? 'Orbital Followers' : 'Orbital Following'}</span>
@@ -1117,10 +768,9 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 </button>
               </div>
 
-              {/* Search Bar */}
               <div className="p-4 pb-2">
                 <div className="relative flex items-center">
-                  <Compass className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                  <Compass className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-555" />
                   <input 
                     type="text" 
                     value={followSearchQuery} 
@@ -1139,7 +789,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 </div>
               </div>
 
-              {/* List items */}
               <div className="p-4 pt-1 overflow-y-auto max-h-[320px] space-y-2.5 scrollbar-thin scrollbar-thumb-slate-800">
                 {filteredList.length > 0 ? (
                   filteredList.map((u) => (
@@ -1147,7 +796,6 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                       key={u.username}
                       className="flex items-center justify-between p-2 rounded-xl bg-slate-50/50 dark:bg-slate-900/10 hover:bg-slate-50 dark:hover:bg-slate-900/40 border border-transparent hover:border-slate-100 dark:hover:border-slate-850/50 transition-all group"
                     >
-                      {/* Left side: Avatar + Username info */}
                       <button 
                         onClick={() => handleUserClick(u.username)}
                         className="flex items-center gap-3 text-left focus:outline-none bg-transparent border-0 cursor-pointer p-0 shrink-0"
@@ -1156,7 +804,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                           <img 
                             src={u.profile_pic} 
                             alt={u.display_name} 
-                            className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-800 object-cover shadow-sm shrink-0"
+                            className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-805 object-cover shadow-sm shrink-0"
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
                         ) : (
@@ -1165,16 +813,15 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                           </div>
                         )}
                         <div className="min-w-0">
-                          <h4 className="text-xs font-black text-slate-800 dark:text-white truncate group-hover:text-cyber-cyan transition-colors leading-tight">
+                          <h4 className="text-xs font-black text-slate-805 dark:text-white truncate group-hover:text-cyber-cyan transition-colors leading-tight">
                             {u.display_name}
                           </h4>
-                          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-555 uppercase tracking-wider block">
                             @{u.username}
                           </span>
                         </div>
                       </button>
 
-                      {/* Right side: Action - message */}
                       <button 
                         onClick={() => handleMessageUser(u.username)}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-cyber-cyan/10 hover:bg-cyber-cyan text-cyber-cyan hover:text-space-900 border border-cyber-cyan/35 rounded-lg text-[10px] font-sans font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm hover:scale-[1.03]"
@@ -1185,13 +832,12 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                     </div>
                   ))
                 ) : (
-                  <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-505 font-light italic leading-normal">
+                  <div className="p-8 text-center text-xs text-slate-405 dark:text-slate-505 font-light italic leading-normal">
                     No developers found in quadrant grid.
                   </div>
                 )}
               </div>
 
-              {/* Secure orbital footer */}
               <div className="p-3 bg-slate-50/50 dark:bg-slate-900/25 border-t border-slate-100 dark:border-slate-850/60 text-center font-mono text-[8px] tracking-wider text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyber-cyan shrink-0 animate-pulse shadow-[0_0_4px_rgba(0,214,230,0.5)]" />
                 <span>Secure live neural signal connection active</span>

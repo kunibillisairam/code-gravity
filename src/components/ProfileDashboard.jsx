@@ -2,42 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import { 
-  ChevronLeft, ChevronRight, Loader2, Award, Zap, Flame, Calendar, 
-  Code2, User, Globe, BookOpen, 
+  ChevronLeft, Loader2, Award, Zap, Flame, 
+  Code2, User, Globe, BookOpen, MessageSquare,
   MapPin, Check, Plus, X, Edit3, Compass, History, Trophy
 } from 'lucide-react';
-
-const Github = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-    <path d="M9 18c-4.51 2-5-2-7-2" />
-  </svg>
-);
-
-const Linkedin = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-    <rect width="4" height="12" x="2" y="9" rx="1" />
-    <circle cx="4" cy="4" r="2" />
-  </svg>
-);
-
-// Help helper to get level title
-const getLevelTitle = (level) => {
-  if (level <= 1) return "Code Apprentice";
-  if (level === 2) return "Syntax Scholar";
-  if (level === 3) return "Algorithm Alchemist";
-  if (level === 4) return "Byte Overlord";
-  return "Legendary Wizard";
-};
-
-// Help helper to get rank title
-const getRankTitle = (solvedCount) => {
-  if (solvedCount === 0) return "Bronze";
-  if (solvedCount <= 2) return "Silver";
-  if (solvedCount <= 4) return "Gold";
-  return "Platinum";
-};
+import { getLevelTitle, getRankTitle, GithubIcon, LinkedinIcon } from '../utils/profileHelpers';
+import ContributionHeatmap from './ContributionHeatmap';
+import BadgeShowcase from './BadgeShowcase';
 
 const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
   const [profileData, setProfileData] = useState(null);
@@ -142,104 +113,6 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
-  // MONTHLY CALENDAR NAVIGATION STATE
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-  const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-
-  const handlePrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(prev => prev - 1);
-    } else {
-      setSelectedMonth(prev => prev - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(prev => prev + 1);
-    } else {
-      setSelectedMonth(prev => prev + 1);
-    }
-  };
-
-  const handlePrevYear = () => {
-    setSelectedYear(prev => prev - 1);
-  };
-
-  const handleNextYear = () => {
-    setSelectedYear(prev => prev + 1);
-  };
-
-  // Get count of days in month
-  const getDaysInMonth = (year, month) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  // Day index for first day of month (0 = Sun, 1 = Mon)
-  const getFirstDayOfMonth = (year, month) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  // Generate standard 42-day calendar grid days
-  const generateMonthlyDays = () => {
-    const days = [];
-    const daysCount = getDaysInMonth(selectedYear, selectedMonth);
-    const firstDayIndex = getFirstDayOfMonth(selectedYear, selectedMonth);
-
-    // Padding days from the previous month
-    const prevMonthDaysCount = getDaysInMonth(
-      selectedMonth === 0 ? selectedYear - 1 : selectedYear,
-      selectedMonth === 0 ? 11 : selectedMonth - 1
-    );
-
-    for (let i = firstDayIndex - 1; i >= 0; i--) {
-      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-      const prevMon = selectedMonth === 0 ? 11 : selectedMonth - 1;
-      const dayNum = prevMonthDaysCount - i;
-      const dateString = `${prevYear}-${String(prevMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: false,
-        formattedDate: new Date(prevYear, prevMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    // Active month days
-    for (let dayNum = 1; dayNum <= daysCount; dayNum++) {
-      const dateString = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: true,
-        formattedDate: new Date(selectedYear, selectedMonth, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    // Padding days from the next month to fill grid
-    const remainingCells = 42 - days.length;
-    for (let dayNum = 1; dayNum <= remainingCells; dayNum++) {
-      const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
-      const nextMon = selectedMonth === 11 ? 0 : selectedMonth + 1;
-      const dateString = `${nextYear}-${String(nextMon + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      days.push({
-        date: dateString,
-        dayNum,
-        isCurrentMonth: false,
-        formattedDate: new Date(nextYear, nextMon, dayNum).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-      });
-    }
-
-    return days;
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-[#080a10] text-slate-400">
@@ -299,64 +172,9 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
   const attemptedCount = (progress.attempted_problems || []).length;
   const successRate = attemptedCount > 0 ? ((solvedCount / attemptedCount) * 100).toFixed(1) : 0;
 
-  // Achievement Badges database
-  const badgeDetails = {
-    first_success: {
-      id: "first_success",
-      title: "First Success",
-      desc: "Unlock your first Accepted code challenge.",
-      icon: <Trophy className="w-6 h-6" />
-    },
-    speed_demon: {
-      id: "speed_demon",
-      title: "Speed Demon",
-      desc: "Compile and execute code successfully in under 100ms.",
-      icon: <Zap className="w-6 h-6" />
-    },
-    streak_master: {
-      id: "streak_master",
-      title: "Streak Master",
-      desc: "Maintain a consecutive 3-day active coding streak.",
-      icon: <Flame className="w-6 h-6" />
-    },
-    algorithm_alchemist: {
-      id: "algorithm_alchemist",
-      title: "Algorithm Alchemist",
-      desc: "Complete 5 unique programming problems successfully.",
-      icon: <Award className="w-6 h-6" />
-    }
-  };
-
   const unlockedBadges = progress.badges || [];
   const heatmapData = progress.contribution_heatmap || {};
   const activityLog = (progress.activity_log || []).slice(-5).reverse(); // last 5 actions
-
-  // Generate monthly grid days
-  const monthlyDays = generateMonthlyDays();
-
-  // Helper to color heatmap cells premium styling
-  const getCellStyles = (day) => {
-    const count = heatmapData[day.date] || 0;
-    
-    if (!day.isCurrentMonth) {
-      if (count === 0) return 'bg-slate-100/30 dark:bg-slate-900/10 border border-slate-200/10 dark:border-slate-850/10 text-slate-400/20 dark:text-slate-655/25 opacity-25 cursor-default pointer-events-none';
-      return 'bg-cyan-500/5 border border-cyan-550/10 text-cyan-500/20 dark:text-cyan-400/20 opacity-30';
-    }
-
-    if (count === 0) {
-      return 'bg-slate-50 dark:bg-[#121626]/40 border border-slate-200/50 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-cyber-cyan/35 dark:hover:border-cyber-cyan/30 hover:bg-slate-100 dark:hover:bg-[#121626]/90';
-    }
-    if (count === 1) {
-      return 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 hover:border-cyan-400/60 shadow-[0_0_6px_rgba(0,180,255,0.05)]';
-    }
-    if (count === 2) {
-      return 'bg-cyan-500/30 border border-cyan-500/50 text-cyan-700 dark:text-cyan-300 hover:border-cyan-300/70 shadow-[0_0_8px_rgba(0,180,255,0.1)]';
-    }
-    if (count === 3) {
-      return 'bg-cyan-500/65 border border-cyan-550/75 text-white dark:text-space-900 dark:font-extrabold hover:border-cyan-200 shadow-[0_0_12px_rgba(0,214,230,0.18)]';
-    }
-    return 'bg-cyber-cyan border border-cyber-cyan/90 text-space-900 font-extrabold shadow-[0_0_15px_rgba(0,240,255,0.28)] hover:scale-[1.04]';
-  };
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative">
@@ -450,7 +268,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                   className="flex items-center gap-1.5 hover:text-cyber-cyan transition-colors font-sans cursor-pointer bg-transparent border-0 p-0 text-slate-600 dark:text-slate-400"
                 >
                   <span className="font-extrabold text-slate-850 dark:text-white">{(profileData?.following || []).length}</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider">Following</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-505 uppercase tracking-wider">Following</span>
                 </button>
               </div>
 
@@ -463,7 +281,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                     rel="noreferrer"
                     className="p-2 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-850 dark:hover:text-white transition-colors cursor-pointer"
                   >
-                    <Github className="w-4 h-4" />
+                    <GithubIcon className="w-4 h-4" />
                   </a>
                 )}
                 {profile.linkedin_url && (
@@ -473,7 +291,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                     rel="noreferrer"
                     className="p-2 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-850 dark:hover:text-white transition-colors cursor-pointer"
                   >
-                    <Linkedin className="w-4 h-4" />
+                    <LinkedinIcon className="w-4 h-4" />
                   </a>
                 )}
                 {!profile.github_url && !profile.linkedin_url && (
@@ -550,7 +368,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                         {dailyStreak}
                       </span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mt-1">Current</span>
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block mt-1">Current</span>
                   </div>
 
                   {/* Longest streak */}
@@ -572,113 +390,8 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
         </div>
 
-        {/* Monthly Activity Calendar Section */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm space-y-5 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-850/60 pb-4">
-            <h3 className="font-sans font-black text-sm uppercase tracking-wider text-slate-850 dark:text-white flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-cyber-cyan" />
-              Activity Calendar
-            </h3>
-            
-            {/* Navigation Controls */}
-            <div className="flex items-center gap-3">
-              {/* Month navigation */}
-              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
-                <button 
-                  onClick={handlePrevMonth}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                  title="Previous Month"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="w-24 text-center font-sans font-extrabold text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-200 select-none">
-                  {MONTH_NAMES[selectedMonth]}
-                </span>
-                <button 
-                  onClick={handleNextMonth}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                  title="Next Month"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Year navigation */}
-              <div className="flex items-center bg-slate-50 dark:bg-[#121626] border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-inner">
-                <button 
-                  onClick={handlePrevYear}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                  title="Previous Year"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="w-14 text-center font-mono font-bold text-[10px] text-slate-700 dark:text-slate-200 select-none">
-                  {selectedYear}
-                </span>
-                <button 
-                  onClick={handleNextYear}
-                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-cyber-cyan rounded-lg transition-colors cursor-pointer"
-                  title="Next Year"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Compact Calendar wrapper to limit cell sizes */}
-          <div className="max-w-[340px] mx-auto w-full space-y-3">
-            {/* Days of Week Header */}
-            <div className="grid grid-cols-7 gap-1.5 text-center text-[9px] font-sans font-extrabold text-slate-400 dark:text-slate-550 uppercase tracking-widest select-none">
-              <div>Su</div>
-              <div>Mo</div>
-              <div>Tu</div>
-              <div>We</div>
-              <div>Th</div>
-              <div>Fr</div>
-              <div>Sa</div>
-            </div>
-
-            {/* Calendar Grid cells */}
-            <div className="grid grid-cols-7 gap-1.5 p-2 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-900 rounded-2xl">
-              {monthlyDays.map((day) => {
-                const count = heatmapData[day.date] || 0;
-                const cellStyles = getCellStyles(day);
-
-                return (
-                  <div
-                    key={day.date}
-                    className={`aspect-square rounded-xl flex items-center justify-center font-sans text-[10px] font-black transition-all duration-300 relative group cursor-pointer ${cellStyles}`}
-                  >
-                    <span>{day.dayNum}</span>
-
-                    {/* Hover Tooltip */}
-                    <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 w-40 bg-slate-900 border border-slate-800 text-white font-mono text-[9px] p-2 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 text-center leading-normal shadow-2xl">
-                      <strong>{count} {count === 1 ? 'commit' : 'commits'}</strong>
-                      <div className="text-slate-455 mt-0.5">{day.formattedDate}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Legend indicator bar */}
-          <div className="flex items-center justify-between text-[9px] text-slate-550 dark:text-slate-500 font-mono mt-1 px-1">
-            <span className="italic">Hover over days to view detailed submission counts.</span>
-            <div className="flex items-center gap-1.5 select-none">
-              <span>Less</span>
-              <div className="w-2.5 h-2.5 rounded bg-slate-500/10 dark:bg-[#121626]/40 border border-slate-200/50 dark:border-slate-850"></div>
-              <div className="w-2.5 h-2.5 rounded bg-cyan-500/15 border border-cyan-500/30"></div>
-              <div className="w-2.5 h-2.5 rounded bg-cyan-500/30 border border-cyan-500/50"></div>
-              <div className="w-2.5 h-2.5 rounded bg-cyan-500/65 border border-cyan-555/75"></div>
-              <div className="w-2.5 h-2.5 rounded bg-cyber-cyan border border-cyber-cyan/90"></div>
-              <span>More</span>
-            </div>
-          </div>
-        </div>
+        {/* Reusable Contribution Heatmap */}
+        <ContributionHeatmap heatmapData={heatmapData} />
 
         {/* Dash Grid Row 2 (Skills, Badges Showcase, & Recent Submissions Timeline) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
@@ -697,8 +410,8 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 {profile.skills && profile.skills.length > 0 ? (
                   profile.skills.map((skill, idx) => (
                     <span 
-                      key={idx}
-                      className="px-2.5 py-1 text-[9px] font-sans font-bold uppercase tracking-wider text-cyber-cyan bg-cyber-cyan/10 border border-cyber-cyan/20 rounded-lg hover:bg-cyber-cyan/15 hover:border-cyber-cyan/30 transition-all select-none"
+                       key={idx}
+                       className="px-2.5 py-1 text-[9px] font-sans font-bold uppercase tracking-wider text-cyber-cyan bg-cyber-cyan/10 border border-cyber-cyan/20 rounded-lg hover:bg-cyber-cyan/15 hover:border-cyber-cyan/30 transition-all select-none"
                     >
                       {skill}
                     </span>
@@ -733,7 +446,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
           </div>
 
-          {/* Col 2: Badges Showcase grid */}
+          {/* Col 2: Reusable Badges Showcase */}
           <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col space-y-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-blue to-cyber-purple" />
             
@@ -747,46 +460,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
               </span>
             </div>
 
-            {/* Badges Grid list */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-              {Object.values(badgeDetails).map((badge) => {
-                const isUnlocked = unlockedBadges.includes(badge.id);
-
-                return (
-                  <div 
-                    key={badge.id}
-                    className={`p-4 rounded-xl border flex items-center gap-3.5 transition-all select-none ${
-                      isUnlocked 
-                        ? 'border-emerald-500/20 bg-emerald-50/5 dark:bg-emerald-950/5 shadow-inner' 
-                        : 'border-slate-200 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-950/10 opacity-50 grayscale'
-                    }`}
-                  >
-                    <div className={`p-3 rounded-xl border shrink-0 ${
-                      isUnlocked
-                        ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-space-900 border-transparent shadow-md'
-                        : 'bg-slate-100 dark:bg-slate-900 border-slate-250 dark:border-slate-800 text-slate-400'
-                    }`}>
-                      {badge.icon}
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <h4 className={`text-xs font-black font-sans uppercase ${isUnlocked ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                        {badge.title}
-                      </h4>
-                      <p className="text-[10px] text-slate-455 dark:text-slate-500 font-light leading-relaxed">
-                        {badge.desc}
-                      </p>
-                      {isUnlocked && (
-                        <div className="text-[8px] font-mono text-emerald-500 font-bold uppercase tracking-wider mt-1 flex items-center gap-0.5">
-                          <Check className="w-3 h-3" /> Unlocked
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
+            <BadgeShowcase unlockedBadges={unlockedBadges} />
           </div>
 
         </div>
@@ -881,7 +555,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Name field */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Display Name</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Display Name</label>
                     <input
                       type="text"
                       name="display_name"
@@ -895,7 +569,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
                   {/* College field */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">College Name</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">College Name</label>
                     <input
                       type="text"
                       name="college_name"
@@ -909,7 +583,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
                 {/* Bio field */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Bio Description</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Bio Description</label>
                   <textarea
                     name="bio"
                     value={editForm.bio}
@@ -923,7 +597,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* GitHub link */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1"><Github className="w-3.5 h-3.5" /> GitHub Profile Link</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-555 uppercase tracking-wider flex items-center gap-1"><GithubIcon className="w-3.5 h-3.5" /> GitHub Profile Link</label>
                     <input
                       type="url"
                       name="github_url"
@@ -936,7 +610,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
                   {/* LinkedIn link */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1"><Linkedin className="w-3.5 h-3.5" /> LinkedIn Profile Link</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-555 uppercase tracking-wider flex items-center gap-1"><LinkedinIcon className="w-3.5 h-3.5" /> LinkedIn Profile Link</label>
                     <input
                       type="url"
                       name="linkedin_url"
@@ -950,7 +624,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
                 {/* Profile Pic URL field */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Profile Avatar Image Link (URL)</label>
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Profile Avatar Image Link (URL)</label>
                   <input
                     type="url"
                     name="profile_pic"
@@ -964,7 +638,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Skills tags */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Skills (Comma Separated)</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Skills (Comma Separated)</label>
                     <input
                       type="text"
                       name="skills"
@@ -977,7 +651,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
                   {/* Domains tags */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Domains (Comma Separated)</label>
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Domains (Comma Separated)</label>
                     <input
                       type="text"
                       name="interested_domains"
@@ -1056,7 +730,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
               {/* Search Bar */}
               <div className="p-4 pb-2">
                 <div className="relative flex items-center">
-                  <Compass className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-500" />
+                  <Compass className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-555" />
                   <input 
                     type="text" 
                     value={followSearchQuery} 
@@ -1104,7 +778,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                           <h4 className="text-xs font-black text-slate-800 dark:text-white truncate group-hover:text-cyber-cyan transition-colors leading-tight">
                             {u.display_name}
                           </h4>
-                          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-505 uppercase tracking-wider block">
+                          <span className="text-[9px] font-mono text-slate-400 dark:text-slate-555 uppercase tracking-wider block">
                             @{u.username}
                           </span>
                         </div>

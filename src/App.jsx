@@ -1,42 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import { Bell, MessageSquare } from 'lucide-react';
 import Features from './components/Features';
-import TopicExplorer from './components/TopicExplorer';
-import AIAssistant from './components/AIAssistant';
-import Leaderboard from './components/Leaderboard';
-import Footer from './components/Footer';
-import Workspace from './components/Workspace';
-import AuthModal from './components/AuthModal';
-import Submissions from './components/Submissions';
-import ProfileDashboard from './components/ProfileDashboard';
-import PublicProfile from './components/PublicProfile';
-import PeerChat from './components/PeerChat';
 import { chatService } from './services/chatService';
 import { apiService } from './services/api';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
+const TopicExplorer = lazy(() => import('./components/TopicExplorer'));
+const AIAssistant = lazy(() => import('./components/AIAssistant'));
+const Leaderboard = lazy(() => import('./components/Leaderboard'));
+const Footer = lazy(() => import('./components/Footer'));
+const Workspace = lazy(() => import('./components/Workspace'));
+const AuthModal = lazy(() => import('./components/AuthModal'));
+const Submissions = lazy(() => import('./components/Submissions'));
+const ProfileDashboard = lazy(() => import('./components/ProfileDashboard'));
+const PublicProfile = lazy(() => import('./components/PublicProfile'));
+const PeerChat = lazy(() => import('./components/PeerChat'));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-[#080a10] text-slate-405">
+    <div className="w-8 h-8 rounded-full border-2 border-t-cyber-cyan border-slate-700 animate-spin" />
+    <span className="text-xs font-light tracking-wider uppercase">Aligning Quantum Grid...</span>
+  </div>
+);
+
 function App() {
   const [view, setView] = useState('landing'); // 'landing' or 'workspace'
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [selectedUsername, setSelectedUsername] = useState(null);
-  const [activeSection, setActiveSection] = useState('hero');
-  const [user, setUser] = useState(() => localStorage.getItem('codegravity_user'));
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
-  const [globalToasts, setGlobalToasts] = useState([]);
-  const token = localStorage.getItem('codegravity_token');
+  
+  // Scoped User State
+  const [user, setUser] = useState(() => {
+    return localStorage.getItem('codegravity_user') || null;
+  });
 
   // Sync solved problems from backend to local storage scoped keys upon login / mount
   useEffect(() => {
-    if (!user || !token) return;
-
     const syncSolvedProblems = async () => {
+      if (!user) return;
       try {
         const profileData = await apiService.getUserProfile();
         if (profileData && profileData.progress && Array.isArray(profileData.progress.solved_problems)) {
@@ -48,151 +52,161 @@ function App() {
         console.error('Failed to sync solved problems from backend:', err);
       }
     };
-
     syncSolvedProblems();
-  }, [user, token]);
+  }, [user]);
 
-  // Load persistent notifications — split by type:
-  // Bell (🔔) = follower, badge, system alerts
-  // Chat (💬) = message-type notifications counted as unread DMs
+  const [activeSection, setActiveSection] = useState('hero');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('codegravity_theme') || 'dark';
+  });
+
+  // Global Real-time Notification Logs State
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [globalToasts, setGlobalToasts] = useState([]);
+
   useEffect(() => {
-    if (!user || !token) {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('codegravity_theme', theme);
+  }, [theme]);
+
+  // Real-time WebSockets Stream integration
+  useEffect(() => {
+    if (!user) {
       setNotifications([]);
       setUnreadNotificationsCount(0);
-      return;
-    }
-
-    const loadNotifications = async () => {
-      try {
-        const list = await chatService.getNotifications();
-        if (Array.isArray(list)) {
-          // Bell only shows non-message notifications
-          const bellNotifs = list.filter(n => n.type !== 'message');
-          setNotifications(bellNotifs);
-          const unreads = bellNotifs.filter(n => !n.is_read).length;
-          setUnreadNotificationsCount(unreads);
-        } else {
-          setNotifications([]);
-          setUnreadNotificationsCount(0);
-        }
-      } catch (err) {
-        console.error('Failed to load global notifications:', err);
-        setNotifications([]);
-        setUnreadNotificationsCount(0);
-      }
-    };
-
-    loadNotifications();
-  }, [user, token, view]);
-
-  // Poll unread DM count every 10 seconds so navbar badge stays fresh
-  useEffect(() => {
-    if (!user || !token) {
       setUnreadMessagesCount(0);
       return;
     }
 
-    const refreshUnreadDMs = async () => {
+    // Connect to global notifications & live chat status alerts
+    chatService.connectNotificationSocket(user);
+
+    // Initial fetch of follows/badges activity alerts
+    const syncInitialNotifications = async () => {
       try {
-        const convs = await chatService.getConversations();
-        if (Array.isArray(convs)) {
-          const total = convs.reduce((sum, c) => {
-            return sum + (c.unread_counts?.[user] || 0);
-          }, 0);
-          setUnreadMessagesCount(total);
-        }
+        const alerts = await chatService.getActivityNotifications();
+        setNotifications(alerts);
+        setUnreadNotificationsCount(alerts.filter(n => !n.is_seen).length);
       } catch (err) {
-        // silently fail
+        console.error("Failed to load active timeline notification stream:", err);
       }
     };
 
-    // When user navigates away from chat page, refresh badge
-    if (view !== 'chat') {
-      refreshUnreadDMs();
-      const interval = setInterval(refreshUnreadDMs, 10000);
-      return () => clearInterval(interval);
-    } else {
-      // On chat page, clear the badge
-      setUnreadMessagesCount(0);
-    }
-  }, [user, token, view]);
-
-  // Also increment badge from WebSocket message events when not on chat page
-  useEffect(() => {
-    if (!token || !user || view === 'chat') return;
-
-    const handleDMEvent = (event) => {
-      if (event.type === 'message' && event.conversation_id && event.sender_username !== user) {
-        setUnreadMessagesCount(prev => prev + 1);
+    // Initial fetch of unread chat counts scoped per user conversation
+    const syncUnreadMessages = async () => {
+      try {
+        const count = await chatService.getUnreadMessagesCount();
+        setUnreadMessagesCount(count);
+      } catch (err) {
+        console.error("Failed to fetch unread DM payload counts:", err);
       }
     };
 
-    chatService.connect(token, handleDMEvent);
-    return () => chatService.disconnect(handleDMEvent);
-  }, [token, user, view]);
-  // Hook real-time WebSocket global notifications
-  // Message-type → increments chat badge; everything else → bell
-  useEffect(() => {
-    if (!token || !user) return;
+    syncInitialNotifications();
+    syncUnreadMessages();
 
-    const handleGlobalWebSocketEvent = (event) => {
+    // Register global listener for incoming updates
+    const handleWebSocketEvent = (event) => {
       if (event.type === 'global_notification') {
-        if (event.notif_type === 'message' || event.type_tag === 'message' || (event.link && event.link.view === 'chat')) {
-          // This is a DM notification — route to chat button badge, not bell
-          if (view !== 'chat') {
-            setUnreadMessagesCount(prev => prev + 1);
-          }
-          // Still show a toast so user sees it
-          const toastId = Date.now();
-          setGlobalToasts(prev => [...prev, {
-            id: toastId,
-            title: event.title,
-            text: event.text,
-            link: event.link,
-            isMessage: true
-          }]);
-          setTimeout(() => {
-            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
-          }, 4000);
+        const notif = event.data;
+
+        // If DM update link is present, dispatch message count increment, else dispatch Bell alert count
+        if (notif.link && notif.link.view === 'chat') {
+          // Increment local live messages counter immediately
+          setUnreadMessagesCount(prev => prev + 1);
+
+          // Append DM message toast alert popup
+          setGlobalToasts(prev => [
+            ...prev,
+            {
+              id: Date.now(),
+              title: notif.title,
+              text: notif.content,
+              link: notif.link,
+              isMessage: true
+            }
+          ]);
         } else {
-          // Bell notification (follower, badge, system)
-          setNotifications(prev => [event, ...prev]);
+          // Normal activity alerts (follower triggers, badges, levels)
+          setNotifications(prev => [notif, ...prev]);
           setUnreadNotificationsCount(prev => prev + 1);
 
-          const toastId = Date.now();
-          setGlobalToasts(prev => [...prev, {
-            id: toastId,
-            title: event.title,
-            text: event.text,
-            link: event.link,
-            isMessage: false
-          }]);
-          setTimeout(() => {
-            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
-          }, 4000);
+          // Append Normal Activity toast alert popup
+          setGlobalToasts(prev => [
+            ...prev,
+            {
+              id: Date.now(),
+              title: notif.title,
+              text: notif.content,
+              link: notif.link,
+              isMessage: false
+            }
+          ]);
         }
+      } else if (event.type === 'chat_read_receipt') {
+        // Recipient read DMs, decrement count
+        syncUnreadMessages();
       }
     };
 
-    chatService.connect(token, handleGlobalWebSocketEvent);
+    chatService.addNotificationListener(handleWebSocketEvent);
 
     return () => {
-      chatService.disconnect(handleGlobalWebSocketEvent);
+      chatService.removeNotificationListener(handleWebSocketEvent);
+      chatService.disconnectNotificationSocket();
     };
-  }, [token, user, view]);
+  }, [user]);
+
+  // Clean-up toasts automatically after 6 seconds
+  useEffect(() => {
+    if (globalToasts.length > 0) {
+      const timer = setTimeout(() => {
+        setGlobalToasts(prev => prev.slice(1));
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [globalToasts]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleLoginSuccess = (username) => {
+    setUser(username);
+    localStorage.setItem('codegravity_user', username);
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    chatService.disconnectNotificationSocket();
+    localStorage.removeItem('codegravity_token');
+    localStorage.removeItem('codegravity_user');
+    setUser(null);
+    setView('landing');
+  };
 
   const handleNotificationClick = async (notif) => {
     try {
-      await chatService.markNotificationRead(notif.id);
-      setNotifications(prev =>
-        prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n)
+      await chatService.markNotificationAsRead(notif.id);
+      setNotifications(prev => 
+        prev.map(n => n.id === notif.id ? { ...n, is_seen: true } : n)
       );
       setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
 
+      // Trigger navigation router alignment based on alert payload link meta
       if (notif.link) {
         const { view: targetView, param } = notif.link;
         if (targetView === 'chat') {
-          if (param) localStorage.setItem('active_chat_recipient', param);
+          if (param) {
+            localStorage.setItem('active_chat_recipient', param);
+          }
           setView('chat');
         } else if (targetView === 'public-profile') {
           setSelectedUsername(param);
@@ -203,146 +217,51 @@ function App() {
         }
       }
     } catch (err) {
-      console.error('Failed to handle notification click:', err);
+      console.error("Failed to update notification logs status:", err);
     }
   };
 
   const handleMarkAllRead = async () => {
     try {
       await chatService.markAllNotificationsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_seen: true })));
       setUnreadNotificationsCount(0);
     } catch (err) {
-      console.error('Failed to mark all read:', err);
+      console.error("Failed to clear notification logs:", err);
     }
   };
 
   const handleClearNotifications = async () => {
     try {
-      await chatService.clearNotifications();
+      await chatService.clearAllNotifications();
       setNotifications([]);
       setUnreadNotificationsCount(0);
     } catch (err) {
-      console.error('Failed to clear notifications:', err);
-    }
-  };
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('codegravity_theme');
-    return savedTheme || 'light';
-  });
-
-  // Sync theme changes with HTML document element class list and localStorage
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('codegravity_theme', theme);
-  }, [theme]);
-
-  // Monitor scrolling to dynamically update active section in Navbar
-  useEffect(() => {
-    if (view !== 'landing') return;
-
-    const handleScroll = () => {
-      const sections = ['hero', 'features', 'problems', 'ai-assistant', 'leaderboard'];
-      const scrollPosition = window.scrollY + 200;
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const top = element.offsetTop;
-          const height = element.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [view]);
-
-  const handleExploreClick = () => {
-    const problemsEl = document.getElementById('problems');
-    if (problemsEl) {
-      problemsEl.scrollIntoView({ behavior: 'smooth' });
+      console.error("Failed to clean notification payloads:", err);
     }
   };
 
-  const handleSolveProblem = (prob) => {
-    if (typeof prob === 'string') {
-      setSelectedProblem(PROBLEMS_DB[prob] || PROBLEMS_DB['two-sum']);
-    } else if (prob && prob.id) {
-      const slug = prob.id;
-      if (slug.endsWith('two-sum')) {
-        setSelectedProblem(PROBLEMS_DB['two-sum']);
-      } else if (slug.endsWith('valid-parentheses')) {
-        setSelectedProblem(PROBLEMS_DB['valid-parentheses']);
-      } else if (slug.endsWith('container-with-most-water')) {
-        setSelectedProblem(PROBLEMS_DB['container-with-most-water']);
-      } else {
-        const parts = prob.id.split('_');
-        if (parts.length >= 3) {
-          const lang = parts[0];
-          const topicId = parts[1];
-          const problemSlug = parts[2];
-          
-          const virtualProb = getVirtualProblem(
-            lang,
-            topicId,
-            problemSlug,
-            prob.title,
-            prob.difficulty,
-            prob.maxScore
-          );
-          setSelectedProblem(virtualProb);
-        } else {
-          setSelectedProblem(PROBLEMS_DB['two-sum']);
-        }
-      }
-    }
+  const handleSolveProblem = (problemId) => {
+    setSelectedProblem(PROBLEMS_DB[problemId] || PROBLEMS_DB['two-sum']);
     setView('workspace');
     window.scrollTo({ top: 0 });
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  const handleLoginSuccess = (username) => {
-    setUser(username);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('codegravity_token');
-    localStorage.removeItem('codegravity_user');
-    setUser(null);
+  const handleExploreClick = () => {
+    handleNavigateToSection('problems');
   };
 
   const handleNavigateToSection = (sectionId) => {
-    setView('landing');
+    if (view !== 'landing') {
+      setView('landing');
+    }
     
-    let attempts = 0;
+    setActiveSection(sectionId);
+    
     const tryScroll = () => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        const offset = 80;
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = element.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - offset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      } else if (attempts < 10) {
-        attempts++;
-        setTimeout(tryScroll, 50);
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
       }
     };
     
@@ -356,12 +275,14 @@ function App() {
   // If in immersive coding workspace, only render Workspace view
   if (view === 'workspace') {
     return (
-      <Workspace 
-        problem={selectedProblem} 
-        onBack={handleBackToExplorer} 
-        theme={theme}
-        toggleTheme={toggleTheme}
-      />
+      <Suspense fallback={<PageLoader />}>
+        <Workspace 
+          problem={selectedProblem} 
+          onBack={handleBackToExplorer} 
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+      </Suspense>
     );
   }
 
@@ -388,8 +309,12 @@ function App() {
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
         />
-        <Submissions onBack={() => setView('landing')} />
-        <Footer />
+        <Suspense fallback={<PageLoader />}>
+          <Submissions onBack={() => setView('landing')} />
+        </Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Footer />
+        </Suspense>
       </div>
     );
   }
@@ -409,6 +334,7 @@ function App() {
           onSubmissionsClick={() => setView('submissions')}
           onProfileClick={() => setView('profile')}
           onNavClick={handleNavigateToSection}
+          onNavClick={handleNavigateToSection}
           onChatClick={() => setView('chat')}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
@@ -417,16 +343,20 @@ function App() {
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
         />
-        <ProfileDashboard 
-          onBack={() => setView('landing')} 
-          setView={setView} 
-          onUserClick={(uname) => {
-            setSelectedUsername(uname);
-            setView('public-profile');
-            window.scrollTo({ top: 0 });
-          }}
-        />
-        <Footer />
+        <Suspense fallback={<PageLoader />}>
+          <ProfileDashboard 
+            onBack={() => setView('landing')} 
+            setView={setView} 
+            onUserClick={(uname) => {
+              setSelectedUsername(uname);
+              setView('public-profile');
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        </Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Footer />
+        </Suspense>
       </div>
     );
   }
@@ -454,19 +384,23 @@ function App() {
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
         />
-        <PublicProfile 
-          username={selectedUsername} 
-          onBack={() => setView('landing')} 
-          setView={setView}
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onUserClick={(uname) => {
-            setSelectedUsername(uname);
-            setView('public-profile');
-            window.scrollTo({ top: 0 });
-          }}
-        />
-        <Footer />
+        <Suspense fallback={<PageLoader />}>
+          <PublicProfile 
+            username={selectedUsername} 
+            onBack={() => setView('landing')} 
+            setView={setView}
+            user={user}
+            onLoginClick={() => setShowAuthModal(true)}
+            onUserClick={(uname) => {
+              setSelectedUsername(uname);
+              setView('public-profile');
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        </Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Footer />
+        </Suspense>
       </div>
     );
   }
@@ -494,11 +428,12 @@ function App() {
           onMarkAllRead={handleMarkAllRead}
           onClearNotifications={handleClearNotifications}
         />
-        <PeerChat onBack={() => setView('landing')} theme={theme} />
+        <Suspense fallback={<PageLoader />}>
+          <PeerChat onBack={() => setView('landing')} theme={theme} />
+        </Suspense>
       </div>
     );
   }
-
 
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white">
@@ -530,11 +465,13 @@ function App() {
         onClearNotifications={handleClearNotifications}
       />
 
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      <Suspense fallback={<PageLoader />}>
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      </Suspense>
 
       {/* Main Sections */}
       <main className="relative z-10 w-full overflow-hidden">
@@ -544,23 +481,31 @@ function App() {
         <Features />
         
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <TopicExplorer onSolveProblem={handleSolveProblem} />
+        <Suspense fallback={<PageLoader />}>
+          <TopicExplorer onSolveProblem={handleSolveProblem} />
+        </Suspense>
         
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <AIAssistant />
+        <Suspense fallback={<PageLoader />}>
+          <AIAssistant />
+        </Suspense>
         
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Leaderboard 
-          onUserClick={(username) => {
-            setSelectedUsername(username);
-            setView('public-profile');
-            window.scrollTo({ top: 0 });
-          }} 
-        />
+        <Suspense fallback={<PageLoader />}>
+          <Leaderboard 
+            onUserClick={(username) => {
+              setSelectedUsername(username);
+              setView('public-profile');
+              window.scrollTo({ top: 0 });
+            }} 
+          />
+        </Suspense>
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Suspense fallback={<PageLoader />}>
+        <Footer />
+      </Suspense>
 
       {/* --- GLOBAL REAL-TIME NOTIFICATION TOASTER --- */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
