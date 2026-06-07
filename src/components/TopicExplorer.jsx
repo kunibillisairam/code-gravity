@@ -11,7 +11,11 @@ const TopicExplorer = ({ onSolveProblem }) => {
   
   // Set default active topic based on current selected language curriculum
   const [activeTopicId, setActiveTopicId] = useState(() => {
-    return localStorage.getItem('codegravity_active_topic') || 'python-basics';
+    const savedLang = localStorage.getItem('codegravity_active_lang') || 'python';
+    const savedTopic = localStorage.getItem('codegravity_active_topic') || 'python-basics';
+    const topics = CURRICULUM_MAP[savedLang] || [];
+    const topicExists = topics.some(t => t.id === savedTopic);
+    return topicExists ? savedTopic : (topics.length > 0 ? topics[0].id : 'python-basics');
   });
   
   // Sidebar Filtering States
@@ -25,8 +29,10 @@ const TopicExplorer = ({ onSolveProblem }) => {
     const topicExists = topics.some(t => t.id === activeTopicId);
     if (!topicExists && topics.length > 0) {
       setActiveTopicId(topics[0].id);
-      clearAllFilters();
+      setStatusFilters({ Solved: false, Unsolved: false });
+      setDifficultyFilters({ Easy: false, Medium: false, Hard: false });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLang]);
 
   useEffect(() => {

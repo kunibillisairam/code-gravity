@@ -91,7 +91,6 @@ function App() {
     if (path === '/profile') return 'profile';
     if (path.startsWith('/profile/')) return 'public-profile';
     if (path === '/chat') return 'chat';
-    if (path === '/explore') return 'explore';
     return 'landing';
   };
 
@@ -361,31 +360,28 @@ function App() {
   };
 
   const handleExploreClick = () => {
-    navigate('/explore');
-    window.scrollTo({ top: 0 });
+    handleNavigateToSection('problems');
   };
 
   const handleNavigateToSection = (sectionId) => {
-    if (sectionId === 'problems') {
-      navigate('/explore');
-      window.scrollTo({ top: 0 });
-      return;
-    }
-
     if (view !== 'landing') {
       navigate('/');
     }
     
     setActiveSection(sectionId);
     
+    let attempts = 0;
     const tryScroll = () => {
       const el = document.getElementById(sectionId);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
+      } else if (attempts < 20) {
+        attempts++;
+        setTimeout(tryScroll, 50);
       }
     };
     
-    setTimeout(tryScroll, 50);
+    setTimeout(tryScroll, 10);
   };
 
   return (
@@ -445,6 +441,11 @@ function App() {
                 
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
                 <Suspense fallback={<PageLoader />}>
+                  <TopicExplorer onSolveProblem={handleSolveProblem} />
+                </Suspense>
+                
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
+                <Suspense fallback={<PageLoader />}>
                   <AIAssistant />
                 </Suspense>
                 
@@ -458,13 +459,6 @@ function App() {
                   />
                 </Suspense>
               </main>
-            } />
-            <Route path="/explore" element={
-              <Suspense fallback={<PageLoader />}>
-                <div className="pt-24 min-h-screen relative z-10 w-full overflow-hidden">
-                  <TopicExplorer onSolveProblem={handleSolveProblem} />
-                </div>
-              </Suspense>
             } />
             <Route path="/submissions" element={
               <Suspense fallback={<PageLoader />}>
