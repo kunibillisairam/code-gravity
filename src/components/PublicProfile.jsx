@@ -241,7 +241,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <h1 className="text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
               <span>Developer Node</span>
               <span className={`text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-0.5 rounded ${fColors.bg} ${fColors.text} border ${fColors.border}`}>
                 {faction} Faction
@@ -272,7 +272,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
 
             {/* Profile Info */}
             <div className="space-y-1">
-              <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+              <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white leading-tight">
                 {profile.display_name || username}
               </h2>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
@@ -445,12 +445,12 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
                 <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest">XP Points</span>
-                <span className="text-xl font-black text-cyber-cyan mt-1 select-all">{xp.toLocaleString()}</span>
+                <span className="text-lg font-black text-cyber-cyan mt-1 select-all">{xp.toLocaleString()}</span>
               </div>
               
               <div className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center">
                 <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest">Rank Tier</span>
-                <span className="text-xl font-black text-cyber-purple mt-1 uppercase">{rank}</span>
+                <span className="text-lg font-black text-cyber-purple mt-1 uppercase">{rank}</span>
               </div>
 
               <button 
@@ -458,7 +458,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 className="p-4 rounded-2xl bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
               >
                 <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Followers</span>
-                <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{followersCount}</span>
+                <span className="text-lg font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{followersCount}</span>
               </button>
 
               <button 
@@ -466,7 +466,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
                 className="p-4 rounded-2xl bg-[#ffffff] dark:bg-[#0e121e] border border-slate-200 dark:border-slate-850 shadow-sm flex flex-col items-center text-center hover:border-cyber-cyan/30 cursor-pointer group transition-all"
               >
                 <span className="text-[8px] font-sans font-extrabold text-slate-400 dark:text-slate-555 uppercase tracking-widest group-hover:text-cyber-cyan transition-colors">Following</span>
-                <span className="text-xl font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{following_count}</span>
+                <span className="text-lg font-black text-slate-805 dark:text-white mt-1 group-hover:scale-[1.03] transition-transform">{following_count}</span>
               </button>
             </div>
 

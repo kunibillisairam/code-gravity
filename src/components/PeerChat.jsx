@@ -8,7 +8,6 @@ import { chatService } from '../services/chatService';
 
 const PeerChat = ({ onBack, theme }) => {
   const myUsername = localStorage.getItem('codegravity_user') || 'anonymous';
-  const token = localStorage.getItem('codegravity_token');
 
   // --- STATE ---
   const [rooms, setRooms] = useState([]);
@@ -80,7 +79,6 @@ const PeerChat = ({ onBack, theme }) => {
 
   // --- CONNECT WEBSOCKET ---
   useEffect(() => {
-    if (!token) return;
 
     // Define named handler to allow correct cleanup in chatService
     const handleChatEvent = (event) => {
@@ -165,7 +163,6 @@ const PeerChat = ({ onBack, theme }) => {
 
     // Connect to WebSocket gateway
     chatService.connect(
-      token,
       handleChatEvent,
       // Disconnect callback
       () => {
@@ -176,7 +173,7 @@ const PeerChat = ({ onBack, theme }) => {
     return () => {
       chatService.disconnect(handleChatEvent);
     };
-  }, [activeTab, token]);
+  }, [activeTab]);
 
   // --- FETCH MESSAGES ON TAB CHANGE & CONTINUOUS REAL-TIME POLLING ---
   useEffect(() => {

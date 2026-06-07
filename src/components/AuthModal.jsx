@@ -20,7 +20,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       
       const data = await apiService.googleLogin(idToken);
       if (data.access_token) {
-        localStorage.setItem('codegravity_token', data.access_token);
         localStorage.setItem('codegravity_user', data.username);
         onLoginSuccess(data.username);
         onClose();
@@ -46,7 +45,6 @@ const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
       }
       
       if (data.access_token) {
-        localStorage.setItem('codegravity_token', data.access_token);
         localStorage.setItem('codegravity_user', data.username);
         onLoginSuccess(data.username);
         onClose();

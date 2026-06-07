@@ -51,7 +51,7 @@ const Leaderboard = ({ onUserClick }) => {
   }, [leaders, searchTerm, activeTab]);
 
   return (
-    <section id="leaderboard" className="relative py-24 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-200 dark:border-slate-900 transition-colors duration-300 overflow-hidden">
+    <section id="leaderboard" className="relative py-12 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-200 dark:border-slate-900 transition-colors duration-300 overflow-hidden">
       
       {/* Background blurs */}
       <div className="absolute top-[20%] left-[-10%] w-[350px] h-[350px] bg-cyber-cyan/5 rounded-full blur-3xl pointer-events-none opacity-30"></div>
@@ -71,7 +71,7 @@ const Leaderboard = ({ onUserClick }) => {
             Hall of Legends
           </motion.div>
 
-          <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="font-sans text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Leaderboard Orbit
           </h2>
           

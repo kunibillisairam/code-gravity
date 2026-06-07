@@ -109,7 +109,7 @@ const Submissions = ({ onBack }) => {
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-850 dark:text-white">Submission History</h1>
+              <h1 className="text-xl font-black tracking-tight text-slate-850 dark:text-white">Submission History</h1>
               <p className="text-xs text-slate-500 font-light">Monitor compiled metrics, verdicts, and code snippets.</p>
             </div>
           </div>
@@ -136,7 +136,7 @@ const Submissions = ({ onBack }) => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Commits</span>
-                <h3 className="text-2xl font-black text-slate-850 dark:text-white mt-0.5">{totalSubmissions}</h3>
+                <h3 className="text-xl font-black text-slate-850 dark:text-white mt-0.5">{totalSubmissions}</h3>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ const Submissions = ({ onBack }) => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Accepted Submissions</span>
-                <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{acceptedSubmissions}</h3>
+                <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{acceptedSubmissions}</h3>
               </div>
             </div>
 
@@ -156,7 +156,7 @@ const Submissions = ({ onBack }) => {
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Success Ratio</span>
-                <h3 className="text-2xl font-black text-cyber-purple mt-0.5">{successRate}%</h3>
+                <h3 className="text-xl font-black text-cyber-purple mt-0.5">{successRate}%</h3>
               </div>
             </div>
           </motion.div>

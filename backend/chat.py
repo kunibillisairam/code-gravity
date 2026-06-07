@@ -457,13 +457,23 @@ async def clear_all_notifications(current_user: dict = Depends(get_current_user)
 
 # --- WEBSOCKET CHAT CONNECTION GATEWAY ---
 
+WS_TICKETS = {}
+
+@router.get("/ticket")
+async def get_ws_ticket(current_user: dict = Depends(get_current_user)):
+    import uuid
+    ticket = str(uuid.uuid4())
+    WS_TICKETS[ticket] = current_user["email"]
+    return {"ticket": ticket}
+
 @router.websocket("/ws")
-async def chat_websocket_endpoint(websocket: WebSocket, token: str = None):
-    if not token:
+async def chat_websocket_endpoint(websocket: WebSocket, ticket: str = None):
+    if not ticket or ticket not in WS_TICKETS:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
-    user = await get_ws_user(token)
+    email = WS_TICKETS.pop(ticket)
+    user = await db.users.find_one({"email": email})
     if not user:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return

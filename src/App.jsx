@@ -137,8 +137,7 @@ function App() {
   // Bell (🔔) = follower, badge, system alerts
   // Chat (💬) = message-type notifications counted as unread DMs
   useEffect(() => {
-    const token = localStorage.getItem('codegravity_token');
-    if (!user || !token) {
+    if (!user) {
       setNotifications([]);
       setUnreadNotificationsCount(0);
       return;
@@ -169,8 +168,7 @@ function App() {
 
   // Poll unread DM count every 10 seconds so navbar badge stays fresh
   useEffect(() => {
-    const token = localStorage.getItem('codegravity_token');
-    if (!user || !token) {
+    if (!user) {
       setUnreadMessagesCount(0);
       return;
     }
@@ -202,8 +200,7 @@ function App() {
 
   // Also increment badge from WebSocket message events when not on chat page
   useEffect(() => {
-    const token = localStorage.getItem('codegravity_token');
-    if (!token || !user || view === 'chat') return;
+    if (!user || view === 'chat') return;
 
     const handleDMEvent = (event) => {
       if (event.type === 'message' && event.conversation_id && event.sender_username !== user) {
@@ -211,15 +208,14 @@ function App() {
       }
     };
 
-    chatService.connect(token, handleDMEvent);
+    chatService.connect(handleDMEvent);
     return () => chatService.disconnect(handleDMEvent);
   }, [user, view]);
 
   // Hook real-time WebSocket global notifications
   // Message-type → increments chat badge; everything else → bell
   useEffect(() => {
-    const token = localStorage.getItem('codegravity_token');
-    if (!token || !user) return;
+    if (!user) return;
 
     const handleGlobalWebSocketEvent = (event) => {
       if (event.type === 'global_notification') {
@@ -260,7 +256,7 @@ function App() {
       }
     };
 
-    chatService.connect(token, handleGlobalWebSocketEvent);
+    chatService.connect(handleGlobalWebSocketEvent);
 
     return () => {
       chatService.disconnect(handleGlobalWebSocketEvent);
@@ -288,7 +284,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('codegravity_token');
     localStorage.removeItem('codegravity_user');
     setUser(null);
     setView('landing');

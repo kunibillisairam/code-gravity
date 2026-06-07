@@ -208,9 +208,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
       });
 
       // Save submission history silently to MongoDB if user is authenticated
-      const token = localStorage.getItem('codegravity_token');
       const activeUser = localStorage.getItem('codegravity_user');
-      if (token && activeUser) {
+      if (activeUser) {
         apiService.saveSubmission({
           problem_id: problem.id,
           problem_title: problem.title,

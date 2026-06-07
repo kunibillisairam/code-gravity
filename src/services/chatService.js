@@ -75,12 +75,17 @@ export const chatService = {
     return response.data;
   },
 
+  getWsTicket: async () => {
+    const response = await apiClient.get('/chat/ticket');
+    return response.data.ticket;
+  },
+
   // --- WEBSOCKET GATEWAY ---
   isConnected: () => {
     return socket !== null && socket.readyState === WebSocket.OPEN;
   },
 
-  connect: (token, onEvent, onDisconnectCallback) => {
+  connect: async (onEvent, onDisconnectCallback) => {
     if (onEvent) {
       listeners.add(onEvent);
     }
@@ -94,7 +99,8 @@ export const chatService = {
     }
 
     try {
-      const wsUrl = `${WS_BASE_URL}?token=${token}`;
+      const ticket = await chatService.getWsTicket();
+      const wsUrl = `${WS_BASE_URL}?ticket=${ticket}`;
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
@@ -126,7 +132,7 @@ export const chatService = {
         // Auto-reconnect logic with exponential backoff
         reconnectTimer = setTimeout(() => {
           reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
-          chatService.connect(token, null, onDisconnectCallback);
+          chatService.connect(null, onDisconnectCallback);
         }, reconnectDelay);
       };
 
@@ -141,7 +147,7 @@ export const chatService = {
       // Fallback reconnect with exponential backoff
       reconnectTimer = setTimeout(() => {
         reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
-        chatService.connect(token, null, onDisconnectCallback);
+        chatService.connect(null, onDisconnectCallback);
       }, reconnectDelay * 2);
     }
   },

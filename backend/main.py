@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -25,6 +25,14 @@ app = FastAPI(
     version="1.0.0",
     description="Microservice providing isolated programming sandbox compilations via Judge0 API"
 )
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS permissions to allow frontend access
 app.add_middleware(
@@ -138,7 +146,7 @@ def read_root():
     }
 
 @app.post("/register")
-async def register(user: UserCreate):
+async def register(user: UserCreate, response: Response):
     existing_email = await db.users.find_one({"email": user.email})
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -175,10 +183,11 @@ async def register(user: UserCreate):
     new_user = await db.users.insert_one(user_dict)
     
     access_token = create_access_token(data={"sub": user.email})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none")
     return {"access_token": access_token, "token_type": "bearer", "username": user.username}
 
 @app.post("/login")
-async def login(user: UserLogin):
+async def login(user: UserLogin, response: Response):
     db_user = await db.users.find_one({"email": user.email})
     if not db_user or not verify_password(user.password, db_user["password"]):
         raise HTTPException(
@@ -189,10 +198,11 @@ async def login(user: UserLogin):
     
     username = db_user["username"]
     access_token = create_access_token(data={"sub": db_user["email"]})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none")
     return {"access_token": access_token, "token_type": "bearer", "username": username}
 
 @app.post("/auth/google")
-async def google_auth(request: GoogleLoginRequest):
+async def google_auth(request: GoogleLoginRequest, response: Response):
     token = request.credential
     if not token:
         raise HTTPException(status_code=400, detail="Missing Google credential token")
@@ -269,6 +279,7 @@ async def google_auth(request: GoogleLoginRequest):
         username = db_user["username"]
         
     access_token = create_access_token(data={"sub": email})
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none")
     return {"access_token": access_token, "token_type": "bearer", "username": username}
 
 async def resolve_usernames(usernames: list) -> list:
@@ -811,7 +822,8 @@ async def get_submissions(current_user: dict = Depends(get_current_user)):
     return submissions
 
 @app.post("/run-code")
-async def run_code(request: RunCodeRequest):
+@limiter.limit("10/minute")
+async def run_code(http_request: Request, request: RunCodeRequest):
     """
     Asynchronously accept a code block, submit to Judge0, poll execution 
     queues, and return final output metrics.
@@ -846,7 +858,8 @@ async def run_code(request: RunCodeRequest):
         }
 
 @app.post("/submit-code")
-async def submit_code(request: SubmitCodeRequest):
+@limiter.limit("10/minute")
+async def submit_code(http_request: Request, request: SubmitCodeRequest):
     """
     Asynchronously accept code and a list of test cases, execute them via Judge0,
     and return strict expected vs actual evaluation metrics.

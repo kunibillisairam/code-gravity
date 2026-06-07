@@ -50,7 +50,7 @@ const DiscussionPanel = ({ problem }) => {
   
   // Current user cache
   const currentUser = localStorage.getItem('codegravity_user') || 'Anonymous';
-  const currentUserEmail = localStorage.getItem('codegravity_token') ? 'authenticated' : '';
+  const currentUserEmail = localStorage.getItem('codegravity_user') ? 'authenticated' : '';
 
   const fetchDiscussions = async () => {
     setIsLoading(true);

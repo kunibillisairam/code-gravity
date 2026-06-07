@@ -196,7 +196,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-850 dark:text-white">User Profile</h1>
+            <h1 className="text-xl font-black tracking-tight text-slate-850 dark:text-white">User Profile</h1>
             <p className="text-xs text-slate-500 font-light">View level scaling, unlocked badges, and daily streaks.</p>
           </div>
         </div>
@@ -226,7 +226,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 )}
                 
                 <div className="space-y-0.5">
-                  <h2 className="text-lg font-black text-slate-850 dark:text-white">{profile.display_name || username}</h2>
+                  <h2 className="text-base font-black text-slate-850 dark:text-white">{profile.display_name || username}</h2>
                   <span className="text-[10px] font-mono text-cyber-cyan uppercase tracking-wider block">@{username}</span>
                   <div className="inline-block px-2.5 py-0.5 mt-1 bg-cyber-purple/10 border border-cyber-purple/35 text-cyber-purple font-sans font-bold text-[9px] uppercase tracking-wider rounded">
                     {levelTitle}
@@ -343,15 +343,15 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                 <div className="grid grid-cols-3 gap-2.5 text-center pt-2">
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 shadow-inner">
                     <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Solved</span>
-                    <span className="text-base font-black text-slate-850 dark:text-white mt-1 block">{solvedCount}</span>
+                    <span className="text-sm font-black text-slate-850 dark:text-white mt-1 block">{solvedCount}</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 shadow-inner">
                     <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Attempted</span>
-                    <span className="text-base font-black text-slate-850 dark:text-white mt-1 block">{attemptedCount}</span>
+                    <span className="text-sm font-black text-slate-850 dark:text-white mt-1 block">{attemptedCount}</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 shadow-inner">
                     <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider block">Accuracy</span>
-                    <span className="text-base font-black text-cyber-cyan mt-1 block">{successRate}%</span>
+                    <span className="text-sm font-black text-cyber-cyan mt-1 block">{successRate}%</span>
                   </div>
                 </div>
               </div>

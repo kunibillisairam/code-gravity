@@ -95,7 +95,7 @@ const AIAssistant = () => {
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight leading-[1.1] text-slate-905 dark:text-white"
+              className="font-sans text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-[1.1] text-slate-905 dark:text-white"
             >
               Your Algorithmic <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-purple-400 to-cyber-purple">

@@ -142,7 +142,7 @@ const TopicExplorer = ({ onSolveProblem }) => {
             <BookOpen className="w-4 h-4 text-cyber-cyan" />
             Curriculum learning path
           </div>
-          <h2 className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="font-sans text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Topic Wise structured Curriculum
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-2xl font-light leading-relaxed">
@@ -163,7 +163,7 @@ const TopicExplorer = ({ onSolveProblem }) => {
           </div>
           <div className="flex items-center gap-4 shrink-0">
             <div className="text-right">
-              <span className="font-mono text-xl font-black text-slate-800 dark:text-cyber-cyan">
+              <span className="font-mono text-lg font-black text-slate-800 dark:text-cyber-cyan">
                 {languageStats.solved} / {languageStats.total}
               </span>
               <span className="text-[10px] uppercase font-sans font-bold text-slate-400 dark:text-slate-500 block">Challenges Solved</span>
@@ -262,7 +262,7 @@ const TopicExplorer = ({ onSolveProblem }) => {
                 <div className="space-y-3.5">
                   <div className="space-y-1">
                     <span className="text-[10px] font-sans font-bold text-cyber-cyan tracking-wider uppercase">Topic {activeTopic.name.match(/^[0-9]+/)?.[0] || '1'}</span>
-                    <h3 className="font-sans font-black text-xl text-slate-850 dark:text-white leading-tight">
+                    <h3 className="font-sans font-black text-lg text-slate-850 dark:text-white leading-tight">
                       {activeTopic.name.replace(/^[0-9.]+\s+/, '')}
                     </h3>
                   </div>

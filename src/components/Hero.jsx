@@ -53,7 +53,7 @@ console.log(calculateEscapeVelocity(5.97e24, 6.37e6));`;
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white"
+            className="font-sans text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white"
           >
             Defy the Gravity of <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-blue-550 to-cyber-purple">

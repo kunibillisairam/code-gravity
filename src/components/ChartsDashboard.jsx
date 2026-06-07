@@ -216,7 +216,7 @@ const ChartsDashboard = ({ onBack, user }) => {
               <BarChart3 className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white leading-tight">
+              <h1 className="text-lg md:text-xl font-black uppercase tracking-widest text-white leading-tight">
                 GRAVITY DATA HUB // SYSTEM ANALYTICS
               </h1>
               <p className="text-[10px] md:text-xs text-slate-400 font-light max-w-xl">
@@ -252,7 +252,7 @@ const ChartsDashboard = ({ onBack, user }) => {
           <div className="absolute top-0 left-0 w-full h-[2px] bg-cyber-purple group-hover:scale-x-110 transition-transform origin-left duration-300" />
           <span className="text-[8px] font-sans font-black text-slate-500 dark:text-slate-450 uppercase tracking-widest block">System Level</span>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-white leading-none font-mono">{progress.level || 1}</span>
+            <span className="text-xl font-black text-white leading-none font-mono">{progress.level || 1}</span>
             <span className="text-[10px] text-cyber-purple font-bold font-mono">Lvl</span>
           </div>
         </motion.div>
@@ -267,7 +267,7 @@ const ChartsDashboard = ({ onBack, user }) => {
           <div className="absolute top-0 left-0 w-full h-[2px] bg-cyber-cyan group-hover:scale-x-110 transition-transform origin-left duration-300" />
           <span className="text-[8px] font-sans font-black text-slate-500 dark:text-slate-450 uppercase tracking-widest block">Neural Weight</span>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-white leading-none font-mono">{progress.xp || 0}</span>
+            <span className="text-xl font-black text-white leading-none font-mono">{progress.xp || 0}</span>
             <span className="text-[9px] text-cyber-cyan font-bold font-mono">XP</span>
           </div>
         </motion.div>
@@ -282,7 +282,7 @@ const ChartsDashboard = ({ onBack, user }) => {
           <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-500 group-hover:scale-x-110 transition-transform origin-left duration-300" />
           <span className="text-[8px] font-sans font-black text-slate-500 dark:text-slate-450 uppercase tracking-widest block">Aligned Quadrants</span>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-white leading-none font-mono">{totalSolved}</span>
+            <span className="text-xl font-black text-white leading-none font-mono">{totalSolved}</span>
             <span className="text-[9px] text-emerald-500 font-bold font-mono">SOLVED</span>
           </div>
         </motion.div>
@@ -297,7 +297,7 @@ const ChartsDashboard = ({ onBack, user }) => {
           <div className="absolute top-0 left-0 w-full h-[2px] bg-amber-500 group-hover:scale-x-110 transition-transform origin-left duration-300" />
           <span className="text-[8px] font-sans font-black text-slate-500 dark:text-slate-450 uppercase tracking-widest block">Attempted Orbits</span>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-white leading-none font-mono">{attemptedIds.length}</span>
+            <span className="text-xl font-black text-white leading-none font-mono">{attemptedIds.length}</span>
             <span className="text-[9px] text-amber-500 font-bold font-mono">TRIALS</span>
           </div>
         </motion.div>
@@ -312,7 +312,7 @@ const ChartsDashboard = ({ onBack, user }) => {
           <div className="absolute top-0 left-0 w-full h-[2px] bg-cyber-magenta group-hover:scale-x-110 transition-transform origin-left duration-300" />
           <span className="text-[8px] font-sans font-black text-slate-500 dark:text-slate-450 uppercase tracking-widest block">Unlocked Seals</span>
           <div className="flex items-baseline gap-1 mt-1.5">
-            <span className="text-2xl font-black text-white leading-none font-mono">{badges.length}</span>
+            <span className="text-xl font-black text-white leading-none font-mono">{badges.length}</span>
             <span className="text-[9px] text-cyber-magenta font-bold font-mono">BADGES</span>
           </div>
         </motion.div>
@@ -357,7 +357,7 @@ const ChartsDashboard = ({ onBack, user }) => {
 
               {/* Text inside circle */}
               <div className="absolute flex flex-col items-center justify-center leading-none text-center">
-                <span className="text-2xl font-black text-white font-mono tracking-tight">{passRate}%</span>
+                <span className="text-xl font-black text-white font-mono tracking-tight">{passRate}%</span>
                 <span className="text-[7.5px] font-sans font-black text-slate-450 uppercase tracking-widest block mt-0.5">VERDICT</span>
               </div>
             </div>
