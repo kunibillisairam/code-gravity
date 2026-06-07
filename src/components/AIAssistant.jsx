@@ -69,7 +69,7 @@ const AIAssistant = () => {
   };
 
   return (
-    <section id="ai-assistant" className="relative py-24 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-205 dark:border-slate-900 transition-colors duration-300">
+    <section id="ai-assistant" className="relative py-12 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-205 dark:border-slate-900 transition-colors duration-300">
       
       {/* Background blurs */}
       <div className="absolute top-[30%] right-[10%] w-[350px] h-[350px] bg-cyber-purple/5 pointer-events-none rounded-full blur-3xl opacity-30"></div>
@@ -80,7 +80,7 @@ const AIAssistant = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* LEFT SIDE: Explanatory Copy */}
-          <div className="lg:col-span-5 flex flex-col text-left space-y-6">
+          <div className="lg:col-span-5 flex flex-col text-left space-y-4">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -95,7 +95,7 @@ const AIAssistant = () => {
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] text-slate-905 dark:text-white"
+              className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight leading-[1.1] text-slate-905 dark:text-white"
             >
               Your Algorithmic <br />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-purple-400 to-cyber-purple">
@@ -107,29 +107,29 @@ const AIAssistant = () => {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-light leading-relaxed"
+              className="text-slate-500 dark:text-slate-400 text-[11px] sm:text-xs font-light leading-relaxed"
             >
               Never get stuck in a compiler loop again. CodeGravity's built-in AI analyzes your syntax, traces computational complexities, and explains optimal coding patterns, ensuring genuine cognitive growth.
             </motion.p>
 
             {/* Presets Grid */}
-            <div className="flex flex-col space-y-3 pt-2">
-              <span className="font-sans font-bold text-[10px] text-slate-450 dark:text-slate-500 tracking-wider uppercase">
+            <div className="flex flex-col space-y-2 pt-1">
+              <span className="font-sans font-bold text-[9px] text-slate-450 dark:text-slate-500 tracking-wider uppercase">
                 Tap a Preset Command
               </span>
               
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2">
                 {PRESET_PROMPTS.map((prompt, idx) => (
                   <button
                     key={idx}
                     disabled={isTyping}
                     onClick={() => handlePromptClick(prompt.query)}
-                    className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e121e] hover:bg-slate-100 dark:hover:bg-[#121626] hover:border-cyber-cyan/30 text-left transition-all duration-200 group cursor-pointer"
+                    className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e121e] hover:bg-slate-100 dark:hover:bg-[#121626] hover:border-cyber-cyan/30 text-left transition-all duration-200 group cursor-pointer"
                   >
-                    <span className="text-slate-700 dark:text-slate-350 text-xs font-semibold group-hover:text-cyber-cyan transition-colors">
+                    <span className="text-slate-700 dark:text-slate-350 text-[11px] font-semibold group-hover:text-cyber-cyan transition-colors">
                       {prompt.label}
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-450 dark:text-slate-650 group-hover:text-cyber-cyan group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-3 h-3 text-slate-450 dark:text-slate-650 group-hover:text-cyber-cyan group-hover:translate-x-1 transition-all" />
                   </button>
                 ))}
               </div>

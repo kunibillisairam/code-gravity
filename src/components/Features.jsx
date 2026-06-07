@@ -49,11 +49,11 @@ const Features = () => {
   };
 
   return (
-    <section id="features" className="relative py-24 px-6 md:px-12 overflow-hidden bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white transition-colors duration-300">
+    <section id="features" className="relative py-12 px-6 md:px-12 overflow-hidden bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+        <div className="text-center max-w-2xl mx-auto mb-8 space-y-3">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -63,30 +63,30 @@ const Features = () => {
             <Compass className="w-3.5 h-3.5 text-cyber-purple" />
             Capabilities
           </motion.div>
-
+ 
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight"
+            className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight"
           >
             Engineered to Propel <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 dark:from-white to-slate-500 dark:to-slate-400">
               Your Coding Velocity.
             </span>
           </motion.h2>
-
+ 
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-light max-w-lg mx-auto"
+            className="text-slate-500 dark:text-slate-400 text-xs font-light max-w-lg mx-auto"
           >
             Say goodbye to clunky interfaces. Embrace a robust, flat-designed developer workspace built for elite problem solvers.
           </motion.p>
         </div>
-
+ 
         {/* Feature Grid */}
         <motion.div
           variants={containerVariants}
@@ -100,23 +100,23 @@ const Features = () => {
               key={idx}
               variants={itemVariants}
               whileHover={{ y: -4 }}
-              className={`p-8 rounded-xl cursor-pointer overflow-hidden transition-all duration-200 bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-800 hover:bg-slate-100/50 dark:hover:bg-[#111626] shadow-sm dark:shadow-md ${feat.hoverBorder}`}
+              className={`p-6 rounded-xl cursor-pointer overflow-hidden transition-all duration-200 bg-white dark:bg-[#0e121e] border border-slate-200 dark:border-slate-800 hover:bg-slate-100/50 dark:hover:bg-[#111626] shadow-sm dark:shadow-md ${feat.hoverBorder}`}
             >
-              <div className="flex flex-col text-left space-y-4">
-                <div className="w-12 h-12 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center transition-colors">
-                  {feat.icon}
+              <div className="flex flex-col text-left space-y-3">
+                <div className="w-10 h-10 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center transition-colors">
+                  {React.cloneElement(feat.icon, { className: 'w-5.5 h-5.5' })}
                 </div>
-                <h3 className="font-sans text-base font-bold text-slate-800 dark:text-white tracking-wide transition-colors">
+                <h3 className="font-sans text-sm font-bold text-slate-800 dark:text-white tracking-wide transition-colors">
                   {feat.title}
                 </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs font-light leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] font-light leading-relaxed">
                   {feat.desc}
                 </p>
               </div>
             </motion.div>
           ))}
         </motion.div>
-
+ 
       </div>
     </section>
   );

@@ -31,7 +31,7 @@ console.log(calculateEscapeVelocity(5.97e24, 6.37e6));`;
   }, []);
 
   return (
-    <section id="hero" className="relative min-h-screen pt-28 pb-16 px-6 md:px-12 flex flex-col items-center justify-center overflow-hidden bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white transition-colors duration-300 tech-grid">
+    <section id="hero" className="relative min-h-[85vh] pt-20 pb-10 px-6 md:px-12 flex flex-col items-center justify-center overflow-hidden bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white transition-colors duration-300 tech-grid">
       
       {/* Subtle Background Glows */}
       <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] bg-cyber-cyan/5 rounded-full blur-3xl pointer-events-none z-0"></div>
@@ -40,7 +40,7 @@ console.log(calculateEscapeVelocity(5.97e24, 6.37e6));`;
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
         
         {/* Left Side: Copy */}
-        <div className="lg:col-span-6 flex flex-col text-left space-y-6">
+        <div className="lg:col-span-6 flex flex-col text-left space-y-4">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ console.log(calculateEscapeVelocity(5.97e24, 6.37e6));`;
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-sans text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white"
+            className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white"
           >
             Defy the Gravity of <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyber-cyan via-blue-550 to-cyber-purple">
@@ -64,7 +64,7 @@ console.log(calculateEscapeVelocity(5.97e24, 6.37e6));`;
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-slate-500 dark:text-slate-400 text-sm sm:text-base max-w-lg font-light leading-relaxed"
+            className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-lg font-light leading-relaxed"
           >
             CodeGravity is a premium solid workspace for developers to practice advanced algorithms, execute templates inside browser terminals, and learn with an active AI coding co-pilot.
           </motion.p>
