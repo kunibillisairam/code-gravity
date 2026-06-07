@@ -9,6 +9,12 @@
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   }
 
+  /* Override light-mode base background with a very very light blue */
+  html:not(.dark) body,
+  html:not(.dark) .bg-slate-50 {
+    background-color: #f2f8ff !important;
+  }
+
   /* JetBrains Mono typography for code nodes */
   code, pre, textarea, .font-mono {
     font-family: 'JetBrains Mono', monospace !important;
