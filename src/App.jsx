@@ -10,7 +10,7 @@ import { apiService } from './services/api';
 import { getVirtualProblem } from './data/virtualProblems';
 import { PROBLEMS_DB } from './data/problems';
 
-const TopicExplorer = lazy(() => import('./components/TopicExplorer'));
+import TopicExplorer from './components/TopicExplorer';
 const AIAssistant = lazy(() => import('./components/AIAssistant'));
 const Leaderboard = lazy(() => import('./components/Leaderboard'));
 const Footer = lazy(() => import('./components/Footer'));
