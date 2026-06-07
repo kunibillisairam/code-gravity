@@ -26,7 +26,8 @@ dist-ssr
 # Environment secrets
 .env
 .env.local
-.env.*
+.env.*.local
+# Allow .env.production to be committed (only public backend URL, no secrets)
 backend/.env
 
 # Python Compiled Caches

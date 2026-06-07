@@ -4,7 +4,8 @@ import { apiService } from '../services/api';
 import { 
   ChevronLeft, Loader2, Award, Zap, Flame, 
   Code2, User, Globe, BookOpen, MessageSquare,
-  MapPin, Check, Plus, X, Edit3, Compass, History, Trophy
+  MapPin, Check, Plus, X, Edit3, Compass, History, Trophy,
+  Calendar
 } from 'lucide-react';
 import { getLevelTitle, getRankTitle, GithubIcon, LinkedinIcon } from '../utils/profileHelpers';
 import ContributionHeatmap from './ContributionHeatmap';
