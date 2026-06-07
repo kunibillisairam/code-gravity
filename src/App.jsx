@@ -31,7 +31,22 @@ const PageLoader = () => (
 const WorkspaceWrapper = ({ theme, toggleTheme }) => {
   const { problemId } = useParams();
   const navigate = useNavigate();
-  const problem = PROBLEMS_DB[problemId] || PROBLEMS_DB['two-sum'];
+  
+  let problem = PROBLEMS_DB[problemId];
+  if (!problem && problemId) {
+    const parts = problemId.split('_');
+    if (parts.length >= 3) {
+      const lang = parts[0];
+      const topicId = parts[1];
+      const slug = parts.slice(2).join('_');
+      const title = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      problem = getVirtualProblem(lang, topicId, slug, title);
+    }
+  }
+  
+  if (!problem) {
+    problem = PROBLEMS_DB['two-sum'];
+  }
   
   return (
     <Workspace 
@@ -338,8 +353,9 @@ function App() {
     }
   };
 
-  const handleSolveProblem = (problemId) => {
-    navigate(`/workspace/${problemId}`);
+  const handleSolveProblem = (problem) => {
+    const id = typeof problem === 'object' && problem !== null ? problem.id : problem;
+    navigate(`/workspace/${id}`);
     window.scrollTo({ top: 0 });
   };
 
