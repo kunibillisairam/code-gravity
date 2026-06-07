@@ -128,7 +128,7 @@ const TopicExplorer = ({ onSolveProblem }) => {
   };
 
   return (
-    <section id="problems" className="relative py-24 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-200 dark:border-slate-900 transition-colors duration-300">
+    <section id="problems" className="relative py-12 px-6 md:px-12 bg-slate-50 dark:bg-[#080a10] border-t border-slate-200 dark:border-slate-900 transition-colors duration-300">
       
       {/* Glow Blur Blobs */}
       <div className="absolute top-[10%] left-[5%] w-[350px] h-[350px] bg-cyber-cyan/5 pointer-events-none z-0 rounded-full blur-3xl"></div>
@@ -137,12 +137,12 @@ const TopicExplorer = ({ onSolveProblem }) => {
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Header */}
-        <div className="flex flex-col text-left space-y-3 mb-12">
+        <div className="flex flex-col text-left space-y-1.5 mb-6">
           <div className="flex items-center gap-2 text-cyber-cyan font-sans text-xs tracking-wider uppercase font-bold">
             <BookOpen className="w-4 h-4 text-cyber-cyan" />
             Curriculum learning path
           </div>
-          <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             Topic Wise structured Curriculum
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-2xl font-light leading-relaxed">
