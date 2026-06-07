@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import { 
@@ -43,13 +43,13 @@ const Submissions = ({ onBack }) => {
   };
 
   // Filter submissions
-  const filteredSubmissions = submissions.filter(sub => {
+  const filteredSubmissions = useMemo(() => submissions.filter(sub => {
     const matchesSearch = sub.problem_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           sub.problem_id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesVerdict = verdictFilter === 'ALL' || sub.verdict.toUpperCase() === verdictFilter;
     const matchesLang = langFilter === 'ALL' || sub.language.toLowerCase() === langFilter.toLowerCase();
     return matchesSearch && matchesVerdict && matchesLang;
-  });
+  }), [submissions, searchQuery, verdictFilter, langFilter]);
 
   const getVerdictStyle = (verdict) => {
     const v = verdict.toLowerCase();
@@ -86,9 +86,12 @@ const Submissions = ({ onBack }) => {
   };
 
   // Calculate statistics
-  const totalSubmissions = submissions.length;
-  const acceptedSubmissions = submissions.filter(s => s.verdict.toLowerCase() === 'accepted').length;
-  const successRate = totalSubmissions > 0 ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(1) : 0;
+  const { totalSubmissions, acceptedSubmissions, successRate } = useMemo(() => {
+    const totalSubmissions = submissions.length;
+    const acceptedSubmissions = submissions.filter(s => s.verdict.toLowerCase() === 'accepted').length;
+    const successRate = totalSubmissions > 0 ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(1) : 0;
+    return { totalSubmissions, acceptedSubmissions, successRate };
+  }, [submissions]);
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative">

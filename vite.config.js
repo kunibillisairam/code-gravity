@@ -6,14 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
-          firebase: ['firebase/app', 'firebase/auth'],
-          editor: ['@monaco-editor/react'],
-          ui: ['lucide-react']
-        }
-      }
+      output: {}
     },
     chunkSizeWarningLimit: 1000,
   }

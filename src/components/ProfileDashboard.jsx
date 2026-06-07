@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiService } from '../services/api';
 import { 
@@ -147,10 +147,12 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
     ? (profileData?.followers || []) 
     : (profileData?.following || []);
 
-  const filteredList = targetList.filter(u => 
-    u.username.toLowerCase().includes(followSearchQuery.toLowerCase()) ||
-    u.display_name.toLowerCase().includes(followSearchQuery.toLowerCase())
-  );
+  const filteredList = useMemo(() => {
+    return targetList.filter(u => 
+      u.username.toLowerCase().includes(followSearchQuery.toLowerCase()) ||
+      (u.display_name && u.display_name.toLowerCase().includes(followSearchQuery.toLowerCase()))
+    );
+  }, [targetList, followSearchQuery]);
 
   // Level & XP metrics
   const xp = progress.xp || 0;
@@ -175,7 +177,9 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
   const unlockedBadges = progress.badges || [];
   const heatmapData = progress.contribution_heatmap || {};
-  const activityLog = (progress.activity_log || []).slice(-5).reverse(); // last 5 actions
+  const activityLog = useMemo(() => {
+    return (progress.activity_log || []).slice(-5).reverse();
+  }, [progress.activity_log]);
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative">

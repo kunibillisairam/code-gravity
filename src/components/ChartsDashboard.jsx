@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { apiService } from '../services/api';
 import { PROBLEMS_DB } from '../data/problems';
@@ -110,50 +110,58 @@ const ChartsDashboard = ({ onBack, user }) => {
   const heatmap = progress.contribution_heatmap || {};
 
   // 1. Difficulty Breakdown Parsing
-  const getProblemDifficulty = (id) => {
-    if (!id) return 'Easy';
-    if (PROBLEMS_DB[id]) return PROBLEMS_DB[id].difficulty || 'Easy';
-    if (id.includes('_')) {
-      if (id.includes('medium') || id.includes('advanced')) return 'Medium';
+  const { easyCount, mediumCount, hardCount, totalSolved, easyPct, medPct, hardPct } = useMemo(() => {
+    const getProblemDifficulty = (id) => {
+      if (!id) return 'Easy';
+      if (PROBLEMS_DB[id]) return PROBLEMS_DB[id].difficulty || 'Easy';
+      if (id.includes('_')) {
+        if (id.includes('medium') || id.includes('advanced')) return 'Medium';
+        return 'Easy';
+      }
       return 'Easy';
-    }
-    return 'Easy';
-  };
+    };
 
-  let easyCount = 0;
-  let mediumCount = 0;
-  let hardCount = 0;
+    let easyCount = 0;
+    let mediumCount = 0;
+    let hardCount = 0;
 
-  solvedIds.forEach(id => {
-    const diff = getProblemDifficulty(id);
-    if (diff === 'Easy') easyCount++;
-    else if (diff === 'Medium') mediumCount++;
-    else if (diff === 'Hard') hardCount++;
-  });
+    solvedIds.forEach(id => {
+      const diff = getProblemDifficulty(id);
+      if (diff === 'Easy') easyCount++;
+      else if (diff === 'Medium') mediumCount++;
+      else if (diff === 'Hard') hardCount++;
+    });
 
-  const totalSolved = solvedIds.length;
-  const easyPct = totalSolved ? Math.round((easyCount / totalSolved) * 100) : 0;
-  const medPct = totalSolved ? Math.round((mediumCount / totalSolved) * 100) : 0;
-  const hardPct = totalSolved ? Math.round((hardCount / totalSolved) * 100) : 0;
+    const totalSolved = solvedIds.length;
+    const easyPct = totalSolved ? Math.round((easyCount / totalSolved) * 100) : 0;
+    const medPct = totalSolved ? Math.round((mediumCount / totalSolved) * 100) : 0;
+    const hardPct = totalSolved ? Math.round((hardCount / totalSolved) * 100) : 0;
+
+    return { easyCount, mediumCount, hardCount, totalSolved, easyPct, medPct, hardPct };
+  }, [solvedIds]);
 
   // 2. Language Breakdown Parsing
-  const langCounts = {};
-  submissions.forEach(sub => {
-    if (sub.verdict === 'Accepted' && sub.language) {
-      const lang = sub.language.toLowerCase();
-      langCounts[lang] = (langCounts[lang] || 0) + 1;
-    }
-  });
+  const { langSplits, totalAcceptedSubmissions } = useMemo(() => {
+    const langCounts = {};
+    submissions.forEach(sub => {
+      if (sub.verdict === 'Accepted' && sub.language) {
+        const lang = sub.language.toLowerCase();
+        langCounts[lang] = (langCounts[lang] || 0) + 1;
+      }
+    });
 
-  const totalAcceptedSubmissions = Object.values(langCounts).reduce((a, b) => a + b, 0);
-  const langSplits = Object.entries(langCounts).map(([lang, count]) => {
-    const label = lang === 'python' ? 'Python' : lang === 'javascript' ? 'JavaScript' : lang === 'cpp' ? 'C++' : lang === 'java' ? 'Java' : lang;
-    return {
-      label,
-      count,
-      pct: totalAcceptedSubmissions ? Math.round((count / totalAcceptedSubmissions) * 100) : 0
-    };
-  }).sort((a, b) => b.count - a.count);
+    const totalAcceptedSubmissions = Object.values(langCounts).reduce((a, b) => a + b, 0);
+    const langSplits = Object.entries(langCounts).map(([lang, count]) => {
+      const label = lang === 'python' ? 'Python' : lang === 'javascript' ? 'JavaScript' : lang === 'cpp' ? 'C++' : lang === 'java' ? 'Java' : lang;
+      return {
+        label,
+        count,
+        pct: totalAcceptedSubmissions ? Math.round((count / totalAcceptedSubmissions) * 100) : 0
+      };
+    }).sort((a, b) => b.count - a.count);
+    
+    return { langSplits, totalAcceptedSubmissions };
+  }, [submissions]);
 
   // 3. Success Integrity Donut calculations
   const totalAttemptsCount = submissions.length;
@@ -167,7 +175,7 @@ const ChartsDashboard = ({ onBack, user }) => {
   const strokeDashoffset = circumference - (passRate / 100) * circumference;
 
   // 4. Heatmap Matrix Preprocessing (Last 20 Weeks for Premium Grid Map representation)
-  const getHeatmapGrid = () => {
+  const heatmapGrid = useMemo(() => {
     const grid = [];
     const today = new Date();
     // Start from Sunday of 20 weeks ago
@@ -194,9 +202,7 @@ const ChartsDashboard = ({ onBack, user }) => {
       grid.push(row);
     }
     return grid;
-  };
-
-  const heatmapGrid = getHeatmapGrid();
+  }, [heatmap]);
 
   return (
     <div className="min-h-screen bg-[#060810] text-slate-100 py-24 px-6 md:px-12 font-sans select-none">
