@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import { Bell, MessageSquare } from 'lucide-react';
@@ -27,8 +28,64 @@ const PageLoader = () => (
   </div>
 );
 
+const WorkspaceWrapper = ({ theme, toggleTheme }) => {
+  const { problemId } = useParams();
+  const navigate = useNavigate();
+  const problem = PROBLEMS_DB[problemId] || PROBLEMS_DB['two-sum'];
+  
+  return (
+    <Workspace 
+      problem={problem} 
+      onBack={() => navigate('/')} 
+      theme={theme}
+      toggleTheme={toggleTheme}
+    />
+  );
+};
+
+const PublicProfileWrapper = ({ user, onLoginClick }) => {
+  const { username } = useParams();
+  const navigate = useNavigate();
+  
+  return (
+    <PublicProfile 
+      username={username} 
+      onBack={() => navigate('/')} 
+      setView={(v) => {
+        if (v === 'landing') navigate('/');
+        else navigate(`/${v}`);
+      }}
+      user={user}
+      onLoginClick={onLoginClick}
+      onUserClick={(uname) => {
+        navigate(`/profile/${uname}`);
+        window.scrollTo({ top: 0 });
+      }}
+    />
+  );
+};
+
 function App() {
-  const [view, setView] = useState('landing'); // 'landing' or 'workspace'
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getDerivedView = () => {
+    const path = location.pathname;
+    if (path.startsWith('/workspace/')) return 'workspace';
+    if (path === '/submissions') return 'submissions';
+    if (path === '/profile') return 'profile';
+    if (path.startsWith('/profile/')) return 'public-profile';
+    if (path === '/chat') return 'chat';
+    return 'landing';
+  };
+
+  const view = getDerivedView();
+  
+  const setView = (v) => {
+    if (v === 'landing') navigate('/');
+    else navigate(`/${v}`);
+  };
+
   const [selectedProblem, setSelectedProblem] = useState(null);
   const [selectedUsername, setSelectedUsername] = useState(null);
   
@@ -287,8 +344,7 @@ function App() {
   };
 
   const handleSolveProblem = (problemId) => {
-    setSelectedProblem(PROBLEMS_DB[problemId] || PROBLEMS_DB['two-sum']);
-    setView('workspace');
+    navigate(`/workspace/${problemId}`);
     window.scrollTo({ top: 0 });
   };
 
@@ -298,7 +354,7 @@ function App() {
 
   const handleNavigateToSection = (sectionId) => {
     if (view !== 'landing') {
-      setView('landing');
+      navigate('/');
     }
     
     setActiveSection(sectionId);
@@ -313,300 +369,177 @@ function App() {
     setTimeout(tryScroll, 50);
   };
 
-  const handleBackToExplorer = () => {
-    handleNavigateToSection('problems');
-  };
-
-  // If in immersive coding workspace, only render Workspace view
-  if (view === 'workspace') {
-    return (
-      <Suspense fallback={<PageLoader />}>
-        <Workspace 
-          problem={selectedProblem} 
-          onBack={handleBackToExplorer} 
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
-      </Suspense>
-    );
-  }
-
-  // If in Submissions history view, render Navbar shell + Submissions board
-  if (view === 'submissions') {
-    return (
-      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
-        <Navbar 
-          activeSection="" 
-          setActiveSection={() => {}} 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogoutClick={handleLogout}
-          onSubmissionsClick={() => setView('submissions')}
-          onProfileClick={() => setView('profile')}
-          onNavClick={handleNavigateToSection}
-          onChatClick={() => setView('chat')}
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          unreadMessagesCount={unreadMessagesCount}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={handleMarkAllRead}
-          onClearNotifications={handleClearNotifications}
-        />
+  return (
+    <Routes>
+      <Route path="/workspace/:problemId" element={
         <Suspense fallback={<PageLoader />}>
-          <Submissions onBack={() => setView('landing')} />
+          <WorkspaceWrapper theme={theme} toggleTheme={toggleTheme} />
         </Suspense>
-        <Suspense fallback={<PageLoader />}>
-          <Footer />
-        </Suspense>
-      </div>
-    );
-  }
+      } />
+      <Route path="/*" element={
+        <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
+          {/* Absolute Glow Background Blobs */}
+          {view === 'landing' && (
+            <>
+              <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full radial-glow-cyan pointer-events-none z-0 opacity-20 dark:opacity-30"></div>
+              <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full radial-glow-purple pointer-events-none z-0 opacity-20 dark:opacity-30"></div>
+              <div className="fixed inset-0 tech-grid opacity-10 dark:opacity-20 pointer-events-none z-0"></div>
+            </>
+          )}
 
-  // If in Profile dashboard view, render Navbar shell + Profile Dashboard
-  if (view === 'profile') {
-    return (
-      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
-        <Navbar 
-          activeSection="" 
-          setActiveSection={() => {}} 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogoutClick={handleLogout}
-          onSubmissionsClick={() => setView('submissions')}
-          onProfileClick={() => setView('profile')}
-          onNavClick={handleNavigateToSection}
-          onNavClick={handleNavigateToSection}
-          onChatClick={() => setView('chat')}
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          unreadMessagesCount={unreadMessagesCount}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={handleMarkAllRead}
-          onClearNotifications={handleClearNotifications}
-        />
-        <Suspense fallback={<PageLoader />}>
-          <ProfileDashboard 
-            onBack={() => setView('landing')} 
-            setView={setView} 
-            onUserClick={(uname) => {
-              setSelectedUsername(uname);
-              setView('public-profile');
-              window.scrollTo({ top: 0 });
-            }}
-          />
-        </Suspense>
-        <Suspense fallback={<PageLoader />}>
-          <Footer />
-        </Suspense>
-      </div>
-    );
-  }
-
-  // If in Public Profile view, render Navbar shell + Public Profile component
-  if (view === 'public-profile') {
-    return (
-      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
-        <Navbar 
-          activeSection="" 
-          setActiveSection={() => {}} 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogoutClick={handleLogout}
-          onSubmissionsClick={() => setView('submissions')}
-          onProfileClick={() => setView('profile')}
-          onNavClick={handleNavigateToSection}
-          onChatClick={() => setView('chat')}
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          unreadMessagesCount={unreadMessagesCount}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={handleMarkAllRead}
-          onClearNotifications={handleClearNotifications}
-        />
-        <Suspense fallback={<PageLoader />}>
-          <PublicProfile 
-            username={selectedUsername} 
-            onBack={() => setView('landing')} 
-            setView={setView}
+          {/* Navigation */}
+          <Navbar 
+            activeSection={view === 'landing' ? activeSection : ""} 
+            setActiveSection={setActiveSection} 
+            theme={theme} 
+            toggleTheme={toggleTheme} 
             user={user}
             onLoginClick={() => setShowAuthModal(true)}
-            onUserClick={(uname) => {
-              setSelectedUsername(uname);
-              setView('public-profile');
-              window.scrollTo({ top: 0 });
-            }}
+            onLogoutClick={handleLogout}
+            onSubmissionsClick={() => navigate('/submissions')}
+            onProfileClick={() => navigate('/profile')}
+            onNavClick={handleNavigateToSection}
+            onChatClick={() => navigate('/chat')}
+            notifications={notifications}
+            unreadNotificationsCount={unreadNotificationsCount}
+            unreadMessagesCount={unreadMessagesCount}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllRead={handleMarkAllRead}
+            onClearNotifications={handleClearNotifications}
           />
-        </Suspense>
-        <Suspense fallback={<PageLoader />}>
-          <Footer />
-        </Suspense>
-      </div>
-    );
-  }
 
-  // If in Peer Chat view, render Navbar shell + Peer Learning Chat
-  if (view === 'chat') {
-    return (
-      <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white select-none">
-        <Navbar 
-          activeSection="" 
-          setActiveSection={() => {}} 
-          theme={theme} 
-          toggleTheme={toggleTheme} 
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogoutClick={handleLogout}
-          onSubmissionsClick={() => setView('submissions')}
-          onProfileClick={() => setView('profile')}
-          onNavClick={handleNavigateToSection}
-          onChatClick={() => setView('chat')}
-          notifications={notifications}
-          unreadNotificationsCount={unreadNotificationsCount}
-          unreadMessagesCount={0}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={handleMarkAllRead}
-          onClearNotifications={handleClearNotifications}
-        />
-        <Suspense fallback={<PageLoader />}>
-          <PeerChat onBack={() => setView('landing')} theme={theme} />
-        </Suspense>
-      </div>
-    );
-  }
+          <Suspense fallback={<PageLoader />}>
+            <AuthModal 
+              isOpen={showAuthModal}
+              onClose={() => setShowAuthModal(false)}
+              onLoginSuccess={handleLoginSuccess}
+            />
+          </Suspense>
 
-  return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 selection:bg-cyber-cyan/35 selection:text-white">
-      {/* Absolute Glow Background Blobs */}
-      <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full radial-glow-cyan pointer-events-none z-0 opacity-20 dark:opacity-30"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full radial-glow-purple pointer-events-none z-0 opacity-20 dark:opacity-30"></div>
-
-      {/* Grid Pattern Mesh */}
-      <div className="fixed inset-0 tech-grid opacity-10 dark:opacity-20 pointer-events-none z-0"></div>
-
-      {/* Navigation */}
-      <Navbar 
-        activeSection={activeSection} 
-        setActiveSection={setActiveSection} 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
-        user={user}
-        onLoginClick={() => setShowAuthModal(true)}
-        onLogoutClick={handleLogout}
-        onSubmissionsClick={() => setView('submissions')}
-        onProfileClick={() => setView('profile')}
-        onNavClick={handleNavigateToSection}
-        onChatClick={() => setView('chat')}
-        notifications={notifications}
-        unreadNotificationsCount={unreadNotificationsCount}
-        unreadMessagesCount={unreadMessagesCount}
-        onNotificationClick={handleNotificationClick}
-        onMarkAllRead={handleMarkAllRead}
-        onClearNotifications={handleClearNotifications}
-      />
-
-      <Suspense fallback={<PageLoader />}>
-        <AuthModal 
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      </Suspense>
-
-      {/* Main Sections */}
-      <main className="relative z-10 w-full overflow-hidden">
-        <Hero onExploreClick={handleExploreClick} />
-        
-        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Features />
-        
-        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Suspense fallback={<PageLoader />}>
-          <TopicExplorer onSolveProblem={handleSolveProblem} />
-        </Suspense>
-        
-        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Suspense fallback={<PageLoader />}>
-          <AIAssistant />
-        </Suspense>
-        
-        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-        <Suspense fallback={<PageLoader />}>
-          <Leaderboard 
-            onUserClick={(username) => {
-              setSelectedUsername(username);
-              setView('public-profile');
-              window.scrollTo({ top: 0 });
-            }} 
-          />
-        </Suspense>
-      </main>
-
-      {/* Footer */}
-      <Suspense fallback={<PageLoader />}>
-        <Footer />
-      </Suspense>
-
-      {/* --- GLOBAL REAL-TIME NOTIFICATION TOASTER --- */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-        <AnimatePresence>
-          {globalToasts.map((toast) => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-              onClick={() => {
-                if (toast.link) {
-                  const { view: targetView, param } = toast.link;
-                  if (targetView === 'chat') {
-                    if (param) localStorage.setItem('active_chat_recipient', param);
-                    setView('chat');
-                  } else if (targetView === 'public-profile') {
-                    setSelectedUsername(param);
-                    setView('public-profile');
+          <Routes>
+            <Route path="/" element={
+              <main className="relative z-10 w-full overflow-hidden">
+                <Hero onExploreClick={handleExploreClick} />
+                
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
+                <Features />
+                
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
+                <Suspense fallback={<PageLoader />}>
+                  <TopicExplorer onSolveProblem={handleSolveProblem} />
+                </Suspense>
+                
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
+                <Suspense fallback={<PageLoader />}>
+                  <AIAssistant />
+                </Suspense>
+                
+                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
+                <Suspense fallback={<PageLoader />}>
+                  <Leaderboard 
+                    onUserClick={(username) => {
+                      navigate(`/profile/${username}`);
+                      window.scrollTo({ top: 0 });
+                    }} 
+                  />
+                </Suspense>
+              </main>
+            } />
+            <Route path="/submissions" element={
+              <Suspense fallback={<PageLoader />}>
+                <Submissions onBack={() => navigate('/')} />
+              </Suspense>
+            } />
+            <Route path="/profile" element={
+              <Suspense fallback={<PageLoader />}>
+                <ProfileDashboard 
+                  onBack={() => navigate('/')} 
+                  setView={setView} 
+                  onUserClick={(uname) => {
+                    navigate(`/profile/${uname}`);
                     window.scrollTo({ top: 0 });
-                  } else if (targetView === 'profile') {
-                    setView('profile');
-                  }
-                }
-                setGlobalToasts(prev => prev.filter(t => t.id !== toast.id));
-              }}
-              className={`p-4 rounded-xl shadow-2xl cursor-pointer w-80 text-left flex items-start gap-3 select-none z-50 border-l-4 ${
-                toast.isMessage
-                  ? 'bg-white dark:bg-[#100b18] border-cyber-magenta shadow-[0_0_20px_rgba(255,0,255,0.15)]'
-                  : 'bg-white dark:bg-[#080f1a] border-cyber-cyan shadow-[0_0_20px_rgba(0,240,255,0.12)]'
-              }`}
-            >
-              {toast.isMessage ? (
-                <div className="p-1.5 rounded-lg bg-cyber-magenta/10 shrink-0 mt-0.5">
-                  <MessageSquare className="w-4 h-4 text-cyber-magenta" />
-                </div>
-              ) : (
-                <div className="p-1.5 rounded-lg bg-cyber-cyan/10 shrink-0 mt-0.5">
-                  <Bell className="w-4 h-4 text-cyber-cyan" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <span className={`text-[10px] uppercase font-black tracking-wider block ${
-                  toast.isMessage ? 'text-cyber-magenta' : 'text-cyber-cyan'
-                }`}>{toast.title}</span>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5 line-clamp-2">{toast.text}</p>
-                <span className={`text-[9px] font-bold mt-1 block uppercase tracking-widest ${
-                  toast.isMessage ? 'text-cyber-magenta/60' : 'text-cyber-cyan/60'
-                }`}>{toast.isMessage ? 'Direct Message' : 'Notification'}</span>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-    </div>
+                  }}
+                />
+              </Suspense>
+            } />
+            <Route path="/profile/:username" element={
+              <Suspense fallback={<PageLoader />}>
+                <PublicProfileWrapper 
+                  user={user}
+                  onLoginClick={() => setShowAuthModal(true)}
+                />
+              </Suspense>
+            } />
+            <Route path="/chat" element={
+              <Suspense fallback={<PageLoader />}>
+                <PeerChat onBack={() => navigate('/')} theme={theme} />
+              </Suspense>
+            } />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+
+          {/* Footer (hide on chat view) */}
+          {view !== 'chat' && (
+            <Suspense fallback={<PageLoader />}>
+              <Footer />
+            </Suspense>
+          )}
+
+          {/* --- GLOBAL REAL-TIME NOTIFICATION TOASTER --- */}
+          <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+            <AnimatePresence>
+              {globalToasts.map((toast) => (
+                <motion.div
+                  key={toast.id}
+                  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                  onClick={() => {
+                    if (toast.link) {
+                      const { view: targetView, param } = toast.link;
+                      if (targetView === 'chat') {
+                        if (param) localStorage.setItem('active_chat_recipient', param);
+                        navigate('/chat');
+                      } else if (targetView === 'public-profile') {
+                        navigate(`/profile/${param}`);
+                        window.scrollTo({ top: 0 });
+                      } else if (targetView === 'profile') {
+                        navigate('/profile');
+                      }
+                    }
+                    setGlobalToasts(prev => prev.filter(t => t.id !== toast.id));
+                  }}
+                  className={`p-4 rounded-xl shadow-2xl cursor-pointer w-80 text-left flex items-start gap-3 select-none z-50 border-l-4 ${
+                    toast.isMessage
+                      ? 'bg-white dark:bg-[#100b18] border-cyber-magenta shadow-[0_0_20px_rgba(255,0,255,0.15)]'
+                      : 'bg-white dark:bg-[#080f1a] border-cyber-cyan shadow-[0_0_20px_rgba(0,240,255,0.12)]'
+                  }`}
+                >
+                  {toast.isMessage ? (
+                    <div className="p-1.5 rounded-lg bg-cyber-magenta/10 shrink-0 mt-0.5">
+                      <MessageSquare className="w-4 h-4 text-cyber-magenta" />
+                    </div>
+                  ) : (
+                    <div className="p-1.5 rounded-lg bg-cyber-cyan/10 shrink-0 mt-0.5">
+                      <Bell className="w-4 h-4 text-cyber-cyan" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-[10px] uppercase font-black tracking-wider block ${
+                      toast.isMessage ? 'text-cyber-magenta' : 'text-cyber-cyan'
+                    }`}>{toast.title}</span>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mt-0.5 line-clamp-2">{toast.text}</p>
+                    <span className={`text-[9px] font-bold mt-1 block uppercase tracking-widest ${
+                      toast.isMessage ? 'text-cyber-magenta/60' : 'text-cyber-cyan/60'
+                    }`}>{toast.isMessage ? 'Direct Message' : 'Notification'}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      } />
+    </Routes>
   );
 }
-
 export default App;
