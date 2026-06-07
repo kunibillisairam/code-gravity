@@ -76,6 +76,10 @@ export const chatService = {
   },
 
   // --- WEBSOCKET GATEWAY ---
+  isConnected: () => {
+    return socket !== null && socket.readyState === WebSocket.OPEN;
+  },
+
   connect: (token, onEvent, onDisconnectCallback) => {
     if (onEvent) {
       listeners.add(onEvent);

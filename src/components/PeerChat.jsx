@@ -225,10 +225,12 @@ const PeerChat = ({ onBack, theme }) => {
     // Load initial history immediately
     fetchMessages(true);
 
-    // Setup polling every 2 seconds
+    // Setup polling every 8 seconds, fallback when WebSocket is down
     const intervalId = setInterval(() => {
-      fetchMessages(false);
-    }, 2000);
+      if (!chatService.isConnected()) {
+        fetchMessages(false);
+      }
+    }, 8000);
 
     return () => {
       isSubscribed = false;
