@@ -5,10 +5,14 @@ import { Code, CheckCircle, HelpCircle, BookOpen, ChevronRight, Filter, Sparkles
 import { CURRICULUM_MAP, LANGUAGE_DETAILS } from '../data/curriculumData';
 
 const TopicExplorer = ({ onSolveProblem }) => {
-  const [activeLang, setActiveLang] = useState('python');
+  const [activeLang, setActiveLang] = useState(() => {
+    return localStorage.getItem('codegravity_active_lang') || 'python';
+  });
   
   // Set default active topic based on current selected language curriculum
-  const [activeTopicId, setActiveTopicId] = useState('python-basics');
+  const [activeTopicId, setActiveTopicId] = useState(() => {
+    return localStorage.getItem('codegravity_active_topic') || 'python-basics';
+  });
   
   // Sidebar Filtering States
   const [statusFilters, setStatusFilters] = useState({ Solved: false, Unsolved: false });
@@ -16,10 +20,20 @@ const TopicExplorer = ({ onSolveProblem }) => {
 
   // Sync active topic when switching languages
   useEffect(() => {
-    const defaultTopic = CURRICULUM_MAP[activeLang][0].id;
-    setActiveTopicId(defaultTopic);
-    clearAllFilters();
+    localStorage.setItem('codegravity_active_lang', activeLang);
+    const topics = CURRICULUM_MAP[activeLang] || [];
+    const topicExists = topics.some(t => t.id === activeTopicId);
+    if (!topicExists && topics.length > 0) {
+      setActiveTopicId(topics[0].id);
+      clearAllFilters();
+    }
   }, [activeLang]);
+
+  useEffect(() => {
+    if (activeTopicId) {
+      localStorage.setItem('codegravity_active_topic', activeTopicId);
+    }
+  }, [activeTopicId]);
 
   // Read solved state directly from localStorage closed loop (scoped per user)
   const getProblemStatus = (probId) => {
