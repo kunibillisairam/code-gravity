@@ -76,93 +76,139 @@ function App() {
     localStorage.setItem('codegravity_theme', theme);
   }, [theme]);
 
-  // Real-time WebSockets Stream integration
+  // Load persistent notifications — split by type:
+  // Bell (🔔) = follower, badge, system alerts
+  // Chat (💬) = message-type notifications counted as unread DMs
   useEffect(() => {
-    if (!user) {
+    const token = localStorage.getItem('codegravity_token');
+    if (!user || !token) {
       setNotifications([]);
       setUnreadNotificationsCount(0);
+      return;
+    }
+
+    const loadNotifications = async () => {
+      try {
+        const list = await chatService.getNotifications();
+        if (Array.isArray(list)) {
+          // Bell only shows non-message notifications
+          const bellNotifs = list.filter(n => n.type !== 'message');
+          setNotifications(bellNotifs);
+          const unreads = bellNotifs.filter(n => !n.is_read).length;
+          setUnreadNotificationsCount(unreads);
+        } else {
+          setNotifications([]);
+          setUnreadNotificationsCount(0);
+        }
+      } catch (err) {
+        console.error('Failed to load global notifications:', err);
+        setNotifications([]);
+        setUnreadNotificationsCount(0);
+      }
+    };
+
+    loadNotifications();
+  }, [user, view]);
+
+  // Poll unread DM count every 10 seconds so navbar badge stays fresh
+  useEffect(() => {
+    const token = localStorage.getItem('codegravity_token');
+    if (!user || !token) {
       setUnreadMessagesCount(0);
       return;
     }
 
-    // Connect to global notifications & live chat status alerts
-    chatService.connectNotificationSocket(user);
-
-    // Initial fetch of follows/badges activity alerts
-    const syncInitialNotifications = async () => {
+    const refreshUnreadDMs = async () => {
       try {
-        const alerts = await chatService.getActivityNotifications();
-        setNotifications(alerts);
-        setUnreadNotificationsCount(alerts.filter(n => !n.is_seen).length);
+        const convs = await chatService.getConversations();
+        if (Array.isArray(convs)) {
+          const total = convs.reduce((sum, c) => {
+            return sum + (c.unread_counts?.[user] || 0);
+          }, 0);
+          setUnreadMessagesCount(total);
+        }
       } catch (err) {
-        console.error("Failed to load active timeline notification stream:", err);
+        // silently fail
       }
     };
 
-    // Initial fetch of unread chat counts scoped per user conversation
-    const syncUnreadMessages = async () => {
-      try {
-        const count = await chatService.getUnreadMessagesCount();
-        setUnreadMessagesCount(count);
-      } catch (err) {
-        console.error("Failed to fetch unread DM payload counts:", err);
+    // When user navigates away from chat page, refresh badge
+    if (view !== 'chat') {
+      refreshUnreadDMs();
+      const interval = setInterval(refreshUnreadDMs, 10000);
+      return () => clearInterval(interval);
+    } else {
+      // On chat page, clear the badge
+      setUnreadMessagesCount(0);
+    }
+  }, [user, view]);
+
+  // Also increment badge from WebSocket message events when not on chat page
+  useEffect(() => {
+    const token = localStorage.getItem('codegravity_token');
+    if (!token || !user || view === 'chat') return;
+
+    const handleDMEvent = (event) => {
+      if (event.type === 'message' && event.conversation_id && event.sender_username !== user) {
+        setUnreadMessagesCount(prev => prev + 1);
       }
     };
 
-    syncInitialNotifications();
-    syncUnreadMessages();
+    chatService.connect(token, handleDMEvent);
+    return () => chatService.disconnect(handleDMEvent);
+  }, [user, view]);
 
-    // Register global listener for incoming updates
-    const handleWebSocketEvent = (event) => {
+  // Hook real-time WebSocket global notifications
+  // Message-type → increments chat badge; everything else → bell
+  useEffect(() => {
+    const token = localStorage.getItem('codegravity_token');
+    if (!token || !user) return;
+
+    const handleGlobalWebSocketEvent = (event) => {
       if (event.type === 'global_notification') {
-        const notif = event.data;
-
-        // If DM update link is present, dispatch message count increment, else dispatch Bell alert count
-        if (notif.link && notif.link.view === 'chat') {
-          // Increment local live messages counter immediately
-          setUnreadMessagesCount(prev => prev + 1);
-
-          // Append DM message toast alert popup
-          setGlobalToasts(prev => [
-            ...prev,
-            {
-              id: Date.now(),
-              title: notif.title,
-              text: notif.content,
-              link: notif.link,
-              isMessage: true
-            }
-          ]);
+        if (event.notif_type === 'message' || event.type_tag === 'message' || (event.link && event.link.view === 'chat')) {
+          // This is a DM notification — route to chat button badge, not bell
+          if (view !== 'chat') {
+            setUnreadMessagesCount(prev => prev + 1);
+          }
+          // Still show a toast so user sees it
+          const toastId = Date.now();
+          setGlobalToasts(prev => [...prev, {
+            id: toastId,
+            title: event.title,
+            text: event.text,
+            link: event.link,
+            isMessage: true
+          }]);
+          setTimeout(() => {
+            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
+          }, 4000);
         } else {
-          // Normal activity alerts (follower triggers, badges, levels)
-          setNotifications(prev => [notif, ...prev]);
+          // Bell notification (follower, badge, system)
+          setNotifications(prev => [event, ...prev]);
           setUnreadNotificationsCount(prev => prev + 1);
 
-          // Append Normal Activity toast alert popup
-          setGlobalToasts(prev => [
-            ...prev,
-            {
-              id: Date.now(),
-              title: notif.title,
-              text: notif.content,
-              link: notif.link,
-              isMessage: false
-            }
-          ]);
+          const toastId = Date.now();
+          setGlobalToasts(prev => [...prev, {
+            id: toastId,
+            title: event.title,
+            text: event.text,
+            link: event.link,
+            isMessage: false
+          }]);
+          setTimeout(() => {
+            setGlobalToasts(prev => prev.filter(t => t.id !== toastId));
+          }, 4000);
         }
-      } else if (event.type === 'chat_read_receipt') {
-        // Recipient read DMs, decrement count
-        syncUnreadMessages();
       }
     };
 
-    chatService.addNotificationListener(handleWebSocketEvent);
+    chatService.connect(token, handleGlobalWebSocketEvent);
 
     return () => {
-      chatService.removeNotificationListener(handleWebSocketEvent);
-      chatService.disconnectNotificationSocket();
+      chatService.disconnect(handleGlobalWebSocketEvent);
     };
-  }, [user]);
+  }, [user, view]);
 
   // Clean-up toasts automatically after 6 seconds
   useEffect(() => {
@@ -185,7 +231,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    chatService.disconnectNotificationSocket();
     localStorage.removeItem('codegravity_token');
     localStorage.removeItem('codegravity_user');
     setUser(null);
@@ -194,9 +239,9 @@ function App() {
 
   const handleNotificationClick = async (notif) => {
     try {
-      await chatService.markNotificationAsRead(notif.id);
+      await chatService.markNotificationRead(notif.id);
       setNotifications(prev => 
-        prev.map(n => n.id === notif.id ? { ...n, is_seen: true } : n)
+        prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n)
       );
       setUnreadNotificationsCount(prev => Math.max(0, prev - 1));
 
@@ -224,7 +269,7 @@ function App() {
   const handleMarkAllRead = async () => {
     try {
       await chatService.markAllNotificationsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, is_seen: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadNotificationsCount(0);
     } catch (err) {
       console.error("Failed to clear notification logs:", err);
@@ -233,7 +278,7 @@ function App() {
 
   const handleClearNotifications = async () => {
     try {
-      await chatService.clearAllNotifications();
+      await chatService.clearNotifications();
       setNotifications([]);
       setUnreadNotificationsCount(0);
     } catch (err) {
