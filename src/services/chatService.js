@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { apiClient } from './api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://code-gravity.onrender.com';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://code-gravity.onrender.com').replace(/\/$/, '');
 const WS_BASE_URL = API_BASE_URL.replace(/^http/, 'ws') + '/chat/ws';
 
 let socket = null;

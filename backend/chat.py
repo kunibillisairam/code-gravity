@@ -48,9 +48,11 @@ class ConnectionManager:
         self.user_statuses: Dict[str, str] = {}
 
     async def connect(self, websocket: WebSocket, username: str):
+        print(f"[WS CONNECT] Connection requested by user: {username}")
         await websocket.accept()
         self.active_connections[username] = websocket
         self.user_statuses[username] = "online"
+        print(f"[WS CONNECT] Connection accepted successfully. Active users online: {list(self.active_connections.keys())}")
         
         # Update user status in DB
         await db.users.update_one(
@@ -62,9 +64,11 @@ class ConnectionManager:
         await self.broadcast_status(username, "online")
 
     async def disconnect(self, username: str):
+        print(f"[WS DISCONNECT] Disconnecting user: {username}")
         if username in self.active_connections:
             del self.active_connections[username]
         self.user_statuses[username] = "offline"
+        print(f"[WS DISCONNECT] Disconnected successfully. Remaining users online: {list(self.active_connections.keys())}")
         
         # Update DB status
         await db.users.update_one(
@@ -468,13 +472,16 @@ async def get_ws_ticket(current_user: dict = Depends(get_current_user)):
 
 @router.websocket("/ws")
 async def chat_websocket_endpoint(websocket: WebSocket, ticket: str = None):
+    print(f"[WS HANDSHAKE] Handshake initiated with ticket: {ticket}")
     if not ticket or ticket not in WS_TICKETS:
+        print(f"[WS HANDSHAKE FAILED] Ticket is invalid or expired: {ticket}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
     email = WS_TICKETS.pop(ticket)
     user = await db.users.find_one({"email": email})
     if not user:
+        print(f"[WS HANDSHAKE FAILED] No user found for email associated with ticket: {email}")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
