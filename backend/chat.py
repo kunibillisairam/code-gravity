@@ -471,10 +471,15 @@ async def get_ws_ticket(current_user: dict = Depends(get_current_user)):
     return {"ticket": ticket}
 
 @router.websocket("/ws")
-async def chat_websocket_endpoint(websocket: WebSocket, ticket: str = None):
+async def chat_websocket_endpoint(websocket: WebSocket, ticket: Optional[str] = None):
+    # Safe query parameter fallback
+    if not ticket:
+        ticket = websocket.query_params.get("ticket")
+
     print(f"[WS HANDSHAKE] Handshake initiated with ticket: {ticket}")
     if not ticket or ticket not in WS_TICKETS:
         print(f"[WS HANDSHAKE FAILED] Ticket is invalid or expired: {ticket}")
+        await websocket.accept()
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
@@ -482,6 +487,7 @@ async def chat_websocket_endpoint(websocket: WebSocket, ticket: str = None):
     user = await db.users.find_one({"email": email})
     if not user:
         print(f"[WS HANDSHAKE FAILED] No user found for email associated with ticket: {email}")
+        await websocket.accept()
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
         
@@ -652,5 +658,7 @@ async def chat_websocket_endpoint(websocket: WebSocket, ticket: str = None):
     except WebSocketDisconnect:
         await manager.disconnect(username)
     except Exception as e:
-        print(f"WS error: {e}")
+        import traceback
+        print(f"[WS ERROR] Unexpected error for user {username}: {str(e)}")
+        traceback.print_exc()
         await manager.disconnect(username)
