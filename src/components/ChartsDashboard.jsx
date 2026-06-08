@@ -39,70 +39,6 @@ const ChartsDashboard = ({ onBack, user }) => {
     fetchTelemetryData();
   }, [user]);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center p-6 pt-24 font-sans select-none">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-[#0c0f1a]/85 border border-rose-500/20 backdrop-blur-md rounded-3xl p-8 text-center space-y-6 relative overflow-hidden shadow-[0_0_40px_rgba(239,68,68,0.05)]"
-        >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-cyber-purple" />
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-            <ShieldAlert className="w-8 h-8 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-black uppercase tracking-widest text-white">Grid Link Restrained</h3>
-            <p className="text-xs text-slate-400 leading-relaxed font-light">
-              Cognitive telemetry profiling requires a secured connection link. Please establish a developer login to bridge the data feed.
-            </p>
-          </div>
-          <button
-            onClick={onBack}
-            className="w-full py-3 bg-rose-550 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md hover:scale-[1.01]"
-          >
-            Return to Core Grid
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center pt-24 font-sans select-none">
-        <div className="space-y-4 text-center">
-          <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 border-4 border-cyber-cyan/15 rounded-full" />
-            <div className="absolute inset-0 border-4 border-t-cyber-cyan border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-            <BarChart3 className="absolute inset-0 m-auto w-6 h-6 text-cyber-cyan animate-bounce" />
-          </div>
-          <p className="text-[10px] text-cyber-cyan font-mono tracking-widest uppercase animate-pulse">Syncing Telemetry Channels...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center p-6 pt-24 font-sans select-none">
-        <div className="w-full max-w-md bg-[#0c0f1a]/85 border border-rose-500/20 backdrop-blur-md rounded-3xl p-8 text-center space-y-6 relative shadow-2xl">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
-            <ShieldAlert className="w-6 h-6" />
-          </div>
-          <h3 className="font-sans font-black text-base uppercase tracking-widest text-white">Telemetry Sync Timeout</h3>
-          <p className="text-xs text-rose-400 font-mono leading-relaxed">{error}</p>
-          <button
-            onClick={onBack}
-            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
-          >
-            Acknowledge & Return
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const progress = profileData?.progress || {};
   const solvedIds = progress.solved_problems || [];
   const attemptedIds = progress.attempted_problems || [];
@@ -203,6 +139,72 @@ const ChartsDashboard = ({ onBack, user }) => {
     }
     return grid;
   }, [heatmap]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center p-6 pt-24 font-sans select-none">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-[#0c0f1a]/85 border border-rose-500/20 backdrop-blur-md rounded-3xl p-8 text-center space-y-6 relative overflow-hidden shadow-[0_0_40px_rgba(239,68,68,0.05)]"
+        >
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-cyber-purple" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+            <ShieldAlert className="w-8 h-8 animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-black uppercase tracking-widest text-white">Grid Link Restrained</h3>
+            <p className="text-xs text-slate-400 leading-relaxed font-light">
+              Cognitive telemetry profiling requires a secured connection link. Please establish a developer login to bridge the data feed.
+            </p>
+          </div>
+          <button
+            onClick={onBack}
+            className="w-full py-3 bg-rose-550 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md hover:scale-[1.01]"
+          >
+            Return to Core Grid
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center pt-24 font-sans select-none">
+        <div className="space-y-4 text-center">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 border-4 border-cyber-cyan/15 rounded-full" />
+            <div className="absolute inset-0 border-4 border-t-cyber-cyan border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
+            <BarChart3 className="absolute inset-0 m-auto w-6 h-6 text-cyber-cyan animate-bounce" />
+          </div>
+          <p className="text-[10px] text-cyber-cyan font-mono tracking-widest uppercase animate-pulse">Syncing Telemetry Channels...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#060810] text-slate-100 flex flex-col items-center justify-center p-6 pt-24 font-sans select-none">
+        <div className="w-full max-w-md bg-[#0c0f1a]/85 border border-rose-500/20 backdrop-blur-md rounded-3xl p-8 text-center space-y-6 relative shadow-2xl">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <h3 className="font-sans font-black text-base uppercase tracking-widest text-white">Telemetry Sync Timeout</h3>
+          <p className="text-xs text-rose-400 font-mono leading-relaxed">{error}</p>
+          <button
+            onClick={onBack}
+            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+          >
+            Acknowledge & Return
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="min-h-screen bg-[#060810] text-slate-100 py-24 px-6 md:px-12 font-sans select-none">

@@ -114,6 +114,21 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
+  const targetList = followModalType === 'followers' 
+    ? (profileData?.followers || []) 
+    : (profileData?.following || []);
+
+  const filteredList = useMemo(() => {
+    return targetList.filter(u => 
+      u?.username?.toLowerCase().includes(followSearchQuery.toLowerCase()) ||
+      (u?.display_name && u?.display_name?.toLowerCase().includes(followSearchQuery.toLowerCase()))
+    );
+  }, [targetList, followSearchQuery]);
+
+  const activityLog = useMemo(() => {
+    return (profileData?.progress?.activity_log || []).slice(-5).reverse();
+  }, [profileData?.progress?.activity_log]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-50 dark:bg-[#080a10] text-slate-400">
@@ -141,18 +156,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
     );
   }
 
-  const { profile, progress, username } = profileData;
-
-  const targetList = followModalType === 'followers' 
-    ? (profileData?.followers || []) 
-    : (profileData?.following || []);
-
-  const filteredList = useMemo(() => {
-    return targetList.filter(u => 
-      u.username.toLowerCase().includes(followSearchQuery.toLowerCase()) ||
-      (u.display_name && u.display_name.toLowerCase().includes(followSearchQuery.toLowerCase()))
-    );
-  }, [targetList, followSearchQuery]);
+  const { profile = {}, progress = {}, username = '' } = profileData;
 
   // Level & XP metrics
   const xp = progress.xp || 0;
@@ -177,9 +181,6 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
 
   const unlockedBadges = progress.badges || [];
   const heatmapData = progress.contribution_heatmap || {};
-  const activityLog = useMemo(() => {
-    return (progress.activity_log || []).slice(-5).reverse();
-  }, [progress.activity_log]);
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 md:px-12 bg-slate-50 dark:bg-[#080a10] text-slate-800 dark:text-white font-sans transition-colors duration-300 relative">
