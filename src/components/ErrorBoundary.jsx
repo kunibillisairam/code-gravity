@@ -26,7 +26,13 @@ class ErrorBoundary extends React.Component {
       if (!lastReload || now - parseInt(lastReload) > 10000) {
         sessionStorage.setItem('last_chunk_reload', now.toString());
         console.warn('Chunk load failure detected. Instantly reloading terminal to synchronize assets...');
-        window.location.reload();
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('cv', now.toString());
+          window.location.replace(url.toString());
+        } catch (e) {
+          window.location.reload();
+        }
       }
     }
   }
@@ -49,7 +55,15 @@ class ErrorBoundary extends React.Component {
               </code>
             </div>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                try {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('cv', Date.now().toString());
+                  window.location.replace(url.toString());
+                } catch (e) {
+                  window.location.reload();
+                }
+              }}
               className="w-full py-3 bg-cyber-cyan hover:bg-cyan-400 text-space-900 font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />

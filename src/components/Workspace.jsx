@@ -195,33 +195,6 @@ const Workspace = ({ problem, onBack, onHome, theme, toggleTheme }) => {
     }
   }, [code, problem, activeLanguage]);
 
-  // Keyboard shortcut listener
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl + S to Save Code
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-      // Ctrl + Enter to Run Code
-      if (e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        handleRun();
-      }
-      // Ctrl + Shift + S to Submit
-      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-        e.preventDefault();
-        handleSubmit();
-      }
-      // Ctrl + Alt + R to Reset template
-      if (e.ctrlKey && e.altKey && e.key === 'r') {
-        e.preventDefault();
-        handleReset();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [code, activeLanguage]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -320,6 +293,35 @@ const Workspace = ({ problem, onBack, onHome, theme, toggleTheme }) => {
       setRunResult(null);
     }
   };
+
+  // Keyboard shortcut listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl + S to Save Code
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      // Ctrl + Enter to Run Code
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        handleRun();
+      }
+      // Ctrl + Shift + S to Submit
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        handleSubmit();
+      }
+      // Ctrl + Alt + R to Reset template
+      if (e.ctrlKey && e.altKey && e.key === 'r') {
+        e.preventDefault();
+        handleReset();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, activeLanguage]);
 
   if (!problem) return null;
 
