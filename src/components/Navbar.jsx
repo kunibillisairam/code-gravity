@@ -8,6 +8,7 @@ const Navbar = ({
   theme, 
   toggleTheme, 
   user, 
+  userXp = 0,
   onLoginClick, 
   onLogoutClick, 
   onSubmissionsClick, 
@@ -261,7 +262,12 @@ const Navbar = ({
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-purple flex items-center justify-center text-space-900 font-extrabold text-xs shadow-md">
                 {user.charAt(0).toUpperCase()}
               </div>
-              <span className="text-[10px] font-bold font-mono text-slate-600 dark:text-cyber-cyan uppercase hidden sm:block pr-1">@{user}</span>
+              <div className="flex flex-col items-start text-left leading-none hidden sm:flex pr-1 shrink-0 select-none">
+                <span className="text-[10px] font-bold font-mono text-slate-600 dark:text-cyber-cyan uppercase">@{user}</span>
+                <span className="text-[8px] font-mono text-cyber-purple font-black tracking-widest mt-0.5 uppercase">
+                  {userXp} XP
+                </span>
+              </div>
               <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 

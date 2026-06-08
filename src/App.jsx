@@ -111,6 +111,35 @@ function App() {
     return localStorage.getItem('codegravity_user') || null;
   });
 
+  const [userXp, setUserXp] = useState(() => {
+    const storedUser = localStorage.getItem('codegravity_user');
+    if (storedUser) {
+      return parseInt(localStorage.getItem(`xp_${storedUser}`) || '0', 10);
+    }
+    return 0;
+  });
+
+  const refreshUserProfile = async () => {
+    const storedUser = localStorage.getItem('codegravity_user');
+    if (!storedUser) return;
+    try {
+      const profileData = await apiService.getUserProfile();
+      if (profileData && profileData.progress) {
+        if (profileData.progress.xp !== undefined) {
+          setUserXp(profileData.progress.xp);
+          localStorage.setItem(`xp_${storedUser}`, profileData.progress.xp.toString());
+        }
+        if (Array.isArray(profileData.progress.solved_problems)) {
+          profileData.progress.solved_problems.forEach((probId) => {
+            localStorage.setItem(`solved_${storedUser}_${probId}`, 'true');
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync profile details:', err);
+    }
+  };
+
   // Verify token on app mount to prevent client-side local storage spoofing
   useEffect(() => {
     const verifyToken = async () => {
@@ -121,6 +150,7 @@ function App() {
         if (storedUser) {
           localStorage.removeItem('codegravity_user');
           setUser(null);
+          setUserXp(0);
         }
         return;
       }
@@ -132,6 +162,10 @@ function App() {
             setUser(profileData.username);
             localStorage.setItem('codegravity_user', profileData.username);
           }
+          if (profileData.progress && profileData.progress.xp !== undefined) {
+            setUserXp(profileData.progress.xp);
+            localStorage.setItem(`xp_${profileData.username}`, profileData.progress.xp.toString());
+          }
         }
       } catch (err) {
         console.error('Token verification failed:', err);
@@ -140,29 +174,17 @@ function App() {
           localStorage.removeItem('codegravity_user');
           localStorage.removeItem('codegravity_token');
           setUser(null);
+          setUserXp(0);
         }
       }
     };
     verifyToken();
   }, []);
 
-  // Sync solved problems from backend to local storage scoped keys upon login / mount
+  // Sync solved problems & XP from backend on user change or location change
   useEffect(() => {
-    const syncSolvedProblems = async () => {
-      if (!user) return;
-      try {
-        const profileData = await apiService.getUserProfile();
-        if (profileData && profileData.progress && Array.isArray(profileData.progress.solved_problems)) {
-          profileData.progress.solved_problems.forEach((probId) => {
-            localStorage.setItem(`solved_${user}_${probId}`, 'true');
-          });
-        }
-      } catch (err) {
-        console.error('Failed to sync solved problems from backend:', err);
-      }
-    };
-    syncSolvedProblems();
-  }, [user]);
+    refreshUserProfile();
+  }, [user, location.pathname]);
 
   const [activeSection, setActiveSection] = useState('hero');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -271,6 +293,7 @@ function App() {
 
     const handleGlobalWebSocketEvent = (event) => {
       if (event.type === 'global_notification') {
+        refreshUserProfile();
         if (event.notif_type === 'message' || event.type_tag === 'message' || (event.link && event.link.view === 'chat')) {
           // This is a DM notification — route to chat button badge, not bell
           if (view !== 'chat') {
@@ -339,6 +362,7 @@ function App() {
     localStorage.removeItem('codegravity_user');
     localStorage.removeItem('codegravity_token');
     setUser(null);
+    setUserXp(0);
     setView('landing');
   };
 
@@ -454,6 +478,7 @@ function App() {
             theme={theme} 
             toggleTheme={toggleTheme} 
             user={user}
+            userXp={userXp}
             onLoginClick={() => setShowAuthModal(true)}
             onLogoutClick={handleLogout}
             onSubmissionsClick={() => navigate('/submissions')}
