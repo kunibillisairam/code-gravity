@@ -51,7 +51,7 @@ const WorkspaceWrapper = ({ theme, toggleTheme }) => {
   return (
     <Workspace 
       problem={problem} 
-      onBack={() => navigate('/')} 
+      onBack={() => navigate(-1)} 
       theme={theme}
       toggleTheme={toggleTheme}
     />
@@ -65,7 +65,7 @@ const PublicProfileWrapper = ({ user, onLoginClick }) => {
   return (
     <PublicProfile 
       username={username} 
-      onBack={() => navigate('/')} 
+      onBack={() => navigate(-1)} 
       setView={(v) => {
         if (v === 'landing') navigate('/');
         else navigate(`/${v}`);
