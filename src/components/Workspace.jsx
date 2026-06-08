@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Orbit, Sun, Moon, Sparkles, Award, Zap, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Home, Orbit, Sun, Moon, Sparkles, Award, Zap, CheckCircle } from 'lucide-react';
 import ProblemPanel from './ProblemPanel';
 import EditorPanel from './EditorPanel';
 import ConsolePanel from './ConsolePanel';
@@ -16,7 +16,7 @@ const getLanguageFromProblemId = (probId) => {
   return 'javascript';
 };
 
-const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
+const Workspace = ({ problem, onBack, onHome, theme, toggleTheme }) => {
   const [activeLanguage, setActiveLanguage] = useState(() => getLanguageFromProblemId(problem?.id));
   const [code, setCode] = useState('');
 
@@ -334,9 +334,17 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
           <button
             onClick={onBack}
             className="flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] text-slate-550 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
-            title="Return to Topic Explorer"
+            title="Return to Previous Page"
           >
             <ChevronLeft className="w-5 h-5 shrink-0" />
+          </button>
+          
+          <button
+            onClick={onHome}
+            className="flex items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#121626] text-slate-550 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
+            title="Go to Home Page"
+          >
+            <Home className="w-5 h-5 shrink-0" />
           </button>
           
           <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-800"></div>

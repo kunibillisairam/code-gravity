@@ -52,6 +52,7 @@ const WorkspaceWrapper = ({ theme, toggleTheme }) => {
     <Workspace 
       problem={problem} 
       onBack={() => navigate(-1)} 
+      onHome={() => navigate('/')} 
       theme={theme}
       toggleTheme={toggleTheme}
     />
