@@ -19,8 +19,23 @@ const TopicExplorer = ({ onSolveProblem }) => {
   });
   
   // Sidebar Filtering States
-  const [statusFilters, setStatusFilters] = useState({ Solved: false, Unsolved: false });
-  const [difficultyFilters, setDifficultyFilters] = useState({ Easy: false, Medium: false, Hard: false });
+  const [statusFilters, setStatusFilters] = useState(() => {
+    try {
+      const saved = localStorage.getItem('codegravity_status_filters');
+      return saved ? JSON.parse(saved) : { Solved: false, Unsolved: false };
+    } catch (e) {
+      return { Solved: false, Unsolved: false };
+    }
+  });
+
+  const [difficultyFilters, setDifficultyFilters] = useState(() => {
+    try {
+      const saved = localStorage.getItem('codegravity_difficulty_filters');
+      return saved ? JSON.parse(saved) : { Easy: false, Medium: false, Hard: false };
+    } catch (e) {
+      return { Easy: false, Medium: false, Hard: false };
+    }
+  });
 
   // Sync active topic when switching languages
   useEffect(() => {
@@ -29,11 +44,17 @@ const TopicExplorer = ({ onSolveProblem }) => {
     const topicExists = topics.some(t => t.id === activeTopicId);
     if (!topicExists && topics.length > 0) {
       setActiveTopicId(topics[0].id);
-      setStatusFilters({ Solved: false, Unsolved: false });
-      setDifficultyFilters({ Easy: false, Medium: false, Hard: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLang]);
+
+  useEffect(() => {
+    localStorage.setItem('codegravity_status_filters', JSON.stringify(statusFilters));
+  }, [statusFilters]);
+
+  useEffect(() => {
+    localStorage.setItem('codegravity_difficulty_filters', JSON.stringify(difficultyFilters));
+  }, [difficultyFilters]);
 
   useEffect(() => {
     if (activeTopicId) {
