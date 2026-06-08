@@ -301,6 +301,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('codegravity_user');
+    localStorage.removeItem('codegravity_token');
     setUser(null);
     setView('landing');
   };
