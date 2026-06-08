@@ -9,10 +9,10 @@
     font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   }
 
-  /* Override light-mode base background with a very very light blue */
+  /* Override light-mode base background with a very light blue */
   html:not(.dark) body,
   html:not(.dark) .bg-slate-50 {
-    background-color: #f2f8ff !important;
+    background-color: #e0f0ff !important;
   }
 
   /* JetBrains Mono typography for code nodes */
