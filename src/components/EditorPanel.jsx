@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Send, RotateCcw, HelpCircle, Eye, EyeOff, Sparkles, Terminal } from 'lucide-react';
+import { Play, Send, RotateCcw, HelpCircle, Eye, EyeOff, Sparkles, Terminal, Save, Check } from 'lucide-react';
 
 const EditorPanel = ({ 
   problem, 
@@ -12,6 +12,8 @@ const EditorPanel = ({
   onRun, 
   onSubmit, 
   onReset,
+  onSave,
+  saveStatus,
   theme,
   runResult 
 }) => {
@@ -181,6 +183,10 @@ const EditorPanel = ({
                 
                 <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
                   <div className="flex items-center justify-between">
+                    <span>Save Code Draft</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-[10px] text-cyber-cyan font-bold">Ctrl + S</kbd>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span>Compile & Run Code</span>
                     <kbd className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-[10px] text-cyber-cyan font-bold">Ctrl + Enter</kbd>
                   </div>
@@ -219,8 +225,22 @@ const EditorPanel = ({
         
         <div className="flex items-center gap-3">
           <button
+            onClick={onSave}
+            className="px-5 py-2.5 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 hover:bg-slate-350 dark:hover:bg-[#121626] text-slate-800 dark:text-slate-300 font-sans font-bold text-xs tracking-wider uppercase rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {saveStatus === 'saving' ? (
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-slate-400 border-t-transparent animate-spin inline-block"></span>
+            ) : saveStatus === 'saved' ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500 font-bold" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Save'}
+          </button>
+
+          <button
             onClick={onRun}
-            className="px-5 py-2.5 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 hover:bg-slate-300 dark:hover:bg-[#121626] text-slate-800 dark:text-slate-300 font-sans font-bold text-xs tracking-wider uppercase rounded transition-colors cursor-pointer"
+            className="px-5 py-2.5 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 hover:bg-slate-350 dark:hover:bg-[#121626] text-slate-800 dark:text-slate-300 font-sans font-bold text-xs tracking-wider uppercase rounded transition-colors cursor-pointer"
           >
             Run Code
           </button>

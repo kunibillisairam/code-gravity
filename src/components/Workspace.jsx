@@ -122,18 +122,87 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
     };
   }, [isResizing]);
 
-  // Sync editor code when active problem or language changes
+  const [saveStatus, setSaveStatus] = useState(''); // '', 'saving', 'saved'
+
+  const handleSave = () => {
+    if (!problem) return;
+    setSaveStatus('saving');
+    const activeUser = localStorage.getItem('codegravity_user') || 'anonymous';
+    localStorage.setItem(`draft_${activeUser}_${problem.id}_${activeLanguage}`, code);
+    setTimeout(() => {
+      setSaveStatus('saved');
+      setTimeout(() => {
+        setSaveStatus('');
+      }, 2000);
+    }, 450);
+  };
+
+  // Load draft or previous accepted submission
   useEffect(() => {
-    if (problem && problem.templates[activeLanguage]) {
-      setCode(problem.templates[activeLanguage]);
+    if (!problem) return;
+    const activeUser = localStorage.getItem('codegravity_user') || 'anonymous';
+    const savedDraft = localStorage.getItem(`draft_${activeUser}_${problem.id}_${activeLanguage}`);
+    const solvedCode = localStorage.getItem(`solved_code_${activeUser}_${problem.id}_${activeLanguage}`);
+
+    if (savedDraft !== null) {
+      setCode(savedDraft);
+    } else if (solvedCode !== null) {
+      setCode(solvedCode);
+    } else {
+      // If no local draft or solved code, check if user has a remote solved submission to load
+      if (activeUser !== 'anonymous') {
+        apiService.getSubmissions()
+          .then((submissions) => {
+            const match = submissions.find(
+              (sub) =>
+                sub.problem_id === problem.id &&
+                sub.language === activeLanguage &&
+                sub.verdict === 'Accepted'
+            );
+            if (match) {
+              localStorage.setItem(`solved_code_${activeUser}_${problem.id}_${activeLanguage}`, match.source_code);
+              localStorage.setItem(`solved_${activeUser}_${problem.id}`, 'true');
+              setCode(match.source_code);
+            } else {
+              if (problem.templates[activeLanguage]) {
+                setCode(problem.templates[activeLanguage]);
+              }
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to load submissions from remote database:", err);
+            if (problem.templates[activeLanguage]) {
+              setCode(problem.templates[activeLanguage]);
+            }
+          });
+      } else {
+        if (problem.templates[activeLanguage]) {
+          setCode(problem.templates[activeLanguage]);
+        }
+      }
     }
     setRunResult(null);
     setConsoleIsOpen(false);
   }, [problem, activeLanguage]);
 
+  // Auto-save code draft on change
+  useEffect(() => {
+    if (!problem || !code) return;
+    const activeUser = localStorage.getItem('codegravity_user') || 'anonymous';
+    const template = problem.templates[activeLanguage];
+    if (code !== template) {
+      localStorage.setItem(`draft_${activeUser}_${problem.id}_${activeLanguage}`, code);
+    }
+  }, [code, problem, activeLanguage]);
+
   // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ctrl + S to Save Code
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
       // Ctrl + Enter to Run Code
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
@@ -207,8 +276,9 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
         metrics: `Time: ${result.time} | Memory: ${result.memory}`
       });
 
-      // Save submission history silently to MongoDB if user is authenticated
       const activeUser = localStorage.getItem('codegravity_user');
+
+      // Save submission history silently to MongoDB if user is authenticated
       if (activeUser) {
         apiService.saveSubmission({
           problem_id: problem.id,
@@ -224,6 +294,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
       if (allPassed) {
         const userScope = activeUser || 'anonymous';
         localStorage.setItem(`solved_${userScope}_${problem.id}`, 'true');
+        // Cache the solved code locally
+        localStorage.setItem(`solved_code_${userScope}_${problem.id}_${activeLanguage}`, code);
         setShowSubmitModal(true);
       }
     } catch(e) {
@@ -240,6 +312,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
 
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset your code to the starter template? All current changes will be overwritten.')) {
+      const activeUser = localStorage.getItem('codegravity_user') || 'anonymous';
+      localStorage.removeItem(`draft_${activeUser}_${problem.id}_${activeLanguage}`);
       if (problem && problem.templates[activeLanguage]) {
         setCode(problem.templates[activeLanguage]);
       }
@@ -383,6 +457,8 @@ const Workspace = ({ problem, onBack, theme, toggleTheme }) => {
               onRun={handleRun}
               onSubmit={handleSubmit}
               onReset={handleReset}
+              onSave={handleSave}
+              saveStatus={saveStatus}
               theme={theme}
               runResult={runResult}
             />
