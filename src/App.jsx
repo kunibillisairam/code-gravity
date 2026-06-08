@@ -91,6 +91,7 @@ function App() {
     if (path === '/profile') return 'profile';
     if (path.startsWith('/profile/')) return 'public-profile';
     if (path === '/chat') return 'chat';
+    if (path === '/explore') return 'explore';
     return 'landing';
   };
 
@@ -360,10 +361,17 @@ function App() {
   };
 
   const handleExploreClick = () => {
-    handleNavigateToSection('problems');
+    navigate('/explore');
+    window.scrollTo({ top: 0 });
   };
 
   const handleNavigateToSection = (sectionId) => {
+    if (sectionId === 'problems') {
+      navigate('/explore');
+      window.scrollTo({ top: 0 });
+      return;
+    }
+
     if (view !== 'landing') {
       navigate('/');
     }
@@ -441,11 +449,6 @@ function App() {
                 
                 <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
                 <Suspense fallback={<PageLoader />}>
-                  <TopicExplorer onSolveProblem={handleSolveProblem} />
-                </Suspense>
-                
-                <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200/30 dark:via-white/5 to-transparent"></div>
-                <Suspense fallback={<PageLoader />}>
                   <AIAssistant />
                 </Suspense>
                 
@@ -459,6 +462,13 @@ function App() {
                   />
                 </Suspense>
               </main>
+            } />
+            <Route path="/explore" element={
+              <Suspense fallback={<PageLoader />}>
+                <div className="pt-24 min-h-screen relative z-10 w-full overflow-hidden">
+                  <TopicExplorer onSolveProblem={handleSolveProblem} />
+                </div>
+              </Suspense>
             } />
             <Route path="/submissions" element={
               <Suspense fallback={<PageLoader />}>
