@@ -72,6 +72,24 @@ async def startup_db_client():
         await db.users.create_index([("progress.xp", pymongo.DESCENDING)])
         print("MongoDB descending index applied for progress.xp.")
         
+        # Add index for comments by discussion_id
+        await db.comments.create_index([("discussion_id", pymongo.ASCENDING)])
+        print("MongoDB index applied for comments.discussion_id.")
+        
+        # Add index for replies by comment_id
+        await db.replies.create_index([("comment_id", pymongo.ASCENDING)])
+        print("MongoDB index applied for replies.comment_id.")
+        
+        # Add indexes for chat messages by room_id and conversation_id
+        await db.chat_messages.create_index([("room_id", pymongo.ASCENDING)])
+        await db.chat_messages.create_index([("conversation_id", pymongo.ASCENDING)])
+        print("MongoDB indexes applied for chat_messages room_id and conversation_id.")
+        
+        # Add indexes for submissions by username and problem_id
+        await db.submissions.create_index([("username", pymongo.ASCENDING)])
+        await db.submissions.create_index([("problem_id", pymongo.ASCENDING)])
+        print("MongoDB indexes applied for submissions username and problem_id.")
+        
         # Seed topic chat rooms for Peer Learning
         from datetime import datetime
         chat_rooms = [
@@ -1048,21 +1066,29 @@ async def get_discussion_thread(discussion_id: str, current_user: dict = Depends
     
     comments_cursor = db.comments.find({"discussion_id": discussion_id, "is_spam": False}).sort("created_at", 1)
     comments = []
+    comment_ids = []
     async for comment in comments_cursor:
         comment["id"] = str(comment["_id"])
         del comment["_id"]
         comment["upvote_count"] = len(comment.get("upvotes", []))
         comment["has_upvoted"] = current_user["email"] in comment.get("upvotes", [])
+        comment["replies"] = []
+        comments.append(comment)
+        comment_ids.append(comment["id"])
         
-        replies_cursor = db.replies.find({"comment_id": comment["id"], "is_spam": False}).sort("created_at", 1)
-        replies = []
+    if comment_ids:
+        replies_cursor = db.replies.find({"comment_id": {"$in": comment_ids}, "is_spam": False}).sort("created_at", 1)
+        replies_map = {}
         async for reply in replies_cursor:
             reply["id"] = str(reply["_id"])
             del reply["_id"]
-            replies.append(reply)
+            c_id = reply["comment_id"]
+            if c_id not in replies_map:
+                replies_map[c_id] = []
+            replies_map[c_id].append(reply)
             
-        comment["replies"] = replies
-        comments.append(comment)
+        for comment in comments:
+            comment["replies"] = replies_map.get(comment["id"], [])
         
     return {
         "discussion": discussion_doc,

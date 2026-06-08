@@ -111,6 +111,41 @@ function App() {
     return localStorage.getItem('codegravity_user') || null;
   });
 
+  // Verify token on app mount to prevent client-side local storage spoofing
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('codegravity_token');
+      const storedUser = localStorage.getItem('codegravity_user');
+      
+      if (!token) {
+        if (storedUser) {
+          localStorage.removeItem('codegravity_user');
+          setUser(null);
+        }
+        return;
+      }
+      
+      try {
+        const profileData = await apiService.getUserProfile();
+        if (profileData && profileData.username) {
+          if (user !== profileData.username) {
+            setUser(profileData.username);
+            localStorage.setItem('codegravity_user', profileData.username);
+          }
+        }
+      } catch (err) {
+        console.error('Token verification failed:', err);
+        // Clear auth state if unauthorized response is received
+        if (err.message.includes('401') || err.message.includes('403') || err.message.includes('Unauthorized')) {
+          localStorage.removeItem('codegravity_user');
+          localStorage.removeItem('codegravity_token');
+          setUser(null);
+        }
+      }
+    };
+    verifyToken();
+  }, []);
+
   // Sync solved problems from backend to local storage scoped keys upon login / mount
   useEffect(() => {
     const syncSolvedProblems = async () => {

@@ -23,6 +23,22 @@ apiClient.interceptors.request.use(
   }
 );
 
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.removeItem('codegravity_user');
+      localStorage.removeItem('codegravity_token');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const apiService = {
   login: async (email, password) => {
     try {
