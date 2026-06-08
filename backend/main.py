@@ -830,21 +830,21 @@ async def get_submissions(current_user: dict = Depends(get_current_user)):
 
 @app.post("/run-code")
 @limiter.limit("10/minute")
-async def run_code(http_request: Request, request: RunCodeRequest):
+async def run_code(request: Request, body: RunCodeRequest):
     """
     Asynchronously accept a code block, submit to Judge0, poll execution 
     queues, and return final output metrics.
     """
-    if not request.code.strip():
+    if not body.code.strip():
         raise HTTPException(status_code=400, detail="Cannot compile empty source code.")
     
     try:
         # Run code execution pipeline
         result = judge_client.run_pipeline(
-            code=request.code,
-            language=request.language,
-            stdin=request.stdin,
-            problem_id=request.problem_id
+            code=body.code,
+            language=body.language,
+            stdin=body.stdin,
+            problem_id=body.problem_id
         )
         return result
     except ValueError as val_err:
@@ -866,12 +866,12 @@ async def run_code(http_request: Request, request: RunCodeRequest):
 
 @app.post("/submit-code")
 @limiter.limit("10/minute")
-async def submit_code(http_request: Request, request: SubmitCodeRequest):
+async def submit_code(request: Request, body: SubmitCodeRequest):
     """
     Asynchronously accept code and a list of test cases, execute them via Judge0,
     and return strict expected vs actual evaluation metrics.
     """
-    if not request.code.strip():
+    if not body.code.strip():
         raise HTTPException(status_code=400, detail="Cannot compile empty source code.")
     
     testcase_results = []
@@ -880,13 +880,13 @@ async def submit_code(http_request: Request, request: SubmitCodeRequest):
     max_memory = 0
     
     try:
-        for tc in request.testcases:
+        for tc in body.testcases:
             # Run code execution pipeline for this testcase
             result = judge_client.run_pipeline(
-                code=request.code,
-                language=request.language,
+                code=body.code,
+                language=body.language,
                 stdin=tc.input,
-                problem_id=request.problem_id
+                problem_id=body.problem_id
             )
             
             if result.get("error"):
