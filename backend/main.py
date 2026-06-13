@@ -1,4 +1,5 @@
 import os
+import asyncio
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -239,21 +240,21 @@ async def google_auth(request: GoogleLoginRequest, response: Response):
     try:
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={firebase_key}"
         payload = {"idToken": token}
-        response = requests.post(url, json=payload, timeout=5)
+        auth_response = await asyncio.to_thread(requests.post, url, json=payload, timeout=5)
     except Exception:
         raise HTTPException(status_code=503, detail="Failed to connect to Firebase authentication service")
         
-    if response.status_code != 200:
+    if auth_response.status_code != 200:
         err_msg = "Invalid Firebase credential"
         try:
-            err_data = response.json()
+            err_data = auth_response.json()
             if "error" in err_data:
                 err_msg = err_data["error"].get("message", err_msg)
         except Exception:
             pass
         raise HTTPException(status_code=401, detail=f"Firebase Verification Failed: {err_msg}")
         
-    res_json = response.json()
+    res_json = auth_response.json()
     users_list = res_json.get("users")
     if not users_list or len(users_list) == 0:
         raise HTTPException(status_code=401, detail="No user profile retrieved from Firebase ID Token")

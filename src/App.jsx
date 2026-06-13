@@ -15,7 +15,7 @@ const AIAssistant = lazy(() => import('./components/AIAssistant'));
 const Leaderboard = lazy(() => import('./components/Leaderboard'));
 const Footer = lazy(() => import('./components/Footer'));
 const Workspace = lazy(() => import('./components/Workspace'));
-const AuthModal = lazy(() => import('./components/AuthModal'));
+const AuthPage = lazy(() => import('./components/AuthPage'));
 const Submissions = lazy(() => import('./components/Submissions'));
 const ProfileDashboard = lazy(() => import('./components/ProfileDashboard'));
 const PublicProfile = lazy(() => import('./components/PublicProfile'));
@@ -187,8 +187,6 @@ function App() {
   }, [user, location.pathname]);
 
   const [activeSection, setActiveSection] = useState('hero');
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState('login');
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('codegravity_theme') || 'dark';
   });
@@ -356,7 +354,7 @@ function App() {
   const handleLoginSuccess = (username) => {
     setUser(username);
     localStorage.setItem('codegravity_user', username);
-    setShowAuthModal(false);
+    navigate('/explore');
   };
 
   const handleRequestDemo = async () => {
@@ -452,8 +450,7 @@ function App() {
 
   const handleExploreClick = () => {
     if (!user) {
-      setAuthModalTab('signup');
-      setShowAuthModal(true);
+      navigate('/auth?mode=signup');
     } else {
       navigate('/explore');
       window.scrollTo({ top: 0 });
@@ -513,8 +510,8 @@ function App() {
             toggleTheme={toggleTheme} 
             user={user}
             userXp={userXp}
-            onLoginClick={() => { setAuthModalTab('login'); setShowAuthModal(true); }}
-            onCreateAccountClick={() => { setAuthModalTab('signup'); setShowAuthModal(true); }}
+            onLoginClick={() => navigate('/auth?mode=login')}
+            onCreateAccountClick={() => navigate('/auth?mode=signup')}
             onRequestDemoClick={handleRequestDemo}
             onLogoutClick={handleLogout}
             onSubmissionsClick={() => navigate('/submissions')}
@@ -528,15 +525,6 @@ function App() {
             onMarkAllRead={handleMarkAllRead}
             onClearNotifications={handleClearNotifications}
           />
-
-          <Suspense fallback={<PageLoader />}>
-            <AuthModal 
-              isOpen={showAuthModal}
-              onClose={() => setShowAuthModal(false)}
-              onLoginSuccess={handleLoginSuccess}
-              initialTab={authModalTab}
-            />
-          </Suspense>
 
           <Routes>
             <Route path="/" element={
@@ -590,8 +578,13 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <PublicProfileWrapper 
                   user={user}
-                  onLoginClick={() => setShowAuthModal(true)}
+                  onLoginClick={() => navigate('/auth?mode=login')}
                 />
+              </Suspense>
+            } />
+            <Route path="/auth" element={
+              <Suspense fallback={<PageLoader />}>
+                <AuthPage onLoginSuccess={handleLoginSuccess} />
               </Suspense>
             } />
             <Route path="/chat" element={
