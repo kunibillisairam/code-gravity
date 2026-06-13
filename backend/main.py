@@ -679,12 +679,14 @@ async def create_submission(submission: SubmissionCreate, current_user: dict = D
         if prob_id not in progress.get("solved_problems", []):
             progress["solved_problems"].append(prob_id)
             
-            # XP Weight: Easy = 15, Medium = 20, Hard = 25
-            xp_to_award = 15
-            if "medium" in prob_id.lower() or "water" in prob_id.lower():
+            # XP Weight: Easy = 10, Medium = 20, Hard = 30
+            prob_lower = prob_id.lower()
+            if any(k in prob_lower for k in ['circular', 'priority', 'cycle', 'recursion', 'knapsack', 'subsequence', 'dfs', 'shortest', 'graph', 'dynamic-programming', 'dijkstra', 'topological']):
+                xp_to_award = 30
+            elif any(k in prob_lower for k in ['binary', 'maximum', 'second', 'reverse', 'sorting', 'grading', 'duplicates', 'matrix', 'search', 'stack', 'queue', 'linked-list', 'water']):
                 xp_to_award = 20
-            elif "hard" in prob_id.lower():
-                xp_to_award = 25
+            else:
+                xp_to_award = 10
                 
             progress["xp"] = progress.get("xp", 0) + xp_to_award
             

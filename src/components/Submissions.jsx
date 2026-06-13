@@ -343,12 +343,12 @@ const Submissions = ({ onBack }) => {
               </div>
 
               {/* Code Sandbox Viewport */}
-              <div className="flex-1 overflow-y-auto p-6 bg-slate-950 font-mono text-xs text-slate-250 leading-relaxed border-b border-slate-200 dark:border-slate-850 selection:bg-cyber-cyan/30">
+              <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950 font-mono text-xs text-slate-800 dark:text-slate-200 leading-relaxed border-b border-slate-200 dark:border-slate-850 selection:bg-cyber-cyan/30">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Source Code Payload</span>
                   <button
                     onClick={() => handleCopyCode(selectedSub.source_code)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white text-[10px] font-bold uppercase transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-150 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white text-[10px] font-bold uppercase transition-all cursor-pointer"
                   >
                     {copied ? (
                       <>
@@ -364,7 +364,7 @@ const Submissions = ({ onBack }) => {
                   </button>
                 </div>
 
-                <pre className="p-4 rounded-xl bg-black border border-slate-900 overflow-x-auto select-text text-left max-h-[50vh] scrollbar-thin scrollbar-thumb-slate-800">
+                <pre className="p-4 rounded-xl bg-white dark:bg-black border border-slate-200 dark:border-slate-900 overflow-x-auto select-text text-left max-h-[50vh] scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 text-slate-800 dark:text-slate-200">
                   <code>{selectedSub.source_code}</code>
                 </pre>
               </div>

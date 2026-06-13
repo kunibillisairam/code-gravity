@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Code, CheckCircle, HelpCircle, BookOpen, ChevronRight, Filter, Sparkles, Trophy, ListCollapse } from 'lucide-react';
 
 import { CURRICULUM_MAP, LANGUAGE_DETAILS } from '../data/curriculumData';
+import { getDifficultyFromTitle } from '../data/virtualProblems';
 
 const TopicExplorer = ({ onSolveProblem }) => {
   const [activeLang, setActiveLang] = useState(() => {
@@ -68,25 +69,12 @@ const TopicExplorer = ({ onSolveProblem }) => {
     return localStorage.getItem(`solved_${activeUser}_${probId}`) === 'true' ? 'Solved' : 'Unsolved';
   };
 
-  const getProblemDifficulty = (title) => {
-    const titleLower = title.toLowerCase();
-    if (titleLower.includes('circular') || titleLower.includes('priority') || titleLower.includes('cycle') || titleLower.includes('recursion') || titleLower.includes('knapsack') || titleLower.includes('subsequence') || titleLower.includes('dfs') || titleLower.includes('shortest')) {
-      return 'Hard';
-    }
-    if (titleLower.includes('binary') || titleLower.includes('maximum') || titleLower.includes('second') || titleLower.includes('reverse') || titleLower.includes('sorting') || titleLower.includes('grading') || titleLower.includes('duplicates')) {
-      return 'Medium';
-    }
-    return 'Easy';
-  };
-
-  // Convert raw title array to complete structured problem list
   const activeCurriculum = useMemo(() => {
     const topics = CURRICULUM_MAP[activeLang] || [];
     return topics.map((topic) => {
       const formattedProblems = topic.problems.map((pName, idx) => {
-        // Construct standard unique global ID
         const probId = `${activeLang}_${topic.id}_${pName.toLowerCase().replace(/\s+/g, '-')}`;
-        const difficulty = getProblemDifficulty(pName);
+        const difficulty = getDifficultyFromTitle(pName);
         return {
           id: probId,
           title: pName,
