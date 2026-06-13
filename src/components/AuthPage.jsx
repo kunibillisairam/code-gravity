@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef, memo, forwardRef } from 'react';
+import { motion, AnimatePresence, useAnimation, useInView, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, User, ArrowRight, Loader2, Orbit, ChevronLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, Loader2, Orbit, ChevronLeft, Sparkles, AlertCircle, Code, Terminal, Cpu, Database } from 'lucide-react';
 import { apiService } from '../services/api';
 import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup } from 'firebase/auth';
+
+// Utility for combining class names
+const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 // 3D Point class for canvas calculations
 class Point3D {
@@ -46,6 +49,314 @@ class Point3D {
   }
 }
 
+// ==================== Input Component ====================
+const Input = memo(
+  forwardRef(function Input(
+    { className, type, accentColor = '#00f0ff', ...props },
+    ref
+  ) {
+    const radius = 100;
+    const [visible, setVisible] = useState(false);
+
+    const mouseX = useMotionValue(0);
+    const mouseY = useMotionValue(0);
+
+    function handleMouseMove({ currentTarget, clientX, clientY }) {
+      const { left, top } = currentTarget.getBoundingClientRect();
+      mouseX.set(clientX - left);
+      mouseY.set(clientY - top);
+    }
+
+    return (
+      <motion.div
+        style={{
+          background: useMotionTemplate`
+            radial-gradient(
+              ${visible ? radius + 'px' : '0px'} circle at ${mouseX}px ${mouseY}px,
+              ${accentColor},
+              transparent 80%
+            )
+          `,
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        className="group/input rounded-xl p-[1px] transition duration-300 bg-white/5"
+      >
+        <input
+          type={type}
+          className={cn(
+            "flex h-11 w-full rounded-xl border-none bg-slate-950/60 px-3.5 py-2 text-sm text-white placeholder-slate-650 transition duration-400 group-hover/input:shadow-none focus-visible:ring-[1px] focus-visible:ring-slate-800 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            className
+          )}
+          ref={ref}
+          {...props}
+        />
+      </motion.div>
+    );
+  })
+);
+
+Input.displayName = 'Input';
+
+// ==================== BoxReveal Component ====================
+const BoxReveal = memo(function BoxReveal({
+  children,
+  width = 'fit-content',
+  boxColor = '#5046e6',
+  duration,
+  overflow = 'hidden',
+  position = 'relative',
+  className,
+}) {
+  const mainControls = useAnimation();
+  const slideControls = useAnimation();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (isInView) {
+      slideControls.start('visible');
+      mainControls.start('visible');
+    } else {
+      slideControls.start('hidden');
+      mainControls.start('hidden');
+    }
+  }, [isInView, mainControls, slideControls]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: position,
+        width,
+        overflow,
+      }}
+      className={className}
+    >
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 35 },
+          visible: { opacity: 1, y: 0 },
+        }}
+        initial="hidden"
+        animate={mainControls}
+        transition={{ duration: duration ?? 0.5, delay: 0.15 }}
+      >
+        {children}
+      </motion.div>
+      <motion.div
+        variants={{ hidden: { left: 0 }, visible: { left: '100%' } }}
+        initial="hidden"
+        animate={slideControls}
+        transition={{ duration: duration ?? 0.5, ease: 'easeIn' }}
+        style={{
+          position: 'absolute',
+          top: 2,
+          bottom: 2,
+          left: 0,
+          right: 0,
+          zIndex: 20,
+          background: boxColor,
+          borderRadius: 4,
+        }}
+      />
+    </div>
+  );
+});
+
+// ==================== Ripple Component ====================
+const Ripple = memo(function Ripple({
+  mainCircleSize = 160,
+  mainCircleOpacity = 0.16,
+  numCircles = 8,
+  className = '',
+  accentColor = '#00f0ff',
+}) {
+  return (
+    <div
+      className={`absolute inset-0 flex items-center justify-center pointer-events-none opacity-50 ${className}`}
+    >
+      {Array.from({ length: numCircles }, (_, i) => {
+        const size = mainCircleSize + i * 50;
+        const opacity = Math.max(0, mainCircleOpacity - i * 0.02);
+        const animationDelay = `${i * 0.15}s`;
+        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
+        const borderOpacity = 10 + i * 5;
+
+        return (
+          <span
+            key={i}
+            className="absolute animate-ripple rounded-full border bg-white/[0.002]"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              opacity: opacity,
+              animationDelay: animationDelay,
+              borderStyle: borderStyle,
+              borderWidth: '1px',
+              borderColor: accentColor,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+});
+
+// ==================== OrbitingCircles Component ====================
+const OrbitingCircles = memo(function OrbitingCircles({
+  className,
+  children,
+  reverse = false,
+  duration = 20,
+  delay = 10,
+  radius = 50,
+  path = true,
+  accentColor = '#00f0ff',
+}) {
+  return (
+    <>
+      {path && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          version="1.1"
+          className="pointer-events-none absolute inset-0 size-full"
+        >
+          <circle
+            className="stroke-white/5 stroke-1"
+            cx="50%"
+            cy="50%"
+            r={radius}
+            fill="none"
+            style={{
+              stroke: accentColor,
+              opacity: 0.12,
+            }}
+          />
+        </svg>
+      )}
+      <div
+        style={{
+          '--duration': duration,
+          '--radius': radius,
+          '--delay': -delay,
+        }}
+        className={cn(
+          'absolute flex transform-gpu animate-orbit items-center justify-center rounded-full',
+          { '[animation-direction:reverse]': reverse },
+          className
+        )}
+      >
+        {children}
+      </div>
+    </>
+  );
+});
+
+// ==================== TechOrbitDisplay Component ====================
+const TechOrbitDisplay = memo(function TechOrbitDisplay({
+  accentColor = '#00f0ff',
+  colorAccent = 'cyan',
+}) {
+  const iconConfig = [
+    // Ring 1 (radius 75)
+    { Icon: Orbit, duration: 16, delay: 0, radius: 75, reverse: false },
+    { Icon: Sparkles, duration: 16, delay: 8, radius: 75, reverse: false },
+    
+    // Ring 2 (radius 135)
+    { Icon: Code, duration: 24, delay: 4, radius: 135, reverse: true },
+    { Icon: Terminal, duration: 24, delay: 16, radius: 135, reverse: true },
+    
+    // Ring 3 (radius 200)
+    { Icon: Cpu, duration: 32, delay: 0, radius: 200, reverse: false },
+    { Icon: Database, duration: 32, delay: 16, radius: 200, reverse: false },
+  ];
+
+  const textAccent = {
+    cyan: 'text-cyber-cyan',
+    purple: 'text-cyber-purple',
+    emerald: 'text-emerald-400'
+  };
+
+  return (
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden">
+      {/* Ripple backdrop */}
+      <Ripple accentColor={accentColor} />
+
+      {/* Central branding */}
+      <div className="relative z-10 flex flex-col items-center gap-2 select-none pointer-events-none">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+          className="w-16 h-16 rounded-2xl bg-[#090e18]/80 border border-white/10 flex items-center justify-center shadow-lg backdrop-blur-md"
+        >
+          <Orbit className="w-9 h-9" style={{ color: accentColor }} />
+        </motion.div>
+        <span className="text-4xl font-black tracking-widest text-white mt-3 font-sans">
+          CODE<span className={textAccent[colorAccent] + " transition-colors duration-500"}>GRAVITY</span>
+        </span>
+        <span className="text-[9px] font-mono tracking-widest text-slate-500 uppercase">
+          Unified Development Node
+        </span>
+      </div>
+
+      {/* Orbiting Tech Icons */}
+      {iconConfig.map((icon, index) => {
+        const IconComponent = icon.Icon;
+        return (
+          <OrbitingCircles
+            key={index}
+            duration={icon.duration}
+            delay={icon.delay}
+            radius={icon.radius}
+            reverse={icon.reverse}
+            accentColor={accentColor}
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#090d16]/90 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors shadow-lg backdrop-blur-md">
+              <IconComponent className="w-4.5 h-4.5" style={{ color: accentColor }} />
+            </div>
+          </OrbitingCircles>
+        );
+      })}
+    </div>
+  );
+});
+
+// ==================== Label Component ====================
+const Label = memo(function Label({ className, ...props }) {
+  return (
+    <label
+      className={cn(
+        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        className
+      )}
+      {...props}
+    />
+  );
+});
+
+// ==================== BottomGradient Component ====================
+const BottomGradient = ({ colorAccent = 'cyan' }) => {
+  const gradientColors = {
+    cyan: { via1: 'via-cyber-cyan', via2: 'via-cyber-blue' },
+    purple: { via1: 'via-cyber-purple', via2: 'via-[#4f46e5]' },
+    emerald: { via1: 'via-emerald-500', via2: 'via-teal-650' }
+  };
+  const activeColors = gradientColors[colorAccent];
+
+  return (
+    <>
+      <span className={`group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent ${activeColors.via1} to-transparent`} />
+      <span className={`group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent ${activeColors.via2} to-transparent`} />
+    </>
+  );
+};
+
+// ==================== Core AuthPage Component ====================
 const AuthPage = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -55,9 +366,10 @@ const AuthPage = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [visiblePassword, setVisiblePassword] = useState(false);
 
   // Dynamic Theme Accent Color selection
-  // Choices: 'cyan' (#00f0ff), 'purple' (#b45aff), 'emerald' (#10b981)
+  // Choices: 'cyan' (#00f0ff), 'purple' (#bd00ff), 'emerald' (#10b981)
   const [colorAccent, setColorAccent] = useState('cyan');
 
   const canvasRef = useRef(null);
@@ -95,7 +407,7 @@ const AuthPage = ({ onLoginSuccess }) => {
 
     // Initialize 3D cloud points (a rotating sphere shell)
     const points = [];
-    const count = 120;
+    const count = 100;
     const radius = 220;
 
     for (let i = 0; i < count; i++) {
@@ -113,7 +425,7 @@ const AuthPage = ({ onLoginSuccess }) => {
     // Colors mapping
     const accentColors = {
       cyan: { r: 0, g: 240, b: 255 },
-      purple: { r: 180, g: 90, b: 255 },
+      purple: { r: 189, g: 0, b: 255 },
       emerald: { r: 16, g: 185, b: 129 }
     };
 
@@ -139,7 +451,7 @@ const AuthPage = ({ onLoginSuccess }) => {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < 95) {
-            const opacity = (1 - dist / 95) * 0.16 * projected[i].scale;
+            const opacity = (1 - dist / 95) * 0.12 * projected[i].scale;
             ctx.strokeStyle = `rgba(${activeColor.r}, ${activeColor.g}, ${activeColor.b}, ${opacity})`;
             ctx.beginPath();
             ctx.moveTo(projected[i].x, projected[i].y);
@@ -151,7 +463,7 @@ const AuthPage = ({ onLoginSuccess }) => {
 
       // Draw point stars
       projected.forEach(p => {
-        ctx.fillStyle = `rgba(${activeColor.r}, ${activeColor.g}, ${activeColor.b}, ${0.4 + p.scale * 0.5})`;
+        ctx.fillStyle = `rgba(${activeColor.r}, ${activeColor.g}, ${activeColor.b}, ${0.3 + p.scale * 0.5})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, Math.max(1, 2.2 * p.scale), 0, Math.PI * 2);
         ctx.fill();
@@ -216,236 +528,322 @@ const AuthPage = ({ onLoginSuccess }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Border and glow mapping matching state
-  const borderStyles = {
-    cyan: 'border-cyber-cyan/30 shadow-[0_0_50px_rgba(0,240,255,0.1)] focus:ring-cyber-cyan',
-    purple: 'border-cyber-purple/30 shadow-[0_0_50px_rgba(180,90,255,0.1)] focus:ring-cyber-purple',
-    emerald: 'border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.1)] focus:ring-emerald-500'
-  };
-
-  const buttonStyles = {
-    cyan: 'from-cyber-cyan to-cyber-blue text-space-900 shadow-[0_0_15px_rgba(0,240,255,0.25)] hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]',
-    purple: 'from-cyber-purple to-[#4f46e5] text-white shadow-[0_0_15px_rgba(180,90,255,0.25)] hover:shadow-[0_0_25px_rgba(180,90,255,0.45)]',
-    emerald: 'from-emerald-500 to-teal-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.45)]'
-  };
-
-  const textAccent = {
-    cyan: 'text-cyber-cyan',
-    purple: 'text-cyber-purple',
-    emerald: 'text-emerald-400'
+  // Theme Config definitions matching state selector
+  const themeConfig = {
+    cyan: {
+      accent: '#00f0ff',
+      glow: 'rgba(0, 240, 255, 0.12)',
+      border: 'border-cyber-cyan/25 shadow-[0_0_50px_rgba(0,240,255,0.06)] focus:ring-cyber-cyan',
+      button: 'from-cyber-cyan to-cyber-blue text-space-900 shadow-[0_0_15px_rgba(0,240,255,0.18)] hover:shadow-[0_0_25px_rgba(0,240,255,0.35)]',
+      text: 'text-cyber-cyan',
+    },
+    purple: {
+      accent: '#bd00ff',
+      glow: 'rgba(189, 0, 255, 0.12)',
+      border: 'border-cyber-purple/25 shadow-[0_0_50px_rgba(189,0,255,0.06)] focus:ring-cyber-purple',
+      button: 'from-cyber-purple to-[#4f46e5] text-white shadow-[0_0_15px_rgba(189,0,255,0.18)] hover:shadow-[0_0_25px_rgba(189,0,255,0.35)]',
+      text: 'text-cyber-purple',
+    },
+    emerald: {
+      accent: '#10b981',
+      glow: 'rgba(16, 185, 129, 0.12)',
+      border: 'border-emerald-500/25 shadow-[0_0_50px_rgba(16,185,129,0.06)] focus:ring-emerald-500',
+      button: 'from-emerald-500 to-teal-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.18)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]',
+      text: 'text-emerald-400',
+    }
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#03050a] flex items-center justify-center overflow-hidden font-sans select-none">
+    <div className="relative w-full min-h-screen bg-[#03050a] flex flex-col lg:flex-row overflow-hidden font-sans select-none">
       
-      {/* 3D Interactive Stars Canvas */}
+      {/* Dynamic inline styles for orbit and ripple animations */}
+      <style>{`
+        @keyframes orbit {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg) translateX(calc(var(--radius) * 1px)) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg) translateX(calc(var(--radius) * 1px)) rotate(-360deg);
+          }
+        }
+        .animate-orbit {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          animation: orbit calc(var(--duration) * 1s) linear infinite;
+          animation-delay: calc(var(--delay) * 1s);
+        }
+        
+        @keyframes ripple {
+          0%, 100% {
+            transform: translate(-50%, -50%) scale(1);
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.06);
+          }
+        }
+        .animate-ripple {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          animation: ripple 7s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* 3D Interactive Stars Canvas Backdrop (covers the entire screen) */}
       <canvas 
         ref={canvasRef} 
-        className="absolute inset-0 z-0 pointer-events-none opacity-50 dark:opacity-70"
+        className="absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-60"
       />
 
       {/* Radial overlay gradient for cinematic feel */}
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#03050a] via-transparent to-[#03050a]/40 pointer-events-none" />
 
-      {/* Floating abstract rings */}
-      <div className="absolute top-[20%] left-[15%] w-80 h-80 rounded-full border border-dashed border-white/5 animate-spin-slow pointer-events-none" />
-      <div className="absolute bottom-[20%] right-[15%] w-96 h-96 rounded-full border border-dashed border-white/5 animate-spin-reverse pointer-events-none" />
-
-      {/* Accent Color customizer bar */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-3 bg-white/5 backdrop-blur-md px-3.5 py-2 border border-white/10 rounded-full select-none">
-        <span className="text-[9px] font-bold font-mono tracking-wider uppercase text-slate-400">Spectrum Matrix:</span>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setColorAccent('cyan')}
-            className={`w-3.5 h-3.5 rounded-full bg-cyber-cyan cursor-pointer transition-transform ${colorAccent === 'cyan' ? 'scale-125 ring-2 ring-white' : ''}`}
-            title="Cyan Protocol"
-          />
-          <button 
-            onClick={() => setColorAccent('purple')}
-            className={`w-3.5 h-3.5 rounded-full bg-cyber-purple cursor-pointer transition-transform ${colorAccent === 'purple' ? 'scale-125 ring-2 ring-white' : ''}`}
-            title="Purple Matrix"
-          />
-          <button 
-            onClick={() => setColorAccent('emerald')}
-            className={`w-3.5 h-3.5 rounded-full bg-emerald-500 cursor-pointer transition-transform ${colorAccent === 'emerald' ? 'scale-125 ring-2 ring-white' : ''}`}
-            title="Emerald Gateway"
-          />
-        </div>
+      {/* LEFT SIDE: Cinematic Orbiting Tech Ecosystem (Hidden on Mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative h-screen items-center justify-center border-r border-white/5 overflow-hidden z-10">
+        <TechOrbitDisplay 
+          accentColor={themeConfig[colorAccent].accent} 
+          colorAccent={colorAccent}
+        />
       </div>
 
-      {/* Back button */}
-      <button 
-        onClick={() => navigate('/')}
-        className="absolute top-6 right-6 z-20 flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer backdrop-blur-md"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>Return Home</span>
-      </button>
-
-      {/* Frosted glass cinematic card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className={`w-full max-w-lg mx-4 bg-[#0a0f1d]/75 backdrop-blur-xl border ${borderStyles[colorAccent]} rounded-2xl p-8 sm:p-10 relative z-10 transition-all duration-500`}
-      >
+      {/* RIGHT SIDE: Immersive Authentication Forms */}
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-center items-center py-12 px-6 sm:px-12 relative z-10 overflow-y-auto">
         
-        {/* Animated Brand Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-              className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg"
-            >
-              <Orbit className={`w-8 h-8 ${textAccent[colorAccent]} transition-colors duration-500`} />
-            </motion.div>
+        {/* Return Home & Matrix Customizer controls floating in forms section */}
+        <div className="absolute top-6 right-6 flex items-center gap-4 z-20">
+          {/* Accent Color customizer bar */}
+          <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-full select-none">
+            <div className="flex gap-1.5">
+              <button 
+                onClick={() => setColorAccent('cyan')}
+                className={`w-3.5 h-3.5 rounded-full bg-cyber-cyan cursor-pointer transition-transform duration-300 ${colorAccent === 'cyan' ? 'scale-125 ring-2 ring-white' : 'opacity-70 hover:opacity-100'}`}
+                title="Cyan Protocol"
+              />
+              <button 
+                onClick={() => setColorAccent('purple')}
+                className={`w-3.5 h-3.5 rounded-full bg-cyber-purple cursor-pointer transition-transform duration-300 ${colorAccent === 'purple' ? 'scale-125 ring-2 ring-white' : 'opacity-70 hover:opacity-100'}`}
+                title="Purple Matrix"
+              />
+              <button 
+                onClick={() => setColorAccent('emerald')}
+                className={`w-3.5 h-3.5 rounded-full bg-emerald-500 cursor-pointer transition-transform duration-300 ${colorAccent === 'emerald' ? 'scale-125 ring-2 ring-white' : 'opacity-70 hover:opacity-100'}`}
+                title="Emerald Gateway"
+              />
+            </div>
           </div>
-          <h2 className="text-2xl font-black text-white font-sans tracking-widest uppercase">
-            CODE<span className={textAccent[colorAccent] + " transition-colors duration-500"}>GRAVITY</span>
-          </h2>
-          <p className="text-[11px] font-mono tracking-widest text-slate-500 uppercase mt-1">
-            {isLogin ? 'Quantum Access Terminal' : 'Initialize Developer Node'}
-          </p>
+
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer backdrop-blur-md uppercase tracking-wider"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Home</span>
+          </button>
         </div>
 
-        {/* Form panel with custom animation */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <AnimatePresence mode="wait">
-            {!isLogin && (
-              <motion.div
-                key="signup-username"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="space-y-1.5 overflow-hidden"
-              >
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Username</label>
+        {/* Form Container Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className={`w-full max-w-md bg-[#0a0f1d]/75 backdrop-blur-xl border ${themeConfig[colorAccent].border} rounded-2xl p-8 relative transition-all duration-500`}
+        >
+          
+          {/* Header */}
+          <div className="mb-6">
+            <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
+              <h2 className="text-2xl font-black text-white font-sans tracking-wider uppercase">
+                {isLogin ? 'Quantum Access' : 'Initialize Node'}
+              </h2>
+            </BoxReveal>
+            <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} className="mt-1">
+              <p className="text-xs text-slate-450">
+                {isLogin ? 'Provide your developer token credentials.' : 'Create an account to join the CodeGravity network.'}
+              </p>
+            </BoxReveal>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <AnimatePresence mode="wait">
+              {!isLogin ? (
+                <motion.div
+                  key="signup-username"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-1.5 overflow-hidden"
+                >
+                  <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
+                    <Label htmlFor="username" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                      Username <span className="text-rose-500">*</span>
+                    </Label>
+                  </BoxReveal>
+                  <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                        <User className="h-4 w-4 text-slate-500" />
+                      </div>
+                      <Input
+                        type="text"
+                        name="username"
+                        id="username"
+                        required={!isLogin}
+                        value={formData.username}
+                        onChange={handleChange}
+                        accentColor={themeConfig[colorAccent].accent}
+                        className="pl-11"
+                        placeholder="e.g. quantum_codex"
+                      />
+                    </div>
+                  </BoxReveal>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <div className="space-y-1.5">
+              <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
+                <Label htmlFor="email" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                  Email Address <span className="text-rose-500">*</span>
+                </Label>
+              </BoxReveal>
+              <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-slate-550" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                    <Mail className="h-4 w-4 text-slate-500" />
                   </div>
-                  <input
-                    type="text"
-                    name="username"
-                    required={!isLogin}
-                    value={formData.username}
+                  <Input
+                    type="email"
+                    name="email"
+                    id="email"
+                    required
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-1 focus:border-transparent text-white placeholder-slate-600 text-sm outline-none transition-all"
-                    placeholder="e.g. quantum_codex"
+                    accentColor={themeConfig[colorAccent].accent}
+                    className="pl-11"
+                    placeholder="developer@codegravity.com"
                   />
                 </div>
-              </motion.div>
+              </BoxReveal>
+            </div>
+
+            <div className="space-y-1.5">
+              <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
+                <Label htmlFor="password" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                  Secret Token (Password) <span className="text-rose-500">*</span>
+                </Label>
+              </BoxReveal>
+              <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                    <Lock className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <Input
+                    type={visiblePassword ? "text" : "password"}
+                    name="password"
+                    id="password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    accentColor={themeConfig[colorAccent].accent}
+                    className="pl-11 pr-10"
+                    placeholder="••••••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setVisiblePassword(!visiblePassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sm text-slate-500 hover:text-slate-300 transition-colors z-10 cursor-pointer"
+                  >
+                    {visiblePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </BoxReveal>
+            </div>
+
+            {error && (
+              <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
+                <motion.div 
+                  initial={{ scale: 0.98, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs text-left font-medium flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </motion.div>
+              </BoxReveal>
             )}
-          </AnimatePresence>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Email Address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-slate-555" />
+            {/* Action button */}
+            <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%" overflow="visible">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full mt-4 py-3.5 bg-gradient-to-r ${themeConfig[colorAccent].button} font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer disabled:opacity-75 relative group/btn overflow-hidden`}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <span className="font-sans uppercase tracking-widest text-xs font-black">
+                      {isLogin ? 'Access Workspace' : 'Initialize Account'}
+                    </span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+                <BottomGradient colorAccent={colorAccent} />
+              </button>
+            </BoxReveal>
+
+            {/* Separator line */}
+            <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
+              <div className="relative my-4 pt-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/5"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-3 bg-[#0a0f1d]/75 text-slate-500 font-mono uppercase tracking-widest text-[9px]">
+                    Authentication Gateway
+                  </span>
+                </div>
               </div>
-              <input
-                type="email"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-1 focus:border-transparent text-white placeholder-slate-600 text-sm outline-none transition-all"
-                placeholder="developer@codegravity.com"
-              />
-            </div>
-          </div>
+            </BoxReveal>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Secret Token (Password)</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-slate-555" />
-              </div>
-              <input
-                type="password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-1 focus:border-transparent text-white placeholder-slate-600 text-sm outline-none transition-all"
-                placeholder="••••••••••••"
-              />
-            </div>
-          </div>
+            {/* Google Firebase button */}
+            <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%" overflow="visible">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200 font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-70 font-sans text-xs uppercase tracking-wider relative group/btn overflow-hidden"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                <span>Google Secure Node</span>
+                <BottomGradient colorAccent={colorAccent} />
+              </button>
+            </BoxReveal>
+          </form>
 
-          {error && (
-            <motion.div 
-              initial={{ scale: 0.98, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs text-left font-medium flex items-start gap-2.5"
+          {/* Toggle between login and registration */}
+          <div className="mt-6 text-center text-xs text-slate-500 font-sans">
+            {isLogin ? "New to CodeGravity? " : "Already registered? "}
+            <button 
+              type="button"
+              onClick={() => { setIsLogin(!isLogin); setError(''); }}
+              className={`${themeConfig[colorAccent].text} transition-colors duration-500 font-bold hover:underline cursor-pointer`}
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-
-          {/* Action button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full mt-6 py-3.5 bg-gradient-to-r ${buttonStyles[colorAccent]} font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer disabled:opacity-75`}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <span className="font-sans uppercase tracking-widest text-xs font-black">
-                  {isLogin ? 'Access Workspace' : 'Initialize Account'}
-                </span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-
-          {/* Separator line */}
-          <div className="relative my-6 pt-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/5"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3.5 bg-[#0a0f1d] text-slate-500 font-mono uppercase tracking-widest text-[9px]">
-                Authentication Gateway
-              </span>
-            </div>
+              {isLogin ? 'Initialize Node' : 'Access Terminal'}
+            </button>
           </div>
 
-          {/* Google Firebase button */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200 font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-70 font-sans text-xs uppercase tracking-wider"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-            </svg>
-            <span>Google Secure Node</span>
-          </button>
-        </form>
+        </motion.div>
+      </div>
 
-        {/* Toggle between login and registration */}
-        <div className="mt-8 text-center text-xs text-slate-500 font-sans">
-          {isLogin ? "New to CodeGravity? " : "Already registered? "}
-          <button 
-            type="button"
-            onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            className={`${textAccent[colorAccent]} transition-colors duration-500 font-bold hover:underline cursor-pointer`}
-          >
-            {isLogin ? 'Initialize Node' : 'Access Terminal'}
-          </button>
-        </div>
-
-      </motion.div>
     </div>
   );
 };

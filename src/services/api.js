@@ -39,6 +39,21 @@ apiClient.interceptors.response.use(
   }
 );
 
+const activeRequests = {};
+let cachedProfile = null;
+let profileCacheTime = null;
+
+const dedupeRequest = (key, fetchFn) => {
+  if (activeRequests[key]) {
+    return activeRequests[key];
+  }
+  const promise = fetchFn().finally(() => {
+    delete activeRequests[key];
+  });
+  activeRequests[key] = promise;
+  return promise;
+};
+
 export const apiService = {
   login: async (email, password) => {
     try {
@@ -86,17 +101,27 @@ export const apiService = {
   },
 
   getUserProfile: async () => {
-    try {
-      const response = await apiClient.get('/profile');
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.detail || 'Failed to fetch user profile');
+    const now = Date.now();
+    if (cachedProfile && profileCacheTime && (now - profileCacheTime < 3000)) {
+      return cachedProfile;
     }
+    return dedupeRequest('getUserProfile', async () => {
+      try {
+        const response = await apiClient.get('/profile');
+        cachedProfile = response.data;
+        profileCacheTime = Date.now();
+        return response.data;
+      } catch (error) {
+        throw new Error(error.response?.data?.detail || 'Failed to fetch user profile');
+      }
+    });
   },
 
   updateUserProfile: async (profileData) => {
     try {
       const response = await apiClient.put('/profile', profileData);
+      cachedProfile = null;
+      profileCacheTime = null;
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.detail || 'Failed to update user profile');

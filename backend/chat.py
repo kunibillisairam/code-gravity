@@ -219,22 +219,45 @@ async def get_room_messages(room_id: str, current_user: dict = Depends(get_curre
 async def get_conversations(current_user: dict = Depends(get_current_user)):
     my_username = current_user["username"]
     conversations = []
+    
+    # 1. Fetch all conversations first
+    convs_list = []
     cursor = db.conversations.find({"participants": my_username}).sort("last_message_at", -1)
     async for conv in cursor:
-        serialized = serialize_doc(conv)
-        # Determine status of other participant
-        other_participant = next((p for p in serialized["participants"] if p != my_username), None)
+        convs_list.append(serialize_doc(conv))
+        
+    # 2. Gather unique other participants
+    other_usernames = set()
+    for conv in convs_list:
+        other_p = next((p for p in conv.get("participants", []) if p != my_username), None)
+        if other_p:
+            other_usernames.add(other_p)
+            
+    # Filter out those who are already marked online in the manager's active connections
+    usernames_to_fetch = [u for u in other_usernames if u not in manager.active_connections]
+    
+    # 3. Fetch online_status of all other participants in a single batch query
+    status_lookup = {}
+    if usernames_to_fetch:
+        users_cursor = db.users.find(
+            {"username": {"$in": usernames_to_fetch}},
+            {"username": 1, "online_status": 1}
+        )
+        async for u in users_cursor:
+            status_lookup[u["username"]] = u.get("online_status", "offline")
+            
+    # 4. Construct response list
+    for conv in convs_list:
+        other_p = next((p for p in conv.get("participants", []) if p != my_username), None)
         status = "offline"
-        if other_participant:
-            # Check active manager connections first
-            if other_participant in manager.active_connections:
+        if other_p:
+            if other_p in manager.active_connections:
                 status = "online"
             else:
-                other_user = await db.users.find_one({"username": other_participant})
-                if other_user:
-                    status = other_user.get("online_status", "offline")
-        serialized["other_participant_status"] = status
-        conversations.append(serialized)
+                status = status_lookup.get(other_p, "offline")
+        conv["other_participant_status"] = status
+        conversations.append(conv)
+        
     return conversations
 
 @router.get("/conversations/{conversation_id}/messages")

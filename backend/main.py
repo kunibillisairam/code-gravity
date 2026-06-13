@@ -326,7 +326,17 @@ async def resolve_usernames(usernames: list) -> list:
         })
     return resolved
 
-async def get_user_ranks(xp: int, faction: str):
+RANKS_CACHE = {}  # username -> (global_rank, faction_rank, timestamp)
+RANKS_CACHE_TTL = 30  # 30 seconds cache
+
+async def get_user_ranks(username: str, xp: int, faction: str):
+    import time
+    now = time.time()
+    if username in RANKS_CACHE:
+        g_rank, f_rank, ts = RANKS_CACHE[username]
+        if now - ts < RANKS_CACHE_TTL:
+            return g_rank, f_rank
+
     # Global rank (1 + count of users with higher XP)
     global_rank = await db.users.count_documents({"progress.xp": {"$gt": xp}}) + 1
     
@@ -356,6 +366,7 @@ async def get_user_ranks(xp: int, faction: str):
         quark_higher = await db.users.count_documents(quark_query)
         faction_rank = (global_rank - orbital_higher - quark_higher)
         
+    RANKS_CACHE[username] = (global_rank, faction_rank, now)
     return global_rank, faction_rank
 
 @app.get("/profile")
@@ -396,7 +407,7 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
             
     # Resolve ranks
     xp = progress.get("xp", 0)
-    global_rank, faction_rank = await get_user_ranks(xp, faction)
+    global_rank, faction_rank = await get_user_ranks(current_user.get("username"), xp, faction)
     
     followers_resolved = await resolve_usernames(current_user.get("followers", []))
     following_resolved = await resolve_usernames(current_user.get("following", []))
@@ -513,7 +524,7 @@ async def get_public_profile(username: str, request: Request):
             
     # Resolve ranks
     xp = progress.get("xp", 0)
-    global_rank, faction_rank = await get_user_ranks(xp, faction)
+    global_rank, faction_rank = await get_user_ranks(target_user.get("username"), xp, faction)
             
     solved_problems = progress.get("solved_problems", [])
     topic_counts = {}
