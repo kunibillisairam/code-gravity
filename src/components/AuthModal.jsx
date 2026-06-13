@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Mail, User, ArrowRight, Loader2, Orbit } from 'lucide-react';
 import { apiService } from '../services/api';
 import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup } from 'firebase/auth';
 
-const AuthModal = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthModal = ({ isOpen, onClose, onLoginSuccess, initialTab = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialTab === 'login');
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsLogin(initialTab === 'login');
+    }
+  }, [isOpen, initialTab]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);

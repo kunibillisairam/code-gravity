@@ -10,6 +10,8 @@ const Navbar = ({
   user, 
   userXp = 0,
   onLoginClick, 
+  onCreateAccountClick,
+  onRequestDemoClick,
   onLogoutClick, 
   onSubmissionsClick, 
   onProfileClick, 
@@ -324,12 +326,26 @@ const Navbar = ({
           </div>
           </div>
         ) : (
-          <button
-            onClick={onLoginClick}
-            className="px-3 md:px-4 py-1.5 rounded bg-cyber-purple/10 border border-cyber-purple/30 text-cyber-purple hover:bg-cyber-purple hover:text-white transition-all text-[10px] md:text-xs font-bold uppercase tracking-wider cursor-pointer"
-          >
-            Sign In
-          </button>
+          <div className="flex items-center gap-3 sm:gap-4 select-none shrink-0">
+            <button
+              onClick={onLoginClick}
+              className="text-xs font-sans font-bold text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+            >
+              Log In
+            </button>
+            <button
+              onClick={onRequestDemoClick}
+              className="px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-800 hover:border-slate-450 dark:hover:border-slate-600 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all text-xs font-sans font-bold bg-transparent cursor-pointer"
+            >
+              Request Demo
+            </button>
+            <button
+              onClick={onCreateAccountClick}
+              className="px-3.5 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-slate-900 hover:bg-slate-900 dark:hover:bg-slate-100 transition-all text-xs font-sans font-bold cursor-pointer"
+            >
+              Create a free account
+            </button>
+          </div>
         )}
 
         <motion.button

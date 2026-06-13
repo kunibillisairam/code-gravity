@@ -188,6 +188,7 @@ function App() {
 
   const [activeSection, setActiveSection] = useState('hero');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login');
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('codegravity_theme') || 'dark';
   });
@@ -358,6 +359,34 @@ function App() {
     setShowAuthModal(false);
   };
 
+  const handleRequestDemo = async () => {
+    try {
+      let data;
+      try {
+        data = await apiService.register('demo_user', 'demo@codegravity.com', 'demopassword123');
+      } catch (err) {
+        data = await apiService.login('demo@codegravity.com', 'demopassword123');
+      }
+      
+      if (data && data.access_token) {
+        localStorage.setItem('codegravity_user', data.username);
+        localStorage.setItem('codegravity_token', data.access_token);
+        setUser(data.username);
+        navigate('/explore');
+        
+        const toastId = Date.now();
+        setGlobalToasts(prev => [...prev, {
+          id: toastId,
+          title: 'Demo Workspace Active',
+          text: `Logged in as @${data.username}. Enjoy practicing!`,
+          isMessage: false
+        }]);
+      }
+    } catch (err) {
+      alert("Failed to initialize demo workspace: " + err.message);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('codegravity_user');
     localStorage.removeItem('codegravity_token');
@@ -422,8 +451,13 @@ function App() {
   };
 
   const handleExploreClick = () => {
-    navigate('/explore');
-    window.scrollTo({ top: 0 });
+    if (!user) {
+      setAuthModalTab('signup');
+      setShowAuthModal(true);
+    } else {
+      navigate('/explore');
+      window.scrollTo({ top: 0 });
+    }
   };
 
   const handleNavigateToSection = (sectionId) => {
@@ -479,7 +513,9 @@ function App() {
             toggleTheme={toggleTheme} 
             user={user}
             userXp={userXp}
-            onLoginClick={() => setShowAuthModal(true)}
+            onLoginClick={() => { setAuthModalTab('login'); setShowAuthModal(true); }}
+            onCreateAccountClick={() => { setAuthModalTab('signup'); setShowAuthModal(true); }}
+            onRequestDemoClick={handleRequestDemo}
             onLogoutClick={handleLogout}
             onSubmissionsClick={() => navigate('/submissions')}
             onProfileClick={() => navigate('/profile')}
@@ -498,6 +534,7 @@ function App() {
               isOpen={showAuthModal}
               onClose={() => setShowAuthModal(false)}
               onLoginSuccess={handleLoginSuccess}
+              initialTab={authModalTab}
             />
           </Suspense>
 
