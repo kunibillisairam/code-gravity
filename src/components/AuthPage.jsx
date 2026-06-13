@@ -52,7 +52,7 @@ class Point3D {
 // ==================== Input Component ====================
 const Input = memo(
   forwardRef(function Input(
-    { className, type, accentColor = '#00f0ff', ...props },
+    { className, type, accentColor = '#00f0ff', isLightMode = false, ...props },
     ref
   ) {
     const radius = 100;
@@ -81,12 +81,12 @@ const Input = memo(
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
-        className="group/input rounded-xl p-[1px] transition duration-300 bg-white/5"
+        className={`group/input rounded-xl p-[1px] transition duration-300 ${isLightMode ? 'bg-slate-300/30' : 'bg-white/5'}`}
       >
         <input
           type={type}
           className={cn(
-            "flex h-11 w-full rounded-xl border-none bg-slate-950/60 px-3.5 py-2 text-sm text-white placeholder-slate-650 transition duration-400 group-hover/input:shadow-none focus-visible:ring-[1px] focus-visible:ring-slate-800 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+            `flex h-11 w-full rounded-xl border-none px-3.5 py-2 text-sm transition duration-400 group-hover/input:shadow-none focus-visible:ring-[1px] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${isLightMode ? 'bg-white/80 text-slate-800 placeholder-slate-400 focus-visible:ring-sky-300 border border-slate-200' : 'bg-slate-950/60 text-white placeholder-slate-650 focus-visible:ring-slate-800'}`,
             className
           )}
           ref={ref}
@@ -261,6 +261,7 @@ const OrbitingCircles = memo(function OrbitingCircles({
 const TechOrbitDisplay = memo(function TechOrbitDisplay({
   accentColor = '#00f0ff',
   colorAccent = 'cyan',
+  isLightMode = false,
 }) {
   const iconConfig = [
     // Ring 1 (radius 75)
@@ -292,11 +293,11 @@ const TechOrbitDisplay = memo(function TechOrbitDisplay({
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-          className="w-16 h-16 rounded-2xl bg-[#090e18]/80 border border-white/10 flex items-center justify-center shadow-lg backdrop-blur-md"
+          className={`w-16 h-16 rounded-2xl border flex items-center justify-center shadow-lg backdrop-blur-md ${isLightMode ? 'bg-white/70 border-slate-200/60' : 'bg-[#090e18]/80 border-white/10'}`}
         >
           <Orbit className="w-9 h-9" style={{ color: accentColor }} />
         </motion.div>
-        <span className="text-4xl font-black tracking-widest text-white mt-3 font-sans">
+        <span className={`text-4xl font-black tracking-widest mt-3 font-sans ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
           CODE<span className={textAccent[colorAccent] + " transition-colors duration-500"}>GRAVITY</span>
         </span>
         <span className="text-[9px] font-mono tracking-widest text-slate-500 uppercase">
@@ -316,7 +317,7 @@ const TechOrbitDisplay = memo(function TechOrbitDisplay({
             reverse={icon.reverse}
             accentColor={accentColor}
           >
-            <div className="w-10 h-10 rounded-xl bg-[#090d16]/90 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors shadow-lg backdrop-blur-md">
+            <div className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-colors shadow-lg backdrop-blur-md ${isLightMode ? 'bg-white/70 border-slate-200/50 text-slate-500 hover:text-slate-700' : 'bg-[#090d16]/90 border-white/5 text-slate-400 hover:text-white'}`}>
               <IconComponent className="w-4.5 h-4.5" style={{ color: accentColor }} />
             </div>
           </OrbitingCircles>
@@ -357,7 +358,8 @@ const BottomGradient = ({ colorAccent = 'cyan' }) => {
 };
 
 // ==================== Core AuthPage Component ====================
-const AuthPage = ({ onLoginSuccess }) => {
+const AuthPage = ({ onLoginSuccess, theme = 'dark' }) => {
+  const isLightMode = theme === 'light';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const modeParam = searchParams.get('mode') || 'login';
@@ -424,9 +426,9 @@ const AuthPage = ({ onLoginSuccess }) => {
 
     // Colors mapping
     const accentColors = {
-      cyan: { r: 0, g: 240, b: 255 },
-      purple: { r: 189, g: 0, b: 255 },
-      emerald: { r: 16, g: 185, b: 129 }
+      cyan: isLightMode ? { r: 14, g: 116, b: 192 } : { r: 0, g: 240, b: 255 },
+      purple: isLightMode ? { r: 126, g: 34, b: 206 } : { r: 189, g: 0, b: 255 },
+      emerald: isLightMode ? { r: 5, g: 150, b: 105 } : { r: 16, g: 185, b: 129 }
     };
 
     const render = () => {
@@ -477,7 +479,7 @@ const AuthPage = ({ onLoginSuccess }) => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [colorAccent]);
+  }, [colorAccent, isLightMode]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -531,30 +533,45 @@ const AuthPage = ({ onLoginSuccess }) => {
   // Theme Config definitions matching state selector
   const themeConfig = {
     cyan: {
-      accent: '#00f0ff',
-      glow: 'rgba(0, 240, 255, 0.12)',
-      border: 'border-cyber-cyan/25 shadow-[0_0_50px_rgba(0,240,255,0.06)] focus:ring-cyber-cyan',
-      button: 'from-cyber-cyan to-cyber-blue text-space-900 shadow-[0_0_15px_rgba(0,240,255,0.18)] hover:shadow-[0_0_25px_rgba(0,240,255,0.35)]',
-      text: 'text-cyber-cyan',
+      accent: isLightMode ? '#0284c7' : '#00f0ff',
+      lightAccent: '#0284c7',
+      glow: isLightMode ? 'rgba(2, 132, 199, 0.12)' : 'rgba(0, 240, 255, 0.12)',
+      border: isLightMode
+        ? 'border-sky-300/40 shadow-lg shadow-sky-200/20'
+        : 'border-cyber-cyan/25 shadow-[0_0_50px_rgba(0,240,255,0.06)] focus:ring-cyber-cyan',
+      button: isLightMode
+        ? 'from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-300/30 hover:shadow-xl hover:shadow-sky-400/40'
+        : 'from-cyber-cyan to-cyber-blue text-space-900 shadow-[0_0_15px_rgba(0,240,255,0.18)] hover:shadow-[0_0_25px_rgba(0,240,255,0.35)]',
+      text: isLightMode ? 'text-sky-600' : 'text-cyber-cyan',
     },
     purple: {
-      accent: '#bd00ff',
-      glow: 'rgba(189, 0, 255, 0.12)',
-      border: 'border-cyber-purple/25 shadow-[0_0_50px_rgba(189,0,255,0.06)] focus:ring-cyber-purple',
-      button: 'from-cyber-purple to-[#4f46e5] text-white shadow-[0_0_15px_rgba(189,0,255,0.18)] hover:shadow-[0_0_25px_rgba(189,0,255,0.35)]',
-      text: 'text-cyber-purple',
+      accent: isLightMode ? '#7c3aed' : '#bd00ff',
+      lightAccent: '#7c3aed',
+      glow: isLightMode ? 'rgba(124, 58, 237, 0.12)' : 'rgba(189, 0, 255, 0.12)',
+      border: isLightMode
+        ? 'border-violet-300/40 shadow-lg shadow-violet-200/20'
+        : 'border-cyber-purple/25 shadow-[0_0_50px_rgba(189,0,255,0.06)] focus:ring-cyber-purple',
+      button: isLightMode
+        ? 'from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-300/30 hover:shadow-xl hover:shadow-violet-400/40'
+        : 'from-cyber-purple to-[#4f46e5] text-white shadow-[0_0_15px_rgba(189,0,255,0.18)] hover:shadow-[0_0_25px_rgba(189,0,255,0.35)]',
+      text: isLightMode ? 'text-violet-600' : 'text-cyber-purple',
     },
     emerald: {
-      accent: '#10b981',
-      glow: 'rgba(16, 185, 129, 0.12)',
-      border: 'border-emerald-500/25 shadow-[0_0_50px_rgba(16,185,129,0.06)] focus:ring-emerald-500',
-      button: 'from-emerald-500 to-teal-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.18)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]',
-      text: 'text-emerald-400',
+      accent: isLightMode ? '#059669' : '#10b981',
+      lightAccent: '#059669',
+      glow: isLightMode ? 'rgba(5, 150, 105, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+      border: isLightMode
+        ? 'border-emerald-300/40 shadow-lg shadow-emerald-200/20'
+        : 'border-emerald-500/25 shadow-[0_0_50px_rgba(16,185,129,0.06)] focus:ring-emerald-500',
+      button: isLightMode
+        ? 'from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-300/30 hover:shadow-xl hover:shadow-emerald-400/40'
+        : 'from-emerald-500 to-teal-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.18)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]',
+      text: isLightMode ? 'text-emerald-600' : 'text-emerald-400',
     }
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#03050a] flex flex-col lg:flex-row overflow-hidden font-sans select-none">
+    <div className={`relative w-full min-h-screen flex flex-col lg:flex-row overflow-hidden font-sans select-none transition-colors duration-500 ${isLightMode ? 'bg-gradient-to-br from-sky-100 via-blue-50 to-indigo-100' : 'bg-[#03050a]'}`}>
       
       {/* Dynamic inline styles for orbit and ripple animations */}
       <style>{`
@@ -593,17 +610,18 @@ const AuthPage = ({ onLoginSuccess }) => {
       {/* 3D Interactive Stars Canvas Backdrop (covers the entire screen) */}
       <canvas 
         ref={canvasRef} 
-        className="absolute inset-0 z-0 pointer-events-none opacity-40 dark:opacity-60"
+        className={`absolute inset-0 z-0 pointer-events-none ${isLightMode ? 'opacity-20' : 'opacity-60'}`}
       />
 
       {/* Radial overlay gradient for cinematic feel */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#03050a] via-transparent to-[#03050a]/40 pointer-events-none" />
+      <div className={`absolute inset-0 z-0 pointer-events-none ${isLightMode ? 'bg-gradient-to-t from-sky-100/60 via-transparent to-blue-50/40' : 'bg-gradient-to-t from-[#03050a] via-transparent to-[#03050a]/40'}`} />
 
       {/* LEFT SIDE: Cinematic Orbiting Tech Ecosystem (Hidden on Mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative h-screen items-center justify-center border-r border-white/5 overflow-hidden z-10">
+      <div className={`hidden lg:flex lg:w-1/2 relative h-screen items-center justify-center border-r overflow-hidden z-10 ${isLightMode ? 'border-slate-200/50' : 'border-white/5'}`}>
         <TechOrbitDisplay 
-          accentColor={themeConfig[colorAccent].accent} 
+          accentColor={isLightMode ? themeConfig[colorAccent].lightAccent || themeConfig[colorAccent].accent : themeConfig[colorAccent].accent} 
           colorAccent={colorAccent}
+          isLightMode={isLightMode}
         />
       </div>
 
@@ -613,7 +631,7 @@ const AuthPage = ({ onLoginSuccess }) => {
         {/* Return Home & Matrix Customizer controls floating in forms section */}
         <div className="absolute top-6 right-6 flex items-center gap-4 z-20">
           {/* Accent Color customizer bar */}
-          <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-full select-none">
+          <div className={`flex items-center gap-2 backdrop-blur-md px-3 py-1.5 border rounded-full select-none ${isLightMode ? 'bg-white/60 border-slate-200/60' : 'bg-white/5 border-white/10'}`}>
             <div className="flex gap-1.5">
               <button 
                 onClick={() => setColorAccent('cyan')}
@@ -635,7 +653,7 @@ const AuthPage = ({ onLoginSuccess }) => {
 
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer backdrop-blur-md uppercase tracking-wider"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl transition-all cursor-pointer backdrop-blur-md uppercase tracking-wider ${isLightMode ? 'text-slate-500 hover:text-slate-800 bg-white/60 hover:bg-white/80 border border-slate-200/60' : 'text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10'}`}
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             <span>Home</span>
@@ -647,18 +665,18 @@ const AuthPage = ({ onLoginSuccess }) => {
           initial={{ opacity: 0, scale: 0.97, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className={`w-full max-w-md bg-[#0a0f1d]/75 backdrop-blur-xl border ${themeConfig[colorAccent].border} rounded-2xl p-8 relative transition-all duration-500`}
+          className={`w-full max-w-md backdrop-blur-xl border rounded-2xl p-8 relative transition-all duration-500 ${isLightMode ? 'bg-white/70 border-slate-200/60 shadow-xl shadow-sky-200/30' : `bg-[#0a0f1d]/75 ${themeConfig[colorAccent].border}`}`}
         >
           
           {/* Header */}
           <div className="mb-6">
             <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-              <h2 className="text-xl font-black text-white font-sans tracking-wider uppercase">
+              <h2 className={`text-xl font-black font-sans tracking-wider uppercase ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
                 {isLogin ? 'Quantum Access' : 'Initialize Node'}
               </h2>
             </BoxReveal>
             <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} className="mt-1">
-              <p className="text-xs text-slate-400">
+              <p className={`text-xs ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                 {isLogin ? 'Provide your developer token credentials.' : 'Create an account to join the CodeGravity network.'}
               </p>
             </BoxReveal>
@@ -676,14 +694,14 @@ const AuthPage = ({ onLoginSuccess }) => {
                   className="space-y-1.5 overflow-hidden"
                 >
                   <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                    <Label htmlFor="username" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
+                    <Label htmlFor="username" className={`text-[10px] font-bold uppercase tracking-widest font-mono ${isLightMode ? 'text-slate-700' : 'text-slate-200'}`}>
                       Username <span className="text-rose-500">*</span>
                     </Label>
                   </BoxReveal>
                   <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                        <User className="h-4 w-4 text-slate-500" />
+                        <User className={`h-4 w-4 ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`} />
                       </div>
                       <Input
                         type="text"
@@ -693,6 +711,7 @@ const AuthPage = ({ onLoginSuccess }) => {
                         value={formData.username}
                         onChange={handleChange}
                         accentColor={themeConfig[colorAccent].accent}
+                        isLightMode={isLightMode}
                         className="pl-11"
                         placeholder="e.g. quantum_codex"
                       />
@@ -704,14 +723,14 @@ const AuthPage = ({ onLoginSuccess }) => {
 
             <div className="space-y-1.5">
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                <Label htmlFor="email" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
+                <Label htmlFor="email" className={`text-[10px] font-bold uppercase tracking-widest font-mono ${isLightMode ? 'text-slate-700' : 'text-slate-200'}`}>
                   Email Address <span className="text-rose-500">*</span>
                 </Label>
               </BoxReveal>
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                    <Mail className="h-4 w-4 text-slate-500" />
+                    <Mail className={`h-4 w-4 ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
                   <Input
                     type="email"
@@ -721,6 +740,7 @@ const AuthPage = ({ onLoginSuccess }) => {
                     value={formData.email}
                     onChange={handleChange}
                     accentColor={themeConfig[colorAccent].accent}
+                    isLightMode={isLightMode}
                     className="pl-11"
                     placeholder="developer@codegravity.com"
                   />
@@ -730,14 +750,14 @@ const AuthPage = ({ onLoginSuccess }) => {
 
             <div className="space-y-1.5">
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                <Label htmlFor="password" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
+                <Label htmlFor="password" className={`text-[10px] font-bold uppercase tracking-widest font-mono ${isLightMode ? 'text-slate-700' : 'text-slate-200'}`}>
                   Secret Token (Password) <span className="text-rose-500">*</span>
                 </Label>
               </BoxReveal>
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                    <Lock className="h-4 w-4 text-slate-500" />
+                    <Lock className={`h-4 w-4 ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   </div>
                   <Input
                     type={visiblePassword ? "text" : "password"}
@@ -747,13 +767,14 @@ const AuthPage = ({ onLoginSuccess }) => {
                     value={formData.password}
                     onChange={handleChange}
                     accentColor={themeConfig[colorAccent].accent}
+                    isLightMode={isLightMode}
                     className="pl-11 pr-10"
                     placeholder="••••••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setVisiblePassword(!visiblePassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-sm text-slate-500 hover:text-slate-300 transition-colors z-10 cursor-pointer"
+                    className={`absolute inset-y-0 right-0 pr-3.5 flex items-center text-sm transition-colors z-10 cursor-pointer ${isLightMode ? 'text-slate-400 hover:text-slate-600' : 'text-slate-500 hover:text-slate-300'}`}
                   >
                     {visiblePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -799,10 +820,10 @@ const AuthPage = ({ onLoginSuccess }) => {
             <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} width="100%">
               <div className="relative my-4 pt-2">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/5"></div>
+                  <div className={`w-full border-t ${isLightMode ? 'border-slate-200' : 'border-white/5'}`}></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="px-3 bg-[#0a0f1d]/75 text-slate-500 font-mono uppercase tracking-widest text-[9px]">
+                  <span className={`px-3 font-mono uppercase tracking-widest text-[9px] ${isLightMode ? 'bg-white/70 text-slate-400' : 'bg-[#0a0f1d]/75 text-slate-500'}`}>
                     Authentication Gateway
                   </span>
                 </div>
@@ -815,7 +836,7 @@ const AuthPage = ({ onLoginSuccess }) => {
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
-                className="w-full py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200 font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-70 font-sans text-xs uppercase tracking-wider relative group/btn overflow-hidden"
+                className={`w-full py-3 font-bold rounded-xl flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-70 font-sans text-xs uppercase tracking-wider relative group/btn overflow-hidden ${isLightMode ? 'bg-white/60 border border-slate-200 hover:bg-white/80 text-slate-700' : 'bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200'}`}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -830,7 +851,7 @@ const AuthPage = ({ onLoginSuccess }) => {
           </form>
 
           {/* Toggle between login and registration */}
-          <div className="mt-6 text-center text-xs text-slate-500 font-sans">
+          <div className={`mt-6 text-center text-xs font-sans ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>
             {isLogin ? "New to CodeGravity? " : "Already registered? "}
             <button 
               type="button"

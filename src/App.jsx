@@ -584,7 +584,7 @@ function App() {
             } />
             <Route path="/auth" element={
               <Suspense fallback={<PageLoader />}>
-                <AuthPage onLoginSuccess={handleLoginSuccess} />
+                <AuthPage onLoginSuccess={handleLoginSuccess} theme={theme} />
               </Suspense>
             } />
             <Route path="/chat" element={
