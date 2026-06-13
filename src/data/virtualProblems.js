@@ -340,6 +340,122 @@ const EXPLICIT_PROBLEMS_DB = {
 };
 
 /**
+ * Detect the input format structure based on the challenge name.
+ */
+function getInputStyle(slug, topicId) {
+  if (slug === 'calculator-program') return 'calculator';
+  if (slug === 'membership-operators') return 'char-and-string';
+  if (slug === 'string-slicing') return 'string-and-two-ints';
+  
+  if (slug.includes('three-numbers') || slug.includes('3-numbers') || slug === 'operator-precedence' || slug === 'triangle-validity') {
+    return 'three-ints';
+  }
+  
+  if (slug.includes('list') || slug.includes('array') || slug.includes('sequence') || slug.includes('maximum') || slug.includes('second-largest') || slug.includes('duplicates') || slug.includes('sorting')) {
+    return 'int-list';
+  }
+  
+  if (slug.includes('two') || slug.includes('pair') || slug === 'logical-operators' || slug === 'bitwise-basics' || slug === 'modulo-operator' || slug === 'shift-operators' || slug === 'quadrant-finder') {
+    return 'two-ints';
+  }
+  
+  if (slug.includes('string') || slug.includes('word') || slug === 'palindrome' || slug === 'count-vowels') {
+    return 'single-string';
+  }
+  
+  if (slug === 'identity-operators' || slug === 'anagram') {
+    return 'two-strings';
+  }
+  
+  if (slug.includes('character') || slug === 'vowel-or-consonant') {
+    return 'single-char';
+  }
+
+  // Fallback default based on topic
+  if (topicId === 'operators' || topicId === 'conditionals') {
+    return 'single-int';
+  }
+  if (topicId === 'loops' || topicId === 'functions') {
+    return 'single-int';
+  }
+  if (topicId === 'strings') {
+    return 'single-string';
+  }
+  if (topicId === 'lists') {
+    return 'int-list';
+  }
+  
+  return 'single-int';
+}
+
+/**
+ * Generates unfilled starter templates specific to the challenge input style.
+ */
+export function getStarterTemplates(slug, topicId, title) {
+  const style = getInputStyle(slug, topicId);
+  const templates = {
+    python: '',
+    javascript: '',
+    cpp: '',
+    java: ''
+  };
+
+  if (style === 'calculator') {
+    templates.python = `# Read operator and two integers\nparts = input().split()\nop = parts[0]\na = int(parts[1])\nb = int(parts[2])\n# Write your calculator logic here\n`;
+    templates.javascript = `const fs = require('fs');\nconst parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nconst op = parts[0];\nconst a = parseInt(parts[1]);\nconst b = parseInt(parts[2]);\n// Write your calculator logic here\n`;
+    templates.cpp = `#include <iostream>\nusing namespace std;\n\nint main() {\n    char op;\n    int a, b;\n    if (cin >> op >> a >> b) {\n        // Write your calculator logic here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String op = sc.next();\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            // Write your calculator logic here\n        }\n    }\n}`;
+  } else if (style === 'char-and-string') {
+    templates.python = `# Read character and string\nparts = input().split(maxsplit=1)\nc = parts[0]\ns = parts[1] if len(parts) > 1 else ""\n# Write your code here to check if c is in s\n`;
+    templates.javascript = `const fs = require('fs');\nconst parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nconst c = parts[0];\nconst s = parts.slice(1).join(' ');\n// Write your code here to check if c is in s\n`;
+    templates.cpp = `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    char c;\n    string s;\n    if (cin >> c >> s) {\n        // Write your code here to check if c is in s\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            char c = sc.next().charAt(0);\n            String s = sc.hasNext() ? sc.next() : "";\n            // Write your code here to check if c is in s\n        }\n    }\n}`;
+  } else if (style === 'string-and-two-ints') {
+    templates.python = `# Read string and two slice indices\nparts = input().split()\ns = parts[0]\nstart = int(parts[1])\nend = int(parts[2])\n# Write your slicing logic here\n`;
+    templates.javascript = `const fs = require('fs');\nconst parts = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\nconst s = parts[0];\nconst start = parseInt(parts[1]);\nconst end = parseInt(parts[2]);\n// Write your slicing logic here\n`;
+    templates.cpp = `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    int start, end;\n    if (cin >> s >> start >> end) {\n        // Write your slicing logic here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            int start = sc.nextInt();\n            int end = sc.nextInt();\n            // Write your slicing logic here\n        }\n    }\n}`;
+  } else if (style === 'three-ints') {
+    templates.python = `# Read three integers\na, b, c = map(int, input().split())\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst [a, b, c] = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(Number);\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b, c;\n    if (cin >> a >> b >> c) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            int c = sc.nextInt();\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else if (style === 'int-list') {
+    templates.python = `# Read space-separated integer list\nnums = list(map(int, input().split()))\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst nums = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(Number);\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\n#include <vector>\n#include <sstream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string line;\n    if (getline(cin, line)) {\n        stringstream ss(line);\n        int val;\n        vector<int> nums;\n        while (ss >> val) {\n            nums.push_back(val);\n        }\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\nimport java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextLine()) {\n            String[] parts = sc.nextLine().trim().split("\\\\s+");\n            ArrayList<Integer> nums = new ArrayList<>();\n            for (String p : parts) {\n                if (!p.isEmpty()) nums.add(Integer.parseInt(p));\n            }\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else if (style === 'two-ints') {
+    templates.python = `# Read two integers\na, b = map(int, input().split())\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst [a, b] = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/).map(Number);\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    if (cin >> a >> b) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int a = sc.nextInt();\n            int b = sc.nextInt();\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else if (style === 'two-strings') {
+    templates.python = `# Read two strings\ns1, s2 = input().split()\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst [s1, s2] = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s1, s2;\n    if (cin >> s1 >> s2) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s1 = sc.next();\n            String s2 = sc.next();\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else if (style === 'single-string') {
+    templates.python = `# Read string\ns = input().strip()\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst s = fs.readFileSync(0, 'utf-8').trim();\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string s;\n    if (cin >> s) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            String s = sc.next();\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else if (style === 'single-char') {
+    templates.python = `# Read character\nc = input().strip()\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst c = fs.readFileSync(0, 'utf-8').trim().charAt(0);\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\nusing namespace std;\n\nint main() {\n    char c;\n    if (cin >> c) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNext()) {\n            char c = sc.next().charAt(0);\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  } else {
+    templates.python = `# Read single integer\nn = int(input())\n# Write your logic for ${title} here\n`;
+    templates.javascript = `const fs = require('fs');\nconst n = parseInt(fs.readFileSync(0, 'utf-8').trim());\n// Write your logic for ${title} here\n`;
+    templates.cpp = `#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    if (cin >> n) {\n        // Write your logic for ${title} here\n    }\n    return 0;\n}`;
+    templates.java = `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if (sc.hasNextInt()) {\n            int n = sc.nextInt();\n            // Write your logic for ${title} here\n        }\n    }\n}`;
+  }
+
+  return templates;
+}
+
+/**
  * Global helper to compute problem difficulty from title keywords.
  */
 export function getDifficultyFromTitle(title) {
@@ -924,7 +1040,7 @@ export function getVirtualProblem(lang, topicId, slug, title, difficulty, maxSco
       examples: custom.examples,
       constraints: custom.constraints,
       testcases: testcases,
-      templates: custom.starter_code
+      templates: custom.starter_code || getStarterTemplates(slug, topicId, custom.title)
     };
   }
 
@@ -940,12 +1056,7 @@ export function getVirtualProblem(lang, topicId, slug, title, difficulty, maxSco
     custom: idx === dynamicSpec.test_cases.length - 1
   }));
 
-  const starterCode = {
-    python: `# Write your code here\n# Use input() to read from standard input\n`,
-    javascript: `// Write your code here\nconst fs = require('fs');\n`,
-    cpp: `#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}`,
-    java: `import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}`
-  };
+  const starterCode = getStarterTemplates(slug, topicId, title);
 
   return {
     id: `${lang}_${topicId}_${slug}`,
