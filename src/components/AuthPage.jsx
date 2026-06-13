@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, memo, forwardRef } from 'react';
 import { motion, AnimatePresence, useAnimation, useInView, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, User, ArrowRight, Loader2, Orbit, ChevronLeft, Sparkles, AlertCircle, Code, Terminal, Cpu, Database } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, Loader2, Orbit, ChevronLeft, Sparkles, AlertCircle, Code, Terminal, Cpu, Database, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/api';
 import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup } from 'firebase/auth';
