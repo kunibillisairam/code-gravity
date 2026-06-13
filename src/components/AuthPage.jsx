@@ -653,12 +653,12 @@ const AuthPage = ({ onLoginSuccess }) => {
           {/* Header */}
           <div className="mb-6">
             <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-              <h2 className="text-2xl font-black text-white font-sans tracking-wider uppercase">
+              <h2 className="text-xl font-black text-white font-sans tracking-wider uppercase">
                 {isLogin ? 'Quantum Access' : 'Initialize Node'}
               </h2>
             </BoxReveal>
             <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3} className="mt-1">
-              <p className="text-xs text-slate-450">
+              <p className="text-xs text-slate-400">
                 {isLogin ? 'Provide your developer token credentials.' : 'Create an account to join the CodeGravity network.'}
               </p>
             </BoxReveal>
@@ -676,7 +676,7 @@ const AuthPage = ({ onLoginSuccess }) => {
                   className="space-y-1.5 overflow-hidden"
                 >
                   <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                    <Label htmlFor="username" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                    <Label htmlFor="username" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
                       Username <span className="text-rose-500">*</span>
                     </Label>
                   </BoxReveal>
@@ -704,7 +704,7 @@ const AuthPage = ({ onLoginSuccess }) => {
 
             <div className="space-y-1.5">
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                <Label htmlFor="email" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                <Label htmlFor="email" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
                   Email Address <span className="text-rose-500">*</span>
                 </Label>
               </BoxReveal>
@@ -730,7 +730,7 @@ const AuthPage = ({ onLoginSuccess }) => {
 
             <div className="space-y-1.5">
               <BoxReveal boxColor={themeConfig[colorAccent].accent} duration={0.3}>
-                <Label htmlFor="password" className="text-[10px] font-bold text-slate-455 uppercase tracking-widest font-mono">
+                <Label htmlFor="password" className="text-[10px] font-bold text-slate-200 uppercase tracking-widest font-mono">
                   Secret Token (Password) <span className="text-rose-500">*</span>
                 </Label>
               </BoxReveal>
@@ -823,7 +823,7 @@ const AuthPage = ({ onLoginSuccess }) => {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
-                <span>Google Secure Node</span>
+                <span>{isLogin ? 'Google Sign In' : 'Google Sign Up'}</span>
                 <BottomGradient colorAccent={colorAccent} />
               </button>
             </BoxReveal>
