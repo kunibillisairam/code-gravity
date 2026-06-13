@@ -325,6 +325,38 @@ async def resolve_usernames(usernames: list) -> list:
         })
     return resolved
 
+async def get_user_ranks(xp: int, faction: str):
+    # Global rank (1 + count of users with higher XP)
+    global_rank = await db.users.count_documents({"progress.xp": {"$gt": xp}}) + 1
+    
+    # Faction rank
+    if faction == "Orbital":
+        faction_query = {
+            "progress.xp": {"$gt": xp},
+            "profile.interested_domains.0": {"$regex": "web|front|back|app|dev|design|full", "$options": "i"}
+        }
+        faction_rank = await db.users.count_documents(faction_query) + 1
+    elif faction == "Quark":
+        faction_query = {
+            "progress.xp": {"$gt": xp},
+            "profile.interested_domains.0": {"$regex": "ai|ml|machine|data|science|deep|learn", "$options": "i"}
+        }
+        faction_rank = await db.users.count_documents(faction_query) + 1
+    else: # Singularity
+        orbital_query = {
+            "progress.xp": {"$gt": xp},
+            "profile.interested_domains.0": {"$regex": "web|front|back|app|dev|design|full", "$options": "i"}
+        }
+        quark_query = {
+            "progress.xp": {"$gt": xp},
+            "profile.interested_domains.0": {"$regex": "ai|ml|machine|data|science|deep|learn", "$options": "i"}
+        }
+        orbital_higher = await db.users.count_documents(orbital_query)
+        quark_higher = await db.users.count_documents(quark_query)
+        faction_rank = (global_rank - orbital_higher - quark_higher)
+        
+    return global_rank, faction_rank
+
 @app.get("/profile")
 async def get_profile(current_user: dict = Depends(get_current_user)):
     profile = current_user.get("profile") or {
@@ -351,6 +383,20 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         "contribution_heatmap": {}
     }
     
+    # Resolve faction
+    domains = profile.get("interested_domains", [])
+    faction = "Singularity"
+    if domains:
+        primary_domain = domains[0].lower()
+        if any(x in primary_domain for x in ["web", "front", "back", "app", "dev", "design", "full"]):
+            faction = "Orbital"
+        elif any(x in primary_domain for x in ["ai", "ml", "machine", "data", "science", "deep", "learn"]):
+            faction = "Quark"
+            
+    # Resolve ranks
+    xp = progress.get("xp", 0)
+    global_rank, faction_rank = await get_user_ranks(xp, faction)
+    
     followers_resolved = await resolve_usernames(current_user.get("followers", []))
     following_resolved = await resolve_usernames(current_user.get("following", []))
     
@@ -359,6 +405,9 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         "email": current_user.get("email"),
         "profile": profile,
         "progress": progress,
+        "faction": faction,
+        "global_rank": global_rank,
+        "faction_rank": faction_rank,
         "followers": followers_resolved,
         "following": following_resolved
     }
@@ -461,6 +510,10 @@ async def get_public_profile(username: str, request: Request):
         elif any(x in primary_domain for x in ["ai", "ml", "machine", "data", "science", "deep", "learn"]):
             faction = "Quark"
             
+    # Resolve ranks
+    xp = progress.get("xp", 0)
+    global_rank, faction_rank = await get_user_ranks(xp, faction)
+            
     solved_problems = progress.get("solved_problems", [])
     topic_counts = {}
     for prob_id in solved_problems:
@@ -505,6 +558,8 @@ async def get_public_profile(username: str, request: Request):
         "profile": profile,
         "progress": progress,
         "faction": faction,
+        "global_rank": global_rank,
+        "faction_rank": faction_rank,
         "strongest_topics": strongest_topics,
         "followers_count": len(followers),
         "following_count": len(following),

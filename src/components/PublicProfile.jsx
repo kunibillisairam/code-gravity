@@ -158,7 +158,7 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
     );
   }
 
-  const { profile, progress, faction, strongest_topics, following_count } = profileData;
+  const { profile, progress, faction, strongest_topics, following_count, global_rank = 1, faction_rank = 1 } = profileData;
 
   const targetList = followModalType === 'followers' 
     ? (profileData?.followers || []) 
@@ -358,6 +358,21 @@ const PublicProfile = ({ username, onBack, user, onLoginClick, setView, onUserCl
               <p className="text-xs text-slate-500 dark:text-slate-404 font-light leading-relaxed italic">
                 {profile.bio ? `"${profile.bio}"` : '"This developer operates silently, traversing gravity tracks without transmitting a core logs broadcast."'}
               </p>
+
+              {/* Rankings Block */}
+              <div className="py-3 border-t border-slate-100 dark:border-slate-850/60 space-y-2">
+                <span className="text-[9px] font-sans font-bold text-slate-400 dark:text-slate-505 uppercase tracking-wider block text-left">Leaderboard Standings</span>
+                <div className="grid grid-cols-2 gap-3 text-left">
+                  <div className="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-850">
+                    <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Global Rank</span>
+                    <span className="text-base font-extrabold text-cyber-cyan font-mono pt-0.5">#{global_rank}</span>
+                  </div>
+                  <div className="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-850">
+                    <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest block">{faction} Rank</span>
+                    <span className="text-base font-extrabold text-cyber-purple font-mono pt-0.5">#{faction_rank}</span>
+                  </div>
+                </div>
+              </div>
 
               {/* Social Channels */}
               <div className="flex items-center gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-850/60">

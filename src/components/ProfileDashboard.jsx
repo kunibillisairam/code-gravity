@@ -156,7 +156,7 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
     );
   }
 
-  const { profile = {}, progress = {}, username = '' } = profileData;
+  const { profile = {}, progress = {}, username = '', global_rank = 1, faction_rank = 1, faction = 'Singularity' } = profileData;
 
   // Level & XP metrics
   const xp = progress.xp || 0;
@@ -276,6 +276,21 @@ const ProfileDashboard = ({ onBack, setView, onUserClick }) => {
                   <span className="font-extrabold text-slate-850 dark:text-white">{(profileData?.following || []).length}</span>
                   <span className="text-[10px] text-slate-400 dark:text-slate-505 uppercase tracking-wider">Following</span>
                 </button>
+              </div>
+
+              {/* Rankings Block */}
+              <div className="py-3.5 border-t border-slate-100 dark:border-slate-850/60 space-y-2">
+                <span className="text-[9px] font-sans font-bold text-slate-400 dark:text-slate-505 uppercase tracking-wider block text-left">Leaderboard Standings</span>
+                <div className="grid grid-cols-2 gap-3 text-left">
+                  <div className="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-850">
+                    <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Global Rank</span>
+                    <span className="text-base font-extrabold text-cyber-cyan font-mono pt-0.5">#{global_rank}</span>
+                  </div>
+                  <div className="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-850">
+                    <span className="text-[8px] font-sans font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest block">{faction} Rank</span>
+                    <span className="text-base font-extrabold text-cyber-purple font-mono pt-0.5">#{faction_rank}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Social Channels */}
